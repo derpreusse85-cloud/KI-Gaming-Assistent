@@ -74,7 +74,10 @@ antworte mit &&NONE&&.
 Wichtige Prompt-Anforderungen:
 
 * Explizite Regel für den Fall "kein Tag trifft zu" (`&&NONE&&`) — sonst besteht die Gefahr,
-  dass das LLM bei Unsicherheit ein Tag rät statt nichts auszugeben.
+  dass das LLM bei Unsicherheit ein Tag rät statt nichts auszugeben. **Entschieden:** Passt die
+  Äußerung nicht eindeutig auf einen Tag aus der Aktionsliste, wird immer `&&NONE&&` ausgegeben
+  — kein Rateversuch auf den "naheliegendsten" Tag. Konsistent mit der Parser-Sicherheit (siehe
+  unten), die im Zweifel ebenfalls nichts tut statt zu raten.
 * **Alle erlaubten Marker explizit im Prompt aufzählen** (`&&LANDEGESTELL&&`, `&&SCHILDE&&`,
   `&&NONE&&`, ...), statt das Modell den Markertext frei formulieren zu lassen. Sonst tippt es
   irgendwann `&&Fahrwerk&&` statt `&&Landegestell&&`, und der Parser findet keinen Treffer.
@@ -95,14 +98,6 @@ Möglich, z. B. "Landegestell ausfahren und um Landeerlaubnis bitten" →
   Spiel überhaupt gleichzeitig ausführbar sind, liegt in der Verantwortung des Nutzers — das
   Tool soll unterstützen, nicht die spielerische Einschätzung ersetzen. Keine Sonderlogik für
   Konflikterkennung oder Reihenfolge-Unabhängigkeit vorgesehen.
-
-## Mehrsprachigkeit
-
-Da ein LLM Bedeutung statt exaktem Wortlaut erkennt, ist mehrsprachige Nutzung ohne separate
-Phrasenlisten pro Sprache möglich — der Prompt müsste lediglich sprachunabhängig formuliert
-werden (Tag-Liste bleibt gleich, Eingabesprache beliebig). Einschränkung: Whisper selbst müsste
-dafür Sprache erkennen bzw. konfigurierbar sein; bei sehr kurzen Äußerungen ist automatische
-Spracherkennung potenziell weniger zuverlässig als bei längeren Sätzen — noch ungetestet.
 
 ## Parser-Sicherheit (übertragbar aus `server/llm.py`)
 
@@ -132,6 +127,36 @@ paar hundert ms weniger auffallen.
 * Kernfrage ist die Instruction-Following-Fähigkeit des Modells — strikte Formattreue und
   zuverlässige Negativ-Erkennung sind hier kritischer als bei freier Textgenerierung, da eine
   Fehlklassifikation eine ungewollte Spielaktion auslöst.
+
+## Aktionslisten-Format
+
+Die Zuordnung Tag ↔ Beschreibung ↔ Taste wird in **YAML-Dateien, eine pro Spielprofil**,
+gepflegt:
+
+```yaml
+# profiles/star_citizen.yaml
+LANDEGESTELL:
+  beschreibung: "Fahrgestell/Landegestell aus- oder einfahren"
+  taste: ["shift", "n"]
+ORBITALSCHLAG:
+  beschreibung: "Orbitalschlag/Orbital Strike anfordern"
+  taste: ["ctrl", "o"]
+```
+
+* **YAML statt JSON/TOML**, weil Kommentare möglich sind und sich die Datei gut von Hand
+  editieren lässt.
+* **`beschreibung`** ist die Grundlage für die im Prompt aufgezählten Tags
+  (`&&TAG&& — {beschreibung}`). **`taste`** wird dem Modell nie gezeigt und nur im Code für
+  die Tastendruck-Simulation verwendet — passt zum Prinzip "Modell nennt nie die Taste selbst"
+  (siehe oben).
+* **Taste als Liste** (`["shift", "n"]`), nicht als zusammengesetzter String (`"shift+n"`) —
+  eindeutig beim Parsen, kein Trennzeichen-Problem bei Sondertasten.
+* **Ein Profil pro Spiel**, nicht eine globale Liste, um Tastenkombinations-Kollisionen
+  zwischen verschiedenen Spielen zu vermeiden.
+* **Manuelle Profilauswahl über das Tray-Menü**, analog zu `profiles` und dem Menü „Modus" im
+  Diktier-Tool (siehe `Diktiertool.md`). Es gibt bewusst **keine automatische Spielerkennung**
+  (kein Fenstertitel-/Prozessname-Scan) — der Nutzer wählt das passende Profil vor dem Spielen
+  selbst aus.
 
 ## Wiederverwendbare Bausteine aus dem Diktier-Tool
 
@@ -231,15 +256,17 @@ Sprachstil passen und nicht neutral/systemhaft klingen.
   dazu diese Konzeptdatei; das Repo bekommt eine eigene, schlanke `CLAUDE.md` mit nur den
   übertragbaren Lektionen.
 * **Ein Prozess statt Server-Client** (siehe oben) — läuft komplett lokal auf dem Spiele-PC.
+* **Kein Mehrsprachigkeits-Support** — Kommandos werden ausschließlich auf Deutsch gesprochen,
+  Whisper wird fest auf Deutsch statt auf automatische Spracherkennung eingestellt.
+* **Whisper-Modell: `large-v3-turbo-german-q5`** — dasselbe Modell, das im Diktier-Tool für den
+  Gaming-Modus vorgesehen ist (547 MB, gemessen zeichengleich zur vollen Fassung, 3,5 % lockere
+  Wortfehlerrate, siehe `Diktiertool.md`). Passt hier besonders, weil Kommandos kurz sind und
+  kein LLM den Whisper-Text nachbessert.
 
 ## Offene Punkte (noch nicht entschieden)
 
-* Wie die Aktionsliste gepflegt wird (eigene Config-Datei, Format offen)
-* Wie mit Ambiguität umgegangen wird (Benutzer meint vielleicht etwas, das nicht in der
-  Aktionsliste steht) — `&&NONE&&` als Sicherheitsnetz
 * Welches Modell für die Klassifikation taugt — vermutlich reicht ein kleineres Modell als
   fürs Bereinigen, da die Aufgabe einfacher ist; nicht getestet
-* Ob automatische Spracherkennung bei sehr kurzen Äußerungen zuverlässig genug ist — ungetestet
 
 ## Status
 
