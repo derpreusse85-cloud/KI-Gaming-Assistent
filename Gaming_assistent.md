@@ -102,15 +102,50 @@ Möglich, z. B. "Landegestell ausfahren und um Landeerlaubnis bitten" →
 * Prompt gibt Tags in Nennreihenfolge aus.
 * Parser verarbeitet eine Liste von Tags statt eines einzelnen Treffers, führt sie in der
   ausgegebenen Reihenfolge aus.
-* Damit das Modell bei kombinierten Äußerungen zuverlässig mehrere Tags ausgibt, braucht der
-  Prompt gezielt 1–2 Beispiele, die genau diese kombinierte Ausgabe vormachen — ein einzelnes
-  Beispiel pro Tag (siehe oben) allein reicht dafür nicht.
+* **Bevorzugter Ansatz: allgemeine Regel statt kombinationsspezifischer Beispiele.** Eine
+  Aufzählung "1–2 Beispiele pro tatsächlich vorkommender Kombination" skaliert nicht — bei N
+  Tags wächst die Zahl möglicher Kombinationen kombinatorisch. Stattdessen eine Regel in Prosa
+  (z. B. "Nennt die Äußerung mehrere Aktionen, gib alle passenden Tags durch Leerzeichen
+  getrennt in der genannten Reihenfolge aus.") plus **ein einziges generisches Beispiel mit
+  Platzhalter-Tags** (`&&AKTION_A&&`/`&&AKTION_B&&`, nicht die echten Spiel-Tags), das nur das
+  *Format* der Mehrfachausgabe demonstriert. Verlässt sich auf die Instruction-Following-Fähigkeit
+  von Gemma 4 E4B (genau der Grund für den Wechsel von E2B, siehe „Modellwahl für die
+  Intent-Erkennung"), statt Kombinationen auswendiglernen zu lassen.
+* **Fallback, falls das nicht robust genug generalisiert:** gezielt 1–2 Beispiele mit echten
+  Tags in den Prompt aufnehmen, die eine konkrete kombinierte Ausgabe vormachen — die
+  ursprünglich vorgeschlagene Methode aus dem Recherchematerial (`Gemma4.md`). Ob das nötig
+  wird, klärt der geplante Klassifikationstest (siehe „Offene Punkte").
 * **`max_tokens` für Mehrfachbefehle hochsetzen** (von ~10 für einen Einzel-Tag auf ~30–40),
   damit das Modell die Tag-Kette nicht mitten in der Ausgabe abschneidet.
 * Ob eine Reihenfolge tatsächlich relevant ist oder ob bestimmte Kombinationen im jeweiligen
   Spiel überhaupt gleichzeitig ausführbar sind, liegt in der Verantwortung des Nutzers — das
   Tool soll unterstützen, nicht die spielerische Einschätzung ersetzen. Keine Sonderlogik für
   Konflikterkennung oder Reihenfolge-Unabhängigkeit vorgesehen.
+
+## Sampling-Parameter
+
+Für eine Klassifikation mit Tastendruck-Konsequenz ist Determinismus wichtiger als Varianz —
+anders als bei freier Textgenerierung (z. B. dem Bereinigungs-Prompt im Diktier-Tool), wo etwas
+Spielraum in der Formulierung unproblematisch ist.
+
+* **`temperature = 0.0`** (Greedy Decoding): Das Modell wählt bei jedem Token immer den
+  wahrscheinlichsten Nachfolger. Dieselbe Äußerung liefert dadurch reproduzierbar denselben Tag
+  statt gelegentlicher Ausreißer. Nebeneffekt: die Inferenz-Engine spart sich den
+  Zufalls-Sampling-Schritt, was zusätzlich etwas Latenz spart.
+* **`top_p` auf Standardwert (1.0) belassen**, nicht manuell verändern — bei `temperature = 0.0`
+  ist Nucleus Sampling ohnehin wirkungslos (es wird immer nur der wahrscheinlichste Token
+  gewählt), ein abweichender Wert würde also nichts bewirken, aber unnötig vom Standard
+  abweichen.
+* **`max_tokens` hart begrenzen** (siehe oben, ~30–40 bei Mehrfachbefehlen): dient nicht nur der
+  Tag-Ketten-Vollständigkeit, sondern auch als Absicherung — falls das Modell doch einmal in eine
+  ungewöhnlich lange Ausgabe geraet, bricht die Anfrage hier hart ab, statt das Spiel spürbar zu
+  blockieren. Ergänzt die Abschneide-Erkennung über `finish_reason` in der Parser-Sicherheit
+  (siehe unten).
+* **`max_tokens` und Kontextlänge bewusst minimal halten**, nicht nur wegen Latenz, sondern auch
+  um den VRAM-Bedarf zu minimieren — das Modell teilt sich die GPU mit dem laufenden Spiel
+  (analog zur Kontextlängen-Reduktion im Diktier-Tool, dort 1,04 GB VRAM gespart bei
+  unveränderter Geschwindigkeit, siehe `Diktiertool.md`). Ein Kommando-Klassifikator braucht
+  weder lange Ausgaben noch viel Kontext, dort ist also Sparen ohne Nachteil möglich.
 
 ## Parser-Sicherheit (übertragbar aus `server/llm.py`)
 
