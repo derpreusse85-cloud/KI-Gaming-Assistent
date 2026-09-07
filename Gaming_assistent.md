@@ -1,0 +1,249 @@
+# Gaming-Sprachassistent — Konzept
+
+Status: Konzeptphase, nichts implementiert. Fasst mehrere Brainstorming-Sessions zusammen.
+
+## Grundidee
+
+Ein Tool, das gesprochene, freie Sprache (keine festen Kommandophrasen) während des Spielens
+in Tastatureingaben übersetzt — z. B. "Fahrgestell ausfahren" oder "Landegestell raus" löst
+automatisch die passende Tastenkombination im Spiel aus (z. B. Shift+D). Kein Modding des
+Spiels selbst nötig.
+
+Abgrenzung zu bestehenden Lösungen (z. B. VoiceAttack-Profile für Helldivers 2): Diese arbeiten
+mit festen, vorprogrammierten Sprachphrasen. Der eigene Ansatz nutzt ein LLM zur freien
+Absichtserkennung — nicht an exakten Wortlaut gebunden.
+
+## Architektur: alles in einem Prozess
+
+Anders als das Diktier-Tool **keine Server-Client-Aufteilung**. Dort macht die Trennung Sinn,
+weil Mikrofon-PC und die GPU mit Whisper/LLM auf verschiedenen Rechnern sitzen können
+(WebSocket dazwischen). Der Game Assistant läuft dagegen komplett auf dem Spiele-PC:
+Mikrofonaufnahme, Whisper-Transkription, LLM-Klassifikation und das Auslösen der
+Tastenkombination in einem einzigen Prozess, ohne Netzwerk-Hop dazwischen. Das spart Latenz
+(kein WebSocket-Roundtrip) und Komplexität (kein Token/Auth-Handling, kein
+Verbindungsmanagement).
+
+## Pipeline
+
+```
+Sprache (PTT) → Whisper (STT) → kleines LLM (Intent-Erkennung) → Parser → Tastendruck-Simulation
+```
+
+Baut auf der bereits vorhandenen Diktier-Tool-Architektur auf: Push-to-Talk, Audio-Capture und
+Whisper-STT lassen sich als Code-Vorlage direkt wiederverwenden (siehe Abschnitt
+"Wiederverwendbare Bausteine" — als Vorlage in den einen Prozess übernommen, nicht als
+eigenständige Server-/Client-Module weiterbetrieben).
+
+## Warum kein einfacher Stringmatch
+
+Feste Befehlsphrasen liessen sich per Fuzzy-Match/Levenshtein direkt gegen den Whisper-Rohtext
+matchen — schnell, aber unflexibel. Da freie Formulierung gewünscht ist ("Fahrgestell" vs.
+"Landegestell" vs. andere Umschreibungen), braucht es stattdessen ein LLM als Klassifikator.
+
+## Unterschied zur Diktier-Pipeline
+
+Wichtig: das ist eine andere Aufgabe als das Bereinigen/Übersetzen im Diktier-Tool.
+
+* **Kein Umformulieren, sondern Klassifikation** in eine geschlossene Menge bekannter Aktionen.
+  Das ist für ein kleines lokales Modell (4B) deutlich einfacher und zuverlässiger als freies
+  Umschreiben — genau das Umformulierungsproblem, an dem wir uns beim Bereinigungs-Prompt
+  (Qwen3.5-4B, dann Gemma 4 E2B) abgearbeitet haben, entfällt hier weitgehend.
+* **Kein rollierendes Fenster nötig.** Kommandos sind kurz, eine einzelne Transkription nach
+  Loslassen reicht — kein 700-ms-Zwischenergebnis-Takt wie im Standardmodus.
+* **Das LLM soll nie die Taste selbst nennen.** Es antwortet nur mit einer festen Aktions-ID
+  aus einer im Prompt vorgegebenen Liste (oder einem "kein Befehl"-Marker). Das Mapping von
+  Aktions-ID auf Tastenkombination passiert deterministisch im Code, nicht im Modell — sonst
+  besteht Hallucination-Risiko bei der Taste selbst.
+
+## LLM-Ausgabeformat
+
+Statt Fließtext gibt das LLM ausschließlich Tags aus, die eine feste Aktion referenzieren, z. B.
+`&&LANDEGESTELL&&`.
+
+Beispiel-Prompt-Grundgerüst:
+
+```
+Du ordnest gesprochene Anweisungen genau einem der folgenden Tags zu:
+&&LANDEGESTELL&& — Fahrgestell/Landegestell aus- oder einfahren
+&&ORBITALSCHLAG&& — Orbitalschlag/Orbital Strike anfordern
+...
+Antworte ausschließlich mit dem/den passenden Tag(s). Trifft keines zu,
+antworte mit &&NONE&&.
+```
+
+Wichtige Prompt-Anforderungen:
+
+* Explizite Regel für den Fall "kein Tag trifft zu" (`&&NONE&&`) — sonst besteht die Gefahr,
+  dass das LLM bei Unsicherheit ein Tag rät statt nichts auszugeben.
+* **Alle erlaubten Marker explizit im Prompt aufzählen** (`&&LANDEGESTELL&&`, `&&SCHILDE&&`,
+  `&&NONE&&`, ...), statt das Modell den Markertext frei formulieren zu lassen. Sonst tippt es
+  irgendwann `&&Fahrwerk&&` statt `&&Landegestell&&`, und der Parser findet keinen Treffer.
+* Parser muss den/die Tag(s) robust per Regex extrahieren, nicht auf exakte
+  Gesamt-Antwort-Gleichheit prüfen (falls das LLM trotz Anweisung zusätzlichen Text ausgibt).
+* Wie beim Bereinigungs-Prompt gilt: kurzer klarer Fließtext mit konkreten Beispielen schlägt
+  eine lange Regelliste (siehe `Diktiertool.md`, Abschnitt Fallstricke).
+
+## Mehrere Befehle in einer Äußerung
+
+Möglich, z. B. "Landegestell ausfahren und um Landeerlaubnis bitten" →
+`&&LANDEGESTELL&& &&LANDEERLAUBNIS&&`.
+
+* Prompt gibt Tags in Nennreihenfolge aus.
+* Parser verarbeitet eine Liste von Tags statt eines einzelnen Treffers, führt sie in der
+  ausgegebenen Reihenfolge aus.
+* Ob eine Reihenfolge tatsächlich relevant ist oder ob bestimmte Kombinationen im jeweiligen
+  Spiel überhaupt gleichzeitig ausführbar sind, liegt in der Verantwortung des Nutzers — das
+  Tool soll unterstützen, nicht die spielerische Einschätzung ersetzen. Keine Sonderlogik für
+  Konflikterkennung oder Reihenfolge-Unabhängigkeit vorgesehen.
+
+## Mehrsprachigkeit
+
+Da ein LLM Bedeutung statt exaktem Wortlaut erkennt, ist mehrsprachige Nutzung ohne separate
+Phrasenlisten pro Sprache möglich — der Prompt müsste lediglich sprachunabhängig formuliert
+werden (Tag-Liste bleibt gleich, Eingabesprache beliebig). Einschränkung: Whisper selbst müsste
+dafür Sprache erkennen bzw. konfigurierbar sein; bei sehr kurzen Äußerungen ist automatische
+Spracherkennung potenziell weniger zuverlässig als bei längeren Sätzen — noch ungetestet.
+
+## Parser-Sicherheit (übertragbar aus `server/llm.py`)
+
+Der Marker-Parser braucht denselben Abschneide-/Plausibilitätsschutz wie `LLMCleaner`:
+
+* Antwort bei `finish_reason == "length"` abgeschnitten → verwerfen, kein Tastendruck
+  (statt zu raten).
+* Marker nicht exakt in der bekannten Liste → verwerfen, kein Tastendruck.
+* Kein "Rohtext behalten" wie beim Diktat — hier gibt es kein sinnvolles Fallback ausser
+  Nichtstun.
+
+## Latenz und Denkmodus
+
+`disable_reasoning`/das LM-Studio-„Enable Thinking"-Problem (siehe `Diktiertool.md`) gilt hier
+verschärft: ein Modell, das erst hunderte Tokens nachdenkt, bevor es `&&LANDEGESTELL&&`
+ausspuckt, macht aus einem Sprachbefehl eine im Spiel spürbare Verzögerung — stärker relevant
+als beim Diktieren, wo eine LLM-Nachbearbeitung erst nach dem Loslassen der Taste läuft und ein
+paar hundert ms weniger auffallen.
+
+## Modellwahl für die Intent-Erkennung
+
+* Start: **Gemma 4 E2B** (2,3 Mrd. effektive Parameter) — gilt als eines der schnellsten
+  verfügbaren Modelle, für reine Klassifikationsaufgabe mit geschlossenem Tag-Set vermutlich
+  ausreichend.
+* Falls nicht robust genug (v. a. bei Negativ-Erkennung/`&&NONE&&` und mehrdeutigen
+  Formulierungen): Eskalation auf **Gemma 4B dense**.
+* Kernfrage ist die Instruction-Following-Fähigkeit des Modells — strikte Formattreue und
+  zuverlässige Negativ-Erkennung sind hier kritischer als bei freier Textgenerierung, da eine
+  Fehlklassifikation eine ungewollte Spielaktion auslöst.
+
+## Wiederverwendbare Bausteine aus dem Diktier-Tool
+
+Werden als Code-Vorlage in den einen Prozess übernommen, nicht als eigenständige
+Server-/Client-Module weiterbetrieben — WebSocket, Token-Auth und alles, was nur der
+Verteilung auf zwei Rechner dient, entfällt:
+
+* `server/stt.py` — Whisper-Transkription (ohne rollierendes Fenster, einmalig nach Loslassen)
+* `server/llm.py` — Grundgerüst für die LM-Studio-Anfrage (Payload, Timeout,
+  Abschneide-Erkennung), Klassifikations-Logik statt Bereinigungs-Logik
+* `server/lmstudio.py` — Modell-Laden/-Verwaltung über `lms`
+* `client/typer.py` — `pynput.keyboard.Controller`, `press`/`release` funktioniert genauso mit
+  Tastenkombinationen (Shift+D) wie mit einzelnen Zeichen beim Tippen
+* PTT-Erkennung aus `client/ptt.py` (Taste halten = Aufnahme an), da Push-to-talk auch hier das
+  Auslöser-Modell bleibt
+
+## Verbindung zu Nero
+
+Das Gaming-Tool dient als kleineres, klar abgegrenztes Testfeld für ein Architekturprinzip, das
+später bei Nero für eine Spiel-/Werkzeug-Integration gebraucht würde: Sprache → Absicht
+erkennen → Aktion auslösen.
+
+Wichtiger Unterschied zu Nero: Beim Gaming-Tool ist die LLM-Ausgabe ausschließlich der Tag. Bei
+Nero soll das Modell zusätzlich zu einer natürlichen Textantwort einen Tag einbetten (näher an
+Function Calling/Tool Use als an reiner Klassifikation) — das ist eine komplexere Aufgabe, die
+separat getestet werden müsste, sobald sie bei Nero ansteht. Nero hat dabei den Vorteil, ohnehin
+ein stärkeres, robusteres LLM zu nutzen (aktuell Qwen3.5 9B) statt eines auf Geschwindigkeit
+optimierten Kleinmodells wie beim Gaming-Tool — das sollte Instruction-Following und
+Robustheit bei Randfällen begünstigen.
+
+Nero verfügt bereits über eine konzeptionelle Sammlung eigener Tags (OKF-Link-Kategorien) —
+strukturell verwandt mit dem hier verwendeten Tag-Mechanismus.
+
+Der beim Gaming-Tool gesammelte und aufbereitete Trainingsdatensatz (Text + korrekter Tag,
+siehe Abschnitt "Trainingsdaten-Sammlung" unten) soll perspektivisch nicht nur zum Fine-Tuning
+des Gaming-Tool-eigenen Live-Modells dienen, sondern auch als Trainingsmaterial für Nero selbst
+wiederverwendet werden können — dieselbe Grundfähigkeit (Text einer Absicht/einem Tag
+zuordnen) wird an beiden Stellen gebraucht.
+
+## Trainingsdaten-Sammlung für künftiges Fine-Tuning
+
+Ziel: Aus echter Nutzung heraus einen Datensatz aufbauen, um das Live-Modell (kleines,
+schnelles Modell) durch Fine-Tuning zu verbessern — im Grunde eine Wissens-Destillation von
+einem stärkeren Offline-Modell auf das schnelle Live-Modell.
+
+**Live-Betrieb (während des Spielens):** Rohdaten werden ungefiltert mitgeloggt — Whisper-
+Rohtext + vom LLM erkannte(r) Tag(s). Kein Echtzeit-Feedback-Mechanismus nötig, kein Eingriff
+in den Spielfluss.
+
+**Offline-Aufbereitung (zeitlich entkoppelt, z. B. einmalig nach Tagen/Wochen Sammelzeit):**
+Zweistufiger Extraktor-Durchlauf über die gesammelten Rohdaten, analog zum Extraktor-Prinzip
+aus dem Nero-Projekt:
+
+1. **Durchlauf 1 — Plausibilitätsprüfung:** Für jeden geloggten Fall wird geprüft, ob Rohtext
+   und ursprünglich erkannter Tag plausibel zusammenpassen (Ja/Nein). Als "richtig" bestätigte
+   Fälle werden gespeichert (`training_data/correct/`).
+2. **Durchlauf 2 — Korrektur:** Nur die in Durchlauf 1 als "falsch" aussortierten Fälle werden
+   erneut vorgelegt, diesmal mit dem Auftrag, den korrekt gewesenen Tag zu bestimmen. Ergebnis
+   wird separat gespeichert (`training_data/corrected/`), inkl. ursprünglich falschem und
+   korrigiertem Tag.
+
+Vorteil der Zweiteilung: Durchlauf 1 ist eine einfache, für alle Fälle schnell zu lösende
+Aufgabe; Durchlauf 2 (komplexere Aufgabe) läuft nur auf der kleineren Teilmenge der tatsächlich
+fehlerhaften Fälle. Da der gesamte Extraktor-Durchlauf offline und zeitlich entkoppelt vom
+Spielbetrieb läuft, kann dafür ein größeres, langsameres, aber robusteres Modell verwendet
+werden (z. B. Qwen3.5 9B aus dem Nero-Setup), ohne dass dies den Spielbetrieb beeinträchtigt —
+dieselbe GPU-Konkurrenz-Problematik wie beim Diktier-Tool-Gaming-Modus tritt hier gar nicht
+erst auf.
+
+Offene Grenze des Ansatzes: Der Extraktor kann nur korrigieren, wenn sich aus dem Kontext
+eindeutig ableiten lässt, was gemeint war. Bei echter Mehrdeutigkeit bleibt vermutlich
+weiterhin eine manuelle Sichtung durch den Nutzer nötig.
+
+### Nebengedanke: Weiterverwendung der Trainingsdaten für Nero
+
+> Kein Bestandteil des Gaming-Tools selbst — nur als Idee festgehalten, wie die hier
+> gesammelten Daten später einem anderen Projekt (Nero) nützen könnten.
+
+Die zweistufig aufbereiteten Trainingsdaten (`correct/` + `corrected/`) bestehen aus
+Text→Tag-Zuordnungen mit Kontext. Dieses Format könnte auch als Trainingsmaterial für Neros
+eigene Absichtserkennung dienen — dort allerdings mit anderen, für Nero relevanten Tags statt
+Gaming-Kommandos wie Landegestell/Orbitalschlag. Der Wert läge weniger in den konkreten
+Inhalten als im bewährten Sammel- und Aufbereitungsprozess selbst.
+
+Einschränkung: Nero soll zusätzlich zum Tag eine natürliche sprachliche Antwort liefern (anders
+als das Gaming-Tool, das ausschließlich den Tag ausgibt). Der reine Text→Tag-Datensatz reicht
+dafür nicht aus. Lösungsidee: ein weiterer, nachgelagerter LLM-Durchlauf auf dem bereits
+bereinigten Datensatz, der pro Eintrag um den feststehenden, verifizierten Tag herum eine
+passende sprachliche Antwort ergänzt. Dabei müsste der Antwort-Generierungs-Prompt Kontext
+über Neros Charakter/Sprechweise mitbekommen, damit die erzeugten Antworten zu Neros eigenem
+Sprachstil passen und nicht neutral/systemhaft klingen.
+
+## Bereits entschieden
+
+* **Eigenständiges Projekt, eigenes Repo** statt Betriebsprofil im Diktier-Tool oder Branch
+  dort. Als Referenz liegt eine Kopie der Diktier-Tool-`CLAUDE.md` als `Diktiertool.md` bei,
+  dazu diese Konzeptdatei; das Repo bekommt eine eigene, schlanke `CLAUDE.md` mit nur den
+  übertragbaren Lektionen.
+* **Ein Prozess statt Server-Client** (siehe oben) — läuft komplett lokal auf dem Spiele-PC.
+
+## Offene Punkte (noch nicht entschieden)
+
+* Wie die Aktionsliste gepflegt wird (eigene Config-Datei, Format offen)
+* Wie mit Ambiguität umgegangen wird (Benutzer meint vielleicht etwas, das nicht in der
+  Aktionsliste steht) — `&&NONE&&` als Sicherheitsnetz
+* Welches Modell für die Klassifikation taugt — vermutlich reicht ein kleineres Modell als
+  fürs Bereinigen, da die Aufgabe einfacher ist; nicht getestet
+* Ob automatische Spracherkennung bei sehr kurzen Äußerungen zuverlässig genug ist — ungetestet
+
+## Status
+
+Rein konzeptionell — bisher keine Umsetzung, nur Architektur- und Prompt-Design durchdacht.
+Nächster sinnvoller Schritt (noch nicht begonnen): Testen der Grundzuverlässigkeit der
+Tag-Klassifikation mit Gemma 4 E2B anhand einiger Beispielkommandos, inklusive Negativ-Fällen
+(kein Kommando gemeint).
