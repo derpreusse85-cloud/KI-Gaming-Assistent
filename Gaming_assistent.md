@@ -50,6 +50,10 @@ Wichtig: das ist eine andere Aufgabe als das Bereinigen/Übersetzen im Diktier-T
   (Qwen3.5-4B, dann Gemma 4 E2B) abgearbeitet haben, entfällt hier weitgehend.
 * **Kein rollierendes Fenster nötig.** Kommandos sind kurz, eine einzelne Transkription nach
   Loslassen reicht — kein 700-ms-Zwischenergebnis-Takt wie im Standardmodus.
+* **Zustandslose Einzel-Session pro Aufruf.** Jeder Klassifikationsaufruf läuft ohne
+  Chat-Historie, um Speicher und Tokens zu sparen. Da kein Vorkontext existiert, wird das Modell
+  rein über prägnante Beispiele im System-Prompt gesteuert (Few-Shot statt Konversation) — es
+  fungiert dadurch wie eine schnelle Zuordnungsfunktion, nicht wie ein Chatbot.
 * **Das LLM soll nie die Taste selbst nennen.** Es antwortet nur mit einer festen Aktions-ID
   aus einer im Prompt vorgegebenen Liste (oder einem "kein Befehl"-Marker). Das Mapping von
   Aktions-ID auf Tastenkombination passiert deterministisch im Code, nicht im Modell — sonst
@@ -85,6 +89,10 @@ Wichtige Prompt-Anforderungen:
   Gesamt-Antwort-Gleichheit prüfen (falls das LLM trotz Anweisung zusätzlichen Text ausgibt).
 * Wie beim Bereinigungs-Prompt gilt: kurzer klarer Fließtext mit konkreten Beispielen schlägt
   eine lange Regelliste (siehe `Diktiertool.md`, Abschnitt Fallstricke).
+* **Ein Beispiel pro Tag reicht in der Regel**, solange die tatsächlich gesprochenen Kommandos
+  strukturell nah an den Prompt-Beispielen bleiben. Das hält den Prompt kurz und minimiert die
+  Prefill-Latenz — mehr Beispiele pro Tag bringen hier voraussichtlich abnehmenden Ertrag
+  (ähnlich der Beobachtung beim Bereinigungs-Prompt in `Diktiertool.md`).
 
 ## Mehrere Befehle in einer Äußerung
 
@@ -94,6 +102,11 @@ Möglich, z. B. "Landegestell ausfahren und um Landeerlaubnis bitten" →
 * Prompt gibt Tags in Nennreihenfolge aus.
 * Parser verarbeitet eine Liste von Tags statt eines einzelnen Treffers, führt sie in der
   ausgegebenen Reihenfolge aus.
+* Damit das Modell bei kombinierten Äußerungen zuverlässig mehrere Tags ausgibt, braucht der
+  Prompt gezielt 1–2 Beispiele, die genau diese kombinierte Ausgabe vormachen — ein einzelnes
+  Beispiel pro Tag (siehe oben) allein reicht dafür nicht.
+* **`max_tokens` für Mehrfachbefehle hochsetzen** (von ~10 für einen Einzel-Tag auf ~30–40),
+  damit das Modell die Tag-Kette nicht mitten in der Ausgabe abschneidet.
 * Ob eine Reihenfolge tatsächlich relevant ist oder ob bestimmte Kombinationen im jeweiligen
   Spiel überhaupt gleichzeitig ausführbar sind, liegt in der Verantwortung des Nutzers — das
   Tool soll unterstützen, nicht die spielerische Einschätzung ersetzen. Keine Sonderlogik für
@@ -117,16 +130,34 @@ ausspuckt, macht aus einem Sprachbefehl eine im Spiel spürbare Verzögerung —
 als beim Diktieren, wo eine LLM-Nachbearbeitung erst nach dem Loslassen der Taste läuft und ein
 paar hundert ms weniger auffallen.
 
+**Geprüft und verworfen: Denkmodus über ein `<|think|>`-Token im System-Prompt steuern.** Diese
+Behauptung taucht in Recherchematerial auf, ist aber dieselbe, die für Gemma 4 in
+`Diktiertool.md` bereits widerlegt wurde — die Chat-Vorlage erzeugt das Token selbst aus der
+Variable `enable_thinking`, ein Prompt-Trick greift nicht. Eigener Test (07.09.2026, gegen
+`google/gemma-4-e2b` **und** `google/gemma-4-e4b`, je gegen eine laufende und eine frisch
+geladene Instanz): `chat_template_kwargs.enable_thinking` (weggelassen/`true`/`false`) liefert in
+allen Fällen identisch 0 Reasoning-Tokens. Der Denkmodus ist für beide Modelle in diesem
+LM-Studio-Setup bereits über den GUI-Schalter deaktiviert — weder Prompt noch API-Parameter
+spielen eine Rolle, solange niemand den Schalter manuell umstellt.
+
 ## Modellwahl für die Intent-Erkennung
 
-* Start: **Gemma 4 E2B** (2,3 Mrd. effektive Parameter) — gilt als eines der schnellsten
-  verfügbaren Modelle, für reine Klassifikationsaufgabe mit geschlossenem Tag-Set vermutlich
-  ausreichend.
-* Falls nicht robust genug (v. a. bei Negativ-Erkennung/`&&NONE&&` und mehrdeutigen
-  Formulierungen): Eskalation auf **Gemma 4B dense**.
-* Kernfrage ist die Instruction-Following-Fähigkeit des Modells — strikte Formattreue und
+* **Gemma 4 E2B verworfen** (2,3 Mrd. effektive Parameter): Recherche ergab
+  Instruction-Following-Schwächen bei verketteten/mehrfachen Kommandos in einer Äußerung. Da
+  genau das ein vorgesehener Anwendungsfall ist (siehe „Mehrere Befehle in einer Äußerung"),
+  ist E2B als Standardmodell ungeeignet.
+* **Aktuelle Wahl: Gemma 4 E4B** (4,5 Mrd. effektive Parameter) — laut Recherche der
+  „Stabilitäts-Sieger" bei Mehrfachbefehlen, mit genug paralleler Aufmerksamkeit, um mehrere
+  Absichten in einem Satz sauber zu erfassen, ohne dass die Tags im Q4-Quant durcheinandergeraten.
+  Preis ist etwas höhere Latenz gegenüber E2B (Recherche nennt ca. 30–50 ms gegen <15 ms —
+  **unbelegte Zahlen, nicht selbst nachgemessen**).
+* **Denkmodus kein Hindernis für E4B:** eigener Test (07.09.2026) bestätigt 0 Reasoning-Tokens
+  in diesem LM-Studio-Setup, siehe „Latenz und Denkmodus" oben — der Wechsel von E2B auf E4B
+  ändert daran nichts.
+* Kernfrage bleibt die Instruction-Following-Fähigkeit des Modells — strikte Formattreue und
   zuverlässige Negativ-Erkennung sind hier kritischer als bei freier Textgenerierung, da eine
-  Fehlklassifikation eine ungewollte Spielaktion auslöst.
+  Fehlklassifikation eine ungewollte Spielaktion auslöst. Noch nicht getestet: tatsächliche
+  Zuverlässigkeit von E4B bei der Tag-Klassifikation (siehe „Offene Punkte").
 
 ## Aktionslisten-Format
 
@@ -265,12 +296,13 @@ Sprachstil passen und nicht neutral/systemhaft klingen.
 
 ## Offene Punkte (noch nicht entschieden)
 
-* Welches Modell für die Klassifikation taugt — vermutlich reicht ein kleineres Modell als
-  fürs Bereinigen, da die Aufgabe einfacher ist; nicht getestet
+* Ob Gemma 4 E4B (aktuelle Wahl, siehe „Modellwahl für die Intent-Erkennung") die
+  Tag-Klassifikation tatsächlich zuverlässig genug leistet — noch nicht getestet, nur die
+  Denkmodus-Frage ist geklärt
 
 ## Status
 
 Rein konzeptionell — bisher keine Umsetzung, nur Architektur- und Prompt-Design durchdacht.
 Nächster sinnvoller Schritt (noch nicht begonnen): Testen der Grundzuverlässigkeit der
-Tag-Klassifikation mit Gemma 4 E2B anhand einiger Beispielkommandos, inklusive Negativ-Fällen
-(kein Kommando gemeint).
+Tag-Klassifikation mit Gemma 4 E4B anhand einiger Beispielkommandos, inklusive Mehrfachbefehlen
+und Negativ-Fällen (kein Kommando gemeint).
