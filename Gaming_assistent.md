@@ -422,4 +422,4 @@ Rein konzeptionell — bisher keine Umsetzung, nur Architektur- und Prompt-Desig
 Testreihe mit Gemma 4 E4B ist gelaufen, zuletzt gegen die vollständige 77-Tag-Helldivers-2-Liste
 (105/107, siehe „Testreihe" und `CLAUDE.md`) — der Prompt-Ansatz gilt damit als belastbar.
 Nächster sinnvoller Schritt: mit der Umsetzung beginnen (siehe `CLAUDE.md` für den aktuellen
-Stand und die zu klärende Kontextlängen-Frage pro Profil).
+Stand und den Einstiegspunkt bei den wiederverwendbaren Bausteinen).
