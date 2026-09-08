@@ -124,10 +124,12 @@ Möglich, z. B. "Landegestell ausfahren und um Landeerlaubnis bitten" →
   *Format* der Mehrfachausgabe demonstriert. Verlässt sich auf die Instruction-Following-Fähigkeit
   von Gemma 4 E4B (genau der Grund für den Wechsel von E2B, siehe „Modellwahl für die
   Intent-Erkennung"), statt Kombinationen auswendiglernen zu lassen.
-* **Fallback, falls das nicht robust genug generalisiert:** gezielt 1–2 Beispiele mit echten
-  Tags in den Prompt aufnehmen, die eine konkrete kombinierte Ausgabe vormachen — die
-  ursprünglich vorgeschlagene Methode aus dem Recherchematerial (`Gemma4.md`). Ob das nötig
-  wird, klärt der geplante Klassifikationstest (siehe „Offene Punkte").
+* **Fallback nicht nötig gewesen:** gezielte Beispiele mit echten Tags für konkrete Kombinationen
+  (ursprünglich vorgeschlagene Methode aus `Gemma4.md`) waren als Rückfalloption vorgesehen,
+  falls der generische Ansatz nicht robust genug generalisiert. Bestätigt in allen drei
+  Testrunden (08.–09.09.2026, zuletzt 3/3 bei der vollständigen 77-Tag-Liste, siehe
+  „Testreihe"): der generische Platzhalter-Ansatz reichte durchgehend aus, der Fallback blieb
+  ungenutzt.
 * **`max_tokens` für Mehrfachbefehle hochsetzen** (von ~10 für einen Einzel-Tag auf ~30–40),
   damit das Modell die Tag-Kette nicht mitten in der Ausgabe abschneidet.
 * Ob eine Reihenfolge tatsächlich relevant ist oder ob bestimmte Kombinationen im jeweiligen
@@ -162,8 +164,8 @@ Spielraum in der Formulierung unproblematisch ist.
   Da der System-Prompt komplett pro Spielprofil generiert wird (siehe „Aktionslisten-Format"),
   variiert sein Umfang stark mit der Tag-Zahl — vom Kommando-Klassifikator mit einer Handvoll
   Tags bis zum Extremfall Helldivers 2 mit 77 Tags (gemessen 3.541 Prompt-Tokens, System-Prompt
-  9.814 Zeichen — eine gemessene Zahl aus der LM-Studio-Antwort, keine Schätzung; siehe „Offene
-  Punkte"). Die Kontextlänge beim `lms load` muss deshalb **pro Profil** passend gesetzt werden,
+  9.814 Zeichen — eine gemessene Zahl aus der LM-Studio-Antwort, keine Schätzung; siehe
+  „Testreihe"). Die Kontextlänge beim `lms load` muss deshalb **pro Profil** passend gesetzt werden,
   nicht auf einen einzigen knappen Wert fürs kleinste Profil — sonst schneidet sie bei
   umfangreichen Profilen den Prompt ab.
 * **Kontextlänge als explizites Feld im Profil, nicht automatisch zur Laufzeit berechnet.**
@@ -219,8 +221,8 @@ spielen eine Rolle, solange niemand den Schalter manuell umstellt.
 * Kernfrage bleibt die Instruction-Following-Fähigkeit des Modells — strikte Formattreue und
   zuverlässige Negativ-Erkennung sind hier kritischer als bei freier Textgenerierung, da eine
   Fehlklassifikation eine ungewollte Spielaktion auslöst. **Erster Test (08.09.2026): 24/25
-  (96 %)** auf einem kleinen, informellen Testset — siehe „Bereits entschieden" und „Offene
-  Punkte" für Details und Einschränkungen.
+  (96 %)** auf einem kleinen, informellen Testset — siehe „Bereits entschieden" und „Testreihe"
+  für Details und Einschränkungen.
 
 ## Aktionslisten-Format
 
@@ -250,15 +252,15 @@ ORBITALSCHLAG:
   Beschreibung braucht (Einzelfall, siehe `Verstärkung`-Tradeoff). **`schlagwort`** ist
   zusätzlich die Quelle für die automatisch zusammengesetzte Whisper-`initial_prompt`-Liste
   (siehe „Wiederverwendbare Bausteine"). **`beispiel`** liefert die Formulierung fürs
-  Few-Shot-Beispiel im Prompt (`"{beispiel}" -> &&TAG&&`) — laut Testergebnis (siehe „Offene
-  Punkte") reicht dafür in der Regel ein Beispiel pro Tag. **`taste`** wird dem Modell nie
+  Few-Shot-Beispiel im Prompt (`"{beispiel}" -> &&TAG&&`) — laut Testergebnis (siehe
+  „Testreihe") reicht dafür in der Regel ein Beispiel pro Tag. **`taste`** wird dem Modell nie
   gezeigt und nur im Code für die Tastendruck-Simulation verwendet — passt zum Prinzip "Modell
   nennt nie die Taste selbst"
   (siehe oben).
 * **Der komplette System-Prompt wird pro Spielprofil generiert, nicht geteilt.** Tag-Liste,
   Beschreibungen und Few-Shot-Beispiele stammen ausschließlich aus dem aktuell ausgewählten
   Profil — es gibt keinen spielübergreifenden Basis-Prompt, in den Profile nur Tags einspeisen.
-  Grund: die im Klassifikationstest (siehe „Offene Punkte") gefundenen, tag-spezifischen
+  Grund: die im Klassifikationstest (siehe „Testreihe") gefundenen, tag-spezifischen
   Formulierungsanpassungen (z. B. die wortgebundene Beschreibung bei `Verstärkung`) sind
   spielspezifisches Feintuning, das sich nicht sinnvoll auf ein anderes Spiel übertragen lässt.
 * **Taste als Liste** (`["shift", "n"]`), nicht als zusammengesetzter String (`"shift+n"`) —
@@ -381,7 +383,7 @@ Sprachstil passen und nicht neutral/systemhaft klingen.
   Wortfehlerrate, siehe `Diktiertool.md`). Passt hier besonders, weil Kommandos kurz sind und
   kein LLM den Whisper-Text nachbessert.
 * **Bei mehrdeutigen Tags: Präzision vor Vollständigkeit, notfalls über Wortbindung.** Erster
-  Klassifikationstest (08.09.2026, siehe „Offene Punkte") zeigte, dass Gemma 4 E4B bei
+  Klassifikationstest (08.09.2026, siehe „Testreihe") zeigte, dass Gemma 4 E4B bei
   `&&Verstärkung&&` sinnverwandte, aber falsche Begriffe ("Ruf die Artillerie") fälschlich
   demselben Tag zuordnete. Behoben durch eine an das wörtliche Vorkommen des Begriffs gebundene
   Tag-Beschreibung ("nur wenn im Befehl auch das Wort 'Verstärkung' vorkommt") — Kehrseite: eine
@@ -392,7 +394,10 @@ Sprachstil passen und nicht neutral/systemhaft klingen.
   immer direkt. Kein allgemeines Prinzip für alle Tags, sondern eine Einzelfallentscheidung, die
   sich bei anderen mehrdeutigen Tags wiederholen könnte.
 
-## Offene Punkte (noch nicht entschieden)
+## Testreihe (abgeschlossen)
+
+Keine offenen Konzeptfragen mehr — alle Punkte, die vor Implementierungsbeginn geklärt werden
+sollten, sind durch die Testreihe beantwortet.
 
 * **Testreihe durchgeführt (08.–09.09.2026, Details in `CLAUDE.md`):** vom 8-Tag-Testset (24/25)
   über 13 echte Waffen-Stratageme (21/25) bis zur vollständigen 77-Tag-Helldivers-2-Liste
@@ -406,10 +411,15 @@ Sprachstil passen und nicht neutral/systemhaft klingen.
   Alltagswörter sind (`Kommando`, `Speer`), siehe „Bewusst akzeptierter Tradeoff" und die
   PTT-Einordnung unter „Pipeline".
 
+Was jetzt noch offen ist, ist keine Konzeptfrage mehr, sondern reine Umsetzung: Code schreiben
+(siehe „Wiederverwendbare Bausteine"), Whisper-`initial_prompt`-Integration bauen (noch nicht
+getestet, nur als Idee festgehalten), und die übrigen Spielprofile (aktuell nur Helldivers 2
+existiert) nach Bedarf ergänzen.
+
 ## Status
 
 Rein konzeptionell — bisher keine Umsetzung, nur Architektur- und Prompt-Design durchdacht.
 Testreihe mit Gemma 4 E4B ist gelaufen, zuletzt gegen die vollständige 77-Tag-Helldivers-2-Liste
-(105/107, siehe „Offene Punkte" und `CLAUDE.md`) — der Prompt-Ansatz gilt damit als belastbar.
+(105/107, siehe „Testreihe" und `CLAUDE.md`) — der Prompt-Ansatz gilt damit als belastbar.
 Nächster sinnvoller Schritt: mit der Umsetzung beginnen (siehe `CLAUDE.md` für den aktuellen
 Stand und die zu klärende Kontextlängen-Frage pro Profil).
