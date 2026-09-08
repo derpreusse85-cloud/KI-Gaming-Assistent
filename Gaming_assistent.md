@@ -39,6 +39,14 @@ Whisper-STT lassen sich als Code-Vorlage direkt wiederverwenden (siehe Abschnitt
 "Wiederverwendbare Bausteine" — als Vorlage in den einen Prozess übernommen, nicht als
 eigenständige Server-/Client-Module weiterbetrieben).
 
+**Push-to-Talk begrenzt das Fehlauslöse-Risiko strukturell, nicht nur der Prompt.** Whisper und
+das LLM bekommen ausschließlich Audio zu Gesicht, das der Nutzer durch bewusstes Halten der
+PTT-Taste aufgenommen hat — beiläufiges Gespräch (z. B. "Wer hat hier eigentlich das Kommando?"
+im Team-Chat) erreicht die Pipeline gar nicht erst. Bei schlagwortgebundenen Tags (siehe
+„Aktionslisten-Format") bleiben dadurch nur die Fälle riskant, in denen der Nutzer die
+PTT-Taste haelt und dabei zufaellig einen sinnfremden Satz mit dem Schlagwort sagt — spürbar
+seltener als beiläufige Erwähnung im laufenden Spielgespräch.
+
 ## Warum kein einfacher Stringmatch
 
 Feste Befehlsphrasen liessen sich per Fuzzy-Match/Levenshtein direkt gegen den Whisper-Rohtext
@@ -149,8 +157,22 @@ Spielraum in der Formulierung unproblematisch ist.
 * **`max_tokens` und Kontextlänge bewusst minimal halten**, nicht nur wegen Latenz, sondern auch
   um den VRAM-Bedarf zu minimieren — das Modell teilt sich die GPU mit dem laufenden Spiel
   (analog zur Kontextlängen-Reduktion im Diktier-Tool, dort 1,04 GB VRAM gespart bei
-  unveränderter Geschwindigkeit, siehe `Diktiertool.md`). Ein Kommando-Klassifikator braucht
-  weder lange Ausgaben noch viel Kontext, dort ist also Sparen ohne Nachteil möglich.
+  unveränderter Geschwindigkeit, siehe `Diktiertool.md`).
+* **"Minimal" heißt: minimal für das jeweilige Profil, nicht ein einzelner globaler Wert.**
+  Da der System-Prompt komplett pro Spielprofil generiert wird (siehe „Aktionslisten-Format"),
+  variiert sein Umfang stark mit der Tag-Zahl — vom Kommando-Klassifikator mit einer Handvoll
+  Tags bis zum Extremfall Helldivers 2 mit 77 Tags (gemessen 3.541 Prompt-Tokens, System-Prompt
+  9.814 Zeichen — eine gemessene Zahl aus der LM-Studio-Antwort, keine Schätzung; siehe „Offene
+  Punkte"). Die Kontextlänge beim `lms load` muss deshalb **pro Profil** passend gesetzt werden,
+  nicht auf einen einzigen knappen Wert fürs kleinste Profil — sonst schneidet sie bei
+  umfangreichen Profilen den Prompt ab.
+* **Kontextlänge als explizites Feld im Profil, nicht automatisch zur Laufzeit berechnet.**
+  Analog zu `llm_context_length`, das im Diktier-Tool schon je Profil überschreibbar ist (siehe
+  `Diktiertool.md`, Abschnitt Betriebsmodi). Einmalig beim Erstellen/Testen eines Profils
+  ermittelt (gemessene Prompt-Tokens plus Marge für `max_tokens` und künftig ergänzte Tags) und
+  als `kontextlaenge`-Feld im Profil hinterlegt — einfacher als eine Tokenizer-Anfrage zur
+  Laufzeit, und konsistent mit dem bestehenden Diktier-Tool-Muster. Für das Helldivers-2-Profil:
+  `kontextlaenge: 8192` (siehe `Helldivers2_Stratagems.yaml`).
 
 ## Parser-Sicherheit (übertragbar aus `server/llm.py`)
 
@@ -207,23 +229,31 @@ gepflegt:
 
 ```yaml
 # profiles/star_citizen.yaml
+kontextlaenge: 4096  # Top-Level-Feld, einmalig ermittelt (siehe "Sampling-Parameter")
 LANDEGESTELL:
-  beschreibung: "Fahrgestell/Landegestell aus- oder einfahren"
+  schlagwort: "Landegestell"
   beispiel: "Fahrgestell einfahren"
   taste: ["shift", "n"]
 ORBITALSCHLAG:
-  beschreibung: "Orbitalschlag/Orbital Strike anfordern"
+  schlagwort: "Orbitalschlag"
   beispiel: "Ruf den Orbitalschlag"
   taste: ["ctrl", "o"]
 ```
 
 * **YAML statt JSON/TOML**, weil Kommentare möglich sind und sich die Datei gut von Hand
   editieren lässt.
-* **`beschreibung`** ist die Grundlage für die im Prompt aufgezählten Tags
-  (`&&TAG&& — {beschreibung}`). **`beispiel`** liefert die Formulierung fürs Few-Shot-Beispiel
-  im Prompt (`"{beispiel}" -> &&TAG&&`) — laut Testergebnis (siehe „Offene Punkte") reicht dafür
-  in der Regel ein Beispiel pro Tag. **`taste`** wird dem Modell nie gezeigt und nur im Code für
-  die Tastendruck-Simulation verwendet — passt zum Prinzip "Modell nennt nie die Taste selbst"
+* **`schlagwort`** ist die Grundlage für die im Prompt aufgezählten Tags — daraus wird
+  standardmäßig die wortgebundene Beschreibung generiert (`&&TAG&& — nur wenn im Befehl das
+  Wort "{schlagwort}" vorkommt`), siehe „Bereits entschieden" zur Schlagwort-Bindung als
+  Prompt-Strategie für dieses Spiel. Optional überschreibbar über ein zusätzliches
+  `beschreibung`-Feld, falls ein Tag statt Schlagwort-Bindung eine freiere, inhaltliche
+  Beschreibung braucht (Einzelfall, siehe `Verstärkung`-Tradeoff). **`schlagwort`** ist
+  zusätzlich die Quelle für die automatisch zusammengesetzte Whisper-`initial_prompt`-Liste
+  (siehe „Wiederverwendbare Bausteine"). **`beispiel`** liefert die Formulierung fürs
+  Few-Shot-Beispiel im Prompt (`"{beispiel}" -> &&TAG&&`) — laut Testergebnis (siehe „Offene
+  Punkte") reicht dafür in der Regel ein Beispiel pro Tag. **`taste`** wird dem Modell nie
+  gezeigt und nur im Code für die Tastendruck-Simulation verwendet — passt zum Prinzip "Modell
+  nennt nie die Taste selbst"
   (siehe oben).
 * **Der komplette System-Prompt wird pro Spielprofil generiert, nicht geteilt.** Tag-Liste,
   Beschreibungen und Few-Shot-Beispiele stammen ausschließlich aus dem aktuell ausgewählten
@@ -246,7 +276,13 @@ Werden als Code-Vorlage in den einen Prozess übernommen, nicht als eigenständi
 Server-/Client-Module weiterbetrieben — WebSocket, Token-Auth und alles, was nur der
 Verteilung auf zwei Rechner dient, entfällt:
 
-* `server/stt.py` — Whisper-Transkription (ohne rollierendes Fenster, einmalig nach Loslassen)
+* `server/stt.py` — Whisper-Transkription (ohne rollierendes Fenster, einmalig nach Loslassen).
+  Der dort bereits vorhandene `initial_prompt`-Mechanismus (getestet in `test_prompt.py`, im
+  Diktier-Tool für einen anderen Zweck genutzt) eignet sich hier, um Whisper die Eigennamen des
+  aktiven Spielprofils vorab bekannt zu machen — verbessert die Erkennung ungewöhnlicher
+  Begriffe (z. B. Stratagem-Namen) schon auf STT-Ebene, vor der LLM-Klassifikation. Die Liste
+  wird automatisch aus den Schlagwörtern des Profils zusammengesetzt (siehe
+  „Aktionslisten-Format"), nicht separat gepflegt.
 * `server/llm.py` — Grundgerüst für die LM-Studio-Anfrage (Payload, Timeout,
   Abschneide-Erkennung), Klassifikations-Logik statt Bereinigungs-Logik
 * `server/lmstudio.py` — Modell-Laden/-Verwaltung über `lms`
@@ -358,16 +394,22 @@ Sprachstil passen und nicht neutral/systemhaft klingen.
 
 ## Offene Punkte (noch nicht entschieden)
 
-* **Erster Klassifikationstest durchgeführt (08.09.2026, 25 Fälle, siehe `CLAUDE.md`):** Gemma
-  4 E4B erreichte nach zwei Prompt-Iterationen 24/25 (96 %) — Positivfälle, Mehrfachbefehle und
-  Negativfälle je 100 %, nur ein indirekter Grenzfall (bewusst akzeptierter Tradeoff, siehe
-  oben) schlägt fehl. Das ist ein sehr kleines, informell erstelltes Testset (8 Tags, von Hand
-  erdachte Fälle) — noch offen: breiterer/verblindeter Test, bevor das als endgültig belastbar
-  gilt.
+* **Testreihe durchgeführt (08.–09.09.2026, Details in `CLAUDE.md`):** vom 8-Tag-Testset (24/25)
+  über 13 echte Waffen-Stratageme (21/25) bis zur vollständigen 77-Tag-Helldivers-2-Liste
+  (105/107, 98,1 %) — siehe `Helldivers2_Stratagems.yaml` für das vollständige Profil.
+  **Damit ist die ursprüngliche Stresstest-Frage beantwortet:** die flache Prompt-Struktur
+  (alle Tags in einer Liste) bricht auch bei realistischem Umfang nicht ein — 100 % auf allen
+  77 Positivfällen und allen 10 gezielt getesteten Namens-Konfliktclustern (u. a. die
+  Guard-Dog-Familie mit drei sich überlappenden Schlagwörtern), Latenz blieb bei 10x mehr Tags
+  praktisch unverändert (~2,2 s Durchschnitt). Keine Kategorisierung/zweistufige Klassifikation
+  nötig. Bleibt bewusst akzeptiert: die zwei bekannten Risikofälle bei Schlagwörtern, die auch
+  Alltagswörter sind (`Kommando`, `Speer`), siehe „Bewusst akzeptierter Tradeoff" und die
+  PTT-Einordnung unter „Pipeline".
 
 ## Status
 
 Rein konzeptionell — bisher keine Umsetzung, nur Architektur- und Prompt-Design durchdacht.
-Nächster sinnvoller Schritt (noch nicht begonnen): Testen der Grundzuverlässigkeit der
-Tag-Klassifikation mit Gemma 4 E4B anhand einiger Beispielkommandos, inklusive Mehrfachbefehlen
-und Negativ-Fällen (kein Kommando gemeint).
+Testreihe mit Gemma 4 E4B ist gelaufen, zuletzt gegen die vollständige 77-Tag-Helldivers-2-Liste
+(105/107, siehe „Offene Punkte" und `CLAUDE.md`) — der Prompt-Ansatz gilt damit als belastbar.
+Nächster sinnvoller Schritt: mit der Umsetzung beginnen (siehe `CLAUDE.md` für den aktuellen
+Stand und die zu klärende Kontextlängen-Frage pro Profil).
