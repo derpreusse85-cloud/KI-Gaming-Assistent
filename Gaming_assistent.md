@@ -209,18 +209,28 @@ gepflegt:
 # profiles/star_citizen.yaml
 LANDEGESTELL:
   beschreibung: "Fahrgestell/Landegestell aus- oder einfahren"
+  beispiel: "Fahrgestell einfahren"
   taste: ["shift", "n"]
 ORBITALSCHLAG:
   beschreibung: "Orbitalschlag/Orbital Strike anfordern"
+  beispiel: "Ruf den Orbitalschlag"
   taste: ["ctrl", "o"]
 ```
 
 * **YAML statt JSON/TOML**, weil Kommentare möglich sind und sich die Datei gut von Hand
   editieren lässt.
 * **`beschreibung`** ist die Grundlage für die im Prompt aufgezählten Tags
-  (`&&TAG&& — {beschreibung}`). **`taste`** wird dem Modell nie gezeigt und nur im Code für
+  (`&&TAG&& — {beschreibung}`). **`beispiel`** liefert die Formulierung fürs Few-Shot-Beispiel
+  im Prompt (`"{beispiel}" -> &&TAG&&`) — laut Testergebnis (siehe „Offene Punkte") reicht dafür
+  in der Regel ein Beispiel pro Tag. **`taste`** wird dem Modell nie gezeigt und nur im Code für
   die Tastendruck-Simulation verwendet — passt zum Prinzip "Modell nennt nie die Taste selbst"
   (siehe oben).
+* **Der komplette System-Prompt wird pro Spielprofil generiert, nicht geteilt.** Tag-Liste,
+  Beschreibungen und Few-Shot-Beispiele stammen ausschließlich aus dem aktuell ausgewählten
+  Profil — es gibt keinen spielübergreifenden Basis-Prompt, in den Profile nur Tags einspeisen.
+  Grund: die im Klassifikationstest (siehe „Offene Punkte") gefundenen, tag-spezifischen
+  Formulierungsanpassungen (z. B. die wortgebundene Beschreibung bei `Verstärkung`) sind
+  spielspezifisches Feintuning, das sich nicht sinnvoll auf ein anderes Spiel übertragen lässt.
 * **Taste als Liste** (`["shift", "n"]`), nicht als zusammengesetzter String (`"shift+n"`) —
   eindeutig beim Parsen, kein Trennzeichen-Problem bei Sondertasten.
 * **Ein Profil pro Spiel**, nicht eine globale Liste, um Tastenkombinations-Kollisionen
