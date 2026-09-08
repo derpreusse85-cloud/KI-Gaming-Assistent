@@ -1,0 +1,12 @@
+Ich brauche Heilung			&&Heilung&&
+Fahrgestell einfahren/ausfahren		&&Fahrgestell&&
+Fahre das Landegestell ein/aus		&&Fahrgestell&&
+Zurück in die Stadt			&&Teleport_Stadt&&
+Lass uns landen				&&Fahrgestell&&
+Ruf die 500-Kilogramm-Bombe		&&500kg_Bombe&&
+Lass uns Verstärkung rufen		&&Verstärkung&&
+Rufe Verstärkung			&&Verstärkung&&
+Rufe den Orbitallaser			&&Orbitallaser&&
+Rufe den Bombenteppich			&&Bombenteppich&&
+Aktiviere/Deaktiviere die Waffen	&&Waffen&&
+	

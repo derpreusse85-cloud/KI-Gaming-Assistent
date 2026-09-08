@@ -13,6 +13,11 @@ Abgrenzung zu bestehenden Lösungen (z. B. VoiceAttack-Profile für Helldivers 2
 mit festen, vorprogrammierten Sprachphrasen. Der eigene Ansatz nutzt ein LLM zur freien
 Absichtserkennung — nicht an exakten Wortlaut gebunden.
 
+**Zielspiel: Helldivers 2.** Die Beispiel-Tags im Testaufbau (`Verstärkung`, `Orbitallaser`,
+`Bombenteppich`, `500kg_Bombe`, ...) sind keine Platzhalter, sondern echte Kommandos aus diesem
+Spiel — u. a. `&&Verstärkung&&` für das Rufen von Verstärkung (Respawn eines gefallenen
+Mitspielers per Tastenkombination).
+
 ## Architektur: alles in einem Prozess
 
 Anders als das Diktier-Tool **keine Server-Client-Aufteilung**. Dort macht die Trennung Sinn,
@@ -191,8 +196,9 @@ spielen eine Rolle, solange niemand den Schalter manuell umstellt.
   ändert daran nichts.
 * Kernfrage bleibt die Instruction-Following-Fähigkeit des Modells — strikte Formattreue und
   zuverlässige Negativ-Erkennung sind hier kritischer als bei freier Textgenerierung, da eine
-  Fehlklassifikation eine ungewollte Spielaktion auslöst. Noch nicht getestet: tatsächliche
-  Zuverlässigkeit von E4B bei der Tag-Klassifikation (siehe „Offene Punkte").
+  Fehlklassifikation eine ungewollte Spielaktion auslöst. **Erster Test (08.09.2026): 24/25
+  (96 %)** auf einem kleinen, informellen Testset — siehe „Bereits entschieden" und „Offene
+  Punkte" für Details und Einschränkungen.
 
 ## Aktionslisten-Format
 
@@ -328,12 +334,26 @@ Sprachstil passen und nicht neutral/systemhaft klingen.
   Gaming-Modus vorgesehen ist (547 MB, gemessen zeichengleich zur vollen Fassung, 3,5 % lockere
   Wortfehlerrate, siehe `Diktiertool.md`). Passt hier besonders, weil Kommandos kurz sind und
   kein LLM den Whisper-Text nachbessert.
+* **Bei mehrdeutigen Tags: Präzision vor Vollständigkeit, notfalls über Wortbindung.** Erster
+  Klassifikationstest (08.09.2026, siehe „Offene Punkte") zeigte, dass Gemma 4 E4B bei
+  `&&Verstärkung&&` sinnverwandte, aber falsche Begriffe ("Ruf die Artillerie") fälschlich
+  demselben Tag zuordnete. Behoben durch eine an das wörtliche Vorkommen des Begriffs gebundene
+  Tag-Beschreibung ("nur wenn im Befehl auch das Wort 'Verstärkung' vorkommt") — Kehrseite: eine
+  rein umschriebene, indirekte Formulierung ohne das Wort selbst ("Die sollen uns hier
+  raushauen") wird dadurch nicht mehr erkannt. Für `Verstärkung` bewusst akzeptiert, weil das
+  Zielspiel Helldivers 2 (siehe „Grundidee") für dieses Kommando ohnehin keinen echten
+  Interpretationsspielraum hat — Spieler sagen in der Praxis das Wort "Verstärkung" so gut wie
+  immer direkt. Kein allgemeines Prinzip für alle Tags, sondern eine Einzelfallentscheidung, die
+  sich bei anderen mehrdeutigen Tags wiederholen könnte.
 
 ## Offene Punkte (noch nicht entschieden)
 
-* Ob Gemma 4 E4B (aktuelle Wahl, siehe „Modellwahl für die Intent-Erkennung") die
-  Tag-Klassifikation tatsächlich zuverlässig genug leistet — noch nicht getestet, nur die
-  Denkmodus-Frage ist geklärt
+* **Erster Klassifikationstest durchgeführt (08.09.2026, 25 Fälle, siehe `CLAUDE.md`):** Gemma
+  4 E4B erreichte nach zwei Prompt-Iterationen 24/25 (96 %) — Positivfälle, Mehrfachbefehle und
+  Negativfälle je 100 %, nur ein indirekter Grenzfall (bewusst akzeptierter Tradeoff, siehe
+  oben) schlägt fehl. Das ist ein sehr kleines, informell erstelltes Testset (8 Tags, von Hand
+  erdachte Fälle) — noch offen: breiterer/verblindeter Test, bevor das als endgültig belastbar
+  gilt.
 
 ## Status
 

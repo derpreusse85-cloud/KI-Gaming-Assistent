@@ -6,7 +6,8 @@ feste Aktion klassifiziert und als Tastenkombination ausgeloest. Konzept siehe
 
 ## Stand der Arbeit (fuer den Wiedereinstieg in einer neuen Session)
 
-Rein konzeptionelle Phase, kein Code vorhanden. Zuletzt bearbeitet: 07.09.2026.
+Rein konzeptionelle Phase, kein Code vorhanden. Zuletzt bearbeitet: 08.09.2026. Zielspiel:
+Helldivers 2 (siehe `Gaming_assistent.md`, Abschnitt "Grundidee").
 
 * `Gaming_assistent.md` ist das konsolidierte, aktuelle Konzept (entstanden aus zwei
   urspruenglich getrennten Brainstorming-Dateien, die inzwischen geloescht sind). Enthaelt
@@ -31,15 +32,34 @@ Rein konzeptionelle Phase, kein Code vorhanden. Zuletzt bearbeitet: 07.09.2026.
   `diktier-<name>` im Diktier-Tool) ist keine zusaetzliche Denkmodus-Konfiguration noetig,
   solange niemand den GUI-Schalter Inference -> Custom Fields -> "Enable Thinking" fuer eines
   der beiden Modelle manuell umstellt.
-* **Naechster offener Punkt** (siehe `Gaming_assistent.md`, Abschnitt "Offene Punkte"): Testen
-  der Grundzuverlaessigkeit der Tag-Klassifikation mit Gemma 4 E4B anhand von Beispielkommandos,
-  inklusive Mehrfachbefehlen und Negativ-Faellen (`&&NONE&&`). Geplanter Testaufbau (noch nicht
-  umgesetzt): LLM-Klassifikation isoliert testen, ohne Whisper (Text rein, Tag raus), Testfaelle
-  in drei Kategorien (klare Positivfaelle je Tag mit mehreren Formulierungen, Mehrfachbefehle in
-  einer Aeusserung, Negativfaelle inkl. Grenzfaelle), Metrik: Tag-Trefferquote + gesondert die
-  Treffsicherheit bei `&&NONE&&` + Latenz. Anzahl der Test-Tags fuer den ersten Durchlauf noch
-  nicht festgelegt.
-* Repo ist initialisiert (`git init` direkt in diesem Ordner), ein Commit vorhanden.
+* **Erster Klassifikationstest durchgefuehrt (08.09.2026): 24/25 (96 %).** Testaufbau: LLM-
+  Klassifikation isoliert getestet, ohne Whisper (Text rein, Tag raus), gegen `google/gemma-4-e4b`
+  (eigene `lms`-Instanz `gaming-test-gemma-e4b`), `temperature=0`, `max_tokens=40`. 8 echte
+  Helldivers-2-Tags aus `Beispiele.txt` (vom Nutzer vorgegeben: Heilung, Fahrgestell,
+  Teleport_Stadt, 500kg_Bombe, Verstärkung, Orbitallaser, Bombenteppich, Waffen), 25 Testfaelle
+  in 5 Kategorien (Positiv, Mehrfachbefehle, Negativ, Negativ-Grenzfaelle, Indirekt) selbst
+  entworfen. Testskript liegt nur im Scratchpad dieser Session, noch nicht ins Repo uebernommen.
+  Ergebnis nach zwei Prompt-Iterationen:
+  * Positiv, Mehrfachbefehle, Negativ, Negativ-Grenzfaelle: je 100 % (13/13, 3/3, 3/3, 2/2).
+  * Indirekt (Absicht ohne Nennung der Aktion): 3/4 (75 %) — ein bewusst akzeptierter Fehlschlag,
+    siehe naechster Punkt.
+  * Mehrfachbefehle liefen von Anfang an fehlerfrei mit dem generischen Platzhalter-Ansatz
+    (allgemeine Regel + ein Beispiel mit `&&AKTION_A&&`/`&&AKTION_B&&`) — die
+    kombinationsspezifischen Beispiele aus `Gemma4.md` waren nicht noetig.
+  * Verbesserung durch Prompt-Iteration: v1 (nur ein Satz fuer die `&&NONE&&`-Regel) lag bei
+    22/25, mit zwei generischen `&&NONE&&`-Beispielen im Prompt bei 23/25, mit zusaetzlich
+    wortgebundener Tag-Beschreibung fuer `Verstärkung` ("nur wenn im Befehl auch das Wort
+    'Verstärkung' vorkommt") bei 24/25.
+* **Bewusst akzeptierter Tradeoff bei `Verstärkung`:** die wortgebundene Beschreibung behebt
+  Fehlklassifikationen bei sinnverwandten, aber falschen Begriffen ("Ruf die Artillerie" ->
+  faelschlich Verstärkung), verhindert aber auch die Erkennung rein indirekter Umschreibungen
+  ohne das Wort selbst ("Die sollen uns hier raushauen" -> NONE statt Verstärkung). Fuer diesen
+  Tag akzeptiert, weil das Kommando in Helldivers 2 in der Praxis so gut wie immer woertlich
+  "Verstärkung" genannt wird — keine allgemeine Regel fuer alle Tags, siehe
+  `Gaming_assistent.md`, Abschnitt "Bereits entschieden".
+* **Naechster offener Punkt** (siehe `Gaming_assistent.md`, Abschnitt "Offene Punkte"): breiterer
+  bzw. verblindeter Test, das bisherige Testset ist mit 25 selbst erdachten Faellen sehr klein.
+* Repo ist initialisiert (`git init` direkt in diesem Ordner), vier Commits vorhanden.
 
 ## Uebertragbare Lektionen aus dem Vorgaengerprojekt
 
