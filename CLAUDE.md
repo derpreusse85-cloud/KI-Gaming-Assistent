@@ -2,14 +2,52 @@
 
 Gaming-Sprachassistent: freie gesprochene Sprache waehrend des Spielens wird per LLM in eine
 feste Aktion klassifiziert und als Tastenkombination ausgeloest. Konzept siehe
-`Gaming_assistent.md`. Noch nichts implementiert.
+`Gaming_assistent.md`. Nicht nur fuer Helldivers 2 gedacht — dessen Profil ist nur das erste von
+mehreren geplanten Spielprofilen.
 
 ## Stand der Arbeit (fuer den Wiedereinstieg in einer neuen Session)
 
-**Konzeptphase abgeschlossen, Implementierung noch nicht begonnen.** Zuletzt bearbeitet:
-09.09.2026. Zielspiel: Helldivers 2 (siehe `Gaming_assistent.md`, Abschnitt "Grundidee").
-Repo ist initialisiert (`git init` direkt in diesem Ordner), acht Commits vorhanden, Working
-Tree sauber (`git status` zeigt nur den nicht relevanten `.claude/`-Ordner als untracked).
+**Version 1.0 fertig und im echten Spiel bestaetigt (09.09.2026).** Push-to-Talk -> Whisper ->
+LLM-Klassifikation -> Tastensequenz funktioniert Ende-zu-Ende gegen das laufende Helldivers 2:
+richtig erkannte Tags loesen korrekt die passende Stratagem-Tastenfolge aus, nicht im Profil
+enthaltene Kommandos loesen (wie vorgesehen) keine Aktion aus.
+
+* **Modulstruktur** (Paket `gaming_assistant/`, ein einziger Prozess, als Vorlage aus
+  `F:\Projekte\KI Diktier Tool` uebernommen, aber ohne WebSocket/Token-Auth/Server-Client-Split):
+  `config.py` (globale JSON-Config), `profile.py` (YAML-Profil laden), `prompt.py`
+  (System-Prompt + Whisper-initial_prompt aus dem Profil generieren), `parser.py`
+  (Tag-Extraktion, verwirft bei Zweifel statt zu raten), `keypress.py` (Tastensequenz per
+  pynput), `whisper_proc.py` + `stt.py` (whisper-server-Subprozess + Einzel-Transkription, kein
+  rollierendes Fenster), `lmstudio.py` + `llm.py` (Modell laden ueber `lms`-CLI +
+  Klassifikations-Request), `ptt.py` + `ptt_dialog.py` + `audio.py` (Push-to-Talk inkl.
+  Tray-Dialog zum Aendern der PTT-Taste zur Laufzeit, Mikrofon-Aufnahme), `tray.py` + `icons.py`
+  + `logbuf.py` (Tray-Icon mit Profil- und PTT-Auswahl-Menue, Log-Fenster), `training_log.py`
+  (ungefiltertes JSONL-Live-Logging fuer spaeteres Fine-Tuning), `__main__.py` (verdrahtet
+  alles). Start ueber `Gaming-Assistent.vbs` (lautlos, `.venv\Scripts\pythonw.exe -m
+  gaming_assistant`) oder `python -m gaming_assistant` mit Konsole.
+* **Design-Entscheidung `halte_taste`:** die `taste`-Listen im Profil sind IMMER eine
+  Tipp-Sequenz (nacheinander druecken/loslassen), niemals eine gleichzeitig gehaltene
+  Kombination. Optionales Profil-Feld `halte_taste` (bei Helldivers 2: `"ctrl"`) haelt waehrend
+  der ganzen Sequenz eine Zusatztaste gedrueckt — noetig, weil Helldivers-2-Stratagem-Codes
+  exakt so funktionieren.
+* **`profiles/Helldivers2_Stratagems.yaml`** ist das erste, im echten Spiel bestaetigte Profil.
+  Tasten sind als Pfeiltasten (`up`/`down`/`left`/`right`, nicht mehr WASD) hinterlegt, weil der
+  Nutzer die Spielbelegung entsprechend umgestellt hat. Zwei Abtippfehler wurden im Zuge des
+  Testens gefunden und korrigiert (`Panzerabwehrstellung`, `Automatische_Kanone`) — die
+  `taste`-Werte gelten weiterhin als vorlaeufig aenderbar, nicht als endgueltig fixiert.
+* **`vendor/whisper.cpp` und Whisper-Modell sind eigenstaendige Kopien**, keine Pfad-
+  Abhaengigkeit zum Diktier-Tool-Repo (aus dessen fertigem Build kopiert: nur `whisper-
+  server.exe` + noetige DLLs, nur die Q5-Deutsch-Modellvariante). `scripts/build_whisper.ps1`/
+  `scripts/fetch_models.ps1` bleiben als Vorlage liegen, falls die Kopie mal neu erzeugt werden
+  muss. `scripts/setup_venv.ps1` legt EIN venv an.
+* **Bekannter, nicht als kritisch eingestufter Fund:** bei rein digitaler Stille (Testfall, kein
+  echtes Mikrofon-Rauschen) halluziniert Whisper gelegentlich Text statt leer zu bleiben. Im
+  echten Spielbetrieb bisher nicht als Problem aufgefallen.
+* **Naechste moegliche Schritte (nicht angefangen):** weitere Spielprofile nach demselben YAML-
+  Schema ergaenzen; die in Gaming_assistent.md skizzierte zweistufige Trainingsdaten-
+  Aufbereitung (Extraktor-Durchlaeufe auf den `training_log.py`-Rohdaten) fuer kuenftiges
+  Fine-Tuning; Whisper-`initial_prompt`-Wirksamkeit ist mitgebaut, aber ihr tatsaechlicher Nutzen
+  noch nicht gezielt evaluiert.
 
 * `Gaming_assistent.md` ist das massgebliche, vollstaendige Konzept — bei Widersprueche zwischen
   dieser Zusammenfassung hier und `Gaming_assistent.md` gilt **immer** `Gaming_assistent.md`.
@@ -21,25 +59,8 @@ Tree sauber (`git status` zeigt nur den nicht relevanten `.claude/`-Ordner als u
   (`google/gemma-4-e4b`, `temperature=0`, Denkmodus in diesem LM-Studio-Setup bereits aus),
   Tags im Format `&&TAG&&`, `&&NONE&&` bei Uneindeutigkeit, YAML-Profil pro Spiel mit
   `schlagwort`/`beispiel`/`taste`/`kontextlaenge`-Feldern (Details siehe „Aktionslisten-Format").
-* **Testreihe (siehe `Gaming_assistent.md`, Abschnitt "Testreihe"):** vier Testrunden vom
-  8-Tag-Set bis zur vollstaendigen 77-Tag-Helldivers-2-Liste, zuletzt 105/107 (98,1 %) inkl.
-  zehn gezielter Namens-Konfliktcluster (z. B. dreifache "Guard Dog"-Familie) — alle korrekt
-  aufgeloest. Latenz blieb bei 10x mehr Tags praktisch unveraendert. Zwei bewusst akzeptierte
-  Restrisiken bei Alltagswort-Schlagwoertern (`Kommando`, `Speer`), abgefedert durch
-  Push-to-Talk (siehe „Pipeline"). Die Testskripte selbst liegen nur im Scratchpad der
-  jeweiligen Session, nicht im Repo — bei Bedarf muessten sie neu geschrieben werden (Vorlage:
-  Prompt aus einem YAML-Profil generieren, gegen `http://localhost:1234/v1/chat/completions`
-  mit `temperature=0` testen, Tags per Regex `&&([^&]+?)&&` parsen).
-* **`Helldivers2_Stratagems.yaml`** ist das fertige, getestete erste Spielprofil (77 Tags,
-  `kontextlaenge: 8192`). **Achtung:** die `taste`-Werte (Tastenkombinationen) hat Claude aus
-  acht Nutzer-Screenshots abgetippt, potenziell fehleranfaellig bei laengeren Codes — vor
-  Code-Verwendung gegen die Original-Screenshots pruefen (liegen als PNG im Projektordner).
-* **Naechster Schritt (noch nicht begonnen): Implementierung.** Sinnvoller Einstieg laut
-  Konzept, Abschnitt "Wiederverwendbare Bausteine": `server/stt.py`, `server/llm.py`,
-  `server/lmstudio.py`, `client/typer.py` und `client/ptt.py` aus dem Diktier-Tool
-  (Pfad dort unbekannt, Nutzer fragen oder danach suchen) als Vorlage in einen einzigen Prozess
-  uebernehmen, WebSocket/Token-Auth weglassen. Whisper-`initial_prompt`-Integration (Eigennamen
-  aus dem Profil-Schlagwort) ist bisher nur eine Idee, nicht getestet.
+  Die vorherige Testreihe (vier Runden, zuletzt 105/107 auf der vollen 77-Tag-Helldivers-2-Liste)
+  ist im Detail in `Gaming_assistent.md`, Abschnitt "Testreihe" dokumentiert.
 
 ## Uebertragbare Lektionen aus dem Vorgaengerprojekt
 

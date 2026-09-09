@@ -1,0 +1,92 @@
+"""Baut den System-Prompt und den Whisper-initial_prompt aus einem Profil.
+
+Beides wird komplett neu erzeugt, sobald ein anderes Profil gewaehlt wird (kein
+spielübergreifender Basis-Prompt, siehe Gaming_assistent.md, Abschnitt
+"Aktionslisten-Format").
+
+Hinweis: Umlaute sind hier bewusst erlaubt (anders als im restlichen
+Quelltext) - dieser Text geht als Prompt an das Sprachmodell, nicht in den
+Python-Code selbst (siehe CLAUDE.md).
+"""
+
+from __future__ import annotations
+
+import logging
+
+from gaming_assistant.profile import Profil
+
+log = logging.getLogger("prompt")
+
+# Whisper beachtet ohnehin nur die letzten ~700 Zeichen des initial_prompt
+# (siehe server/stt.py im Diktier-Tool, dieselbe Budget-Ueberlegung gilt hier).
+_MAX_INITIAL_PROMPT_CHARS = 700
+
+NONE_TAG = "NONE"
+
+
+def system_prompt_bauen(profil: Profil) -> str:
+    """Erzeugt den vollstaendigen System-Prompt fuer die LLM-Klassifikation.
+
+    Aufbau (siehe Gaming_assistent.md, "LLM-Ausgabeformat"): kurzer Fliesstext
+    statt Regelliste, ein Few-Shot-Beispiel pro Tag, ein einziges generisches
+    Beispiel fuer Mehrfachbefehle (mit Platzhalter-Tags statt echten Namen) und
+    eine explizite Regel fuer den Fall "kein Tag trifft zu".
+    """
+    zeilen: list[str] = [
+        "Du ordnest gesprochene Anweisungen aus einem Spiel jeweils einem oder "
+        "mehreren der folgenden Tags zu:",
+        "",
+    ]
+
+    for tag_name, eintrag in profil.tags.items():
+        if eintrag.beschreibung:
+            beschreibung = eintrag.beschreibung
+        else:
+            # Standard: wortgebundene Beschreibung, siehe "Bereits entschieden"
+            # in Gaming_assistent.md (Praezision vor Vollstaendigkeit).
+            beschreibung = f'nur wenn im Befehl das Wort "{eintrag.schlagwort}" vorkommt'
+        zeilen.append(f"&&{tag_name}&& - {beschreibung}")
+
+    zeilen.append("")
+    zeilen.append("Beispiele:")
+    for tag_name, eintrag in profil.tags.items():
+        zeilen.append(f'"{eintrag.beispiel}" -> &&{tag_name}&&')
+
+    zeilen.append("")
+    zeilen.append(
+        "Nennt eine Aeusserung mehrere Aktionen, gib alle passenden Tags durch je "
+        "ein Leerzeichen getrennt aus, in der genannten Reihenfolge, zum Beispiel: "
+        '"mach zuerst A und dann B" -> &&AKTION_A&& &&AKTION_B&&.'
+    )
+    zeilen.append(
+        f"Passt keine Aeusserung eindeutig zu einem der oben genannten Tags, "
+        f"antworte ausschliesslich mit &&{NONE_TAG}&&. Rate niemals einen Tag, "
+        f"wenn du dir nicht vollkommen sicher bist."
+    )
+    zeilen.append(
+        "Antworte ausschliesslich mit dem oder den passenden Tags im Format "
+        "&&TAG&&, ohne weiteren Text."
+    )
+    return "\n".join(zeilen)
+
+
+def initial_prompt_bauen(profil: Profil) -> str:
+    """Baut die Whisper-initial_prompt-Liste aus den Schlagwoertern des Profils.
+
+    Idee laut Gaming_assistent.md: Whisper bekommt die im Spiel vorkommenden
+    Eigennamen vorab als Vokabular-Hinweis, bevor die LLM-Klassifikation
+    ueberhaupt laeuft. Noch ungetestet (siehe CLAUDE.md, "Naechster Schritt").
+    """
+    schlagwoerter: list[str] = []
+    for eintrag in profil.tags.values():
+        if eintrag.schlagwort not in schlagwoerter:
+            schlagwoerter.append(eintrag.schlagwort)
+
+    text = ", ".join(schlagwoerter)
+    if len(text) > _MAX_INITIAL_PROMPT_CHARS:
+        log.warning(
+            "initial_prompt fuer Profil %r gekuerzt: %d -> %d Zeichen",
+            profil.name, len(text), _MAX_INITIAL_PROMPT_CHARS,
+        )
+        text = text[:_MAX_INITIAL_PROMPT_CHARS]
+    return text

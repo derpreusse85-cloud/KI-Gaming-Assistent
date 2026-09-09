@@ -4,9 +4,11 @@
 # beispiel -> Few-Shot-Beispiel im Prompt; taste -> Tastenkombination, nie im Prompt gezeigt.
 #
 # WICHTIG: "taste" wurde von Claude aus acht Nutzer-Screenshots abgetippt (Stratagem Code PC-
-# Spalte). Bei laengeren Codes ist ein Abtippfehler nicht ausgeschlossen -- vor Verwendung im
-# Code bitte gegen die Screenshots pruefen. "schlagwort" ist der bereits mit dem Nutzer
-# abgestimmte Stand (inkl. Korrekturen: SEAF_Artillerie -> "Artillerie", EMS -> EMP).
+# Spalte, dort als WASD notiert) und bereits gegen die Screenshots geprueft. Der Nutzer hat die
+# Tastenbelegung im Spiel auf die Pfeiltasten umgestellt, deshalb sind hier ab 09.09.2026
+# "up"/"down"/"left"/"right" statt "W"/"A"/"S"/"D" eingetragen (Zuordnung: W->up, A->left,
+# S->down, D->right). "schlagwort" ist der bereits mit dem Nutzer abgestimmte Stand (inkl.
+# Korrekturen: SEAF_Artillerie -> "Artillerie", EMS -> EMP).
 #
 # Konfliktcluster (mehrere Tags mit gemeinsamem Wortstamm, siehe Gespraechsverlauf):
 #   A Gatling: Orbital_Gatling / Gatlinggeschuetz
@@ -23,326 +25,333 @@
 # Tokens bei 77 Tags, 08.09.2026) plus Marge fuer max_tokens und kuenftig ergaenzte Stratageme.
 kontextlaenge: 8192
 
+# Taste, die waehrend der gesamten "taste"-Sequenz jedes Tags gehalten wird (Helldivers-2-
+# Standardeinstellung: Strg). Die "taste"-Listen selbst sind IMMER eine Tipp-Sequenz
+# (nacheinander druecken/loslassen), niemals eine gleichzeitig gehaltene Kombination -- siehe
+# Implementierungsplan. Wert ist noch nicht endgueltig, kann sich noch aendern (Nutzerhinweis
+# 09.09.2026).
+halte_taste: "ctrl"
+
 # --- Waffen (Nachschub-Taktikausruestung) ---
 MG43:
   schlagwort: "MG-43"
   beispiel: "Ruf das MG-43"
-  taste: ["S", "A", "S", "W", "D"]
+  taste: ["down", "left", "down", "up", "right"]
 Antimateriegewehr:
   schlagwort: "Anti-Materie-Gewehr"
   beispiel: "Ruf das Anti-Materie-Gewehr"
-  taste: ["S", "A", "D", "W", "S"]
+  taste: ["down", "left", "right", "up", "down"]
 Stalwart:
   schlagwort: "Stalwart"
   beispiel: "Ruf den Stalwart"
-  taste: ["S", "A", "S", "W", "W", "A"]
+  taste: ["down", "left", "down", "up", "up", "left"]
 EAT:
   schlagwort: "EAT"
   beispiel: "Ruf die EAT"
-  taste: ["S", "S", "A", "W", "D"]
+  taste: ["down", "down", "left", "up", "right"]
 Rueckstossfreies_Gewehr:
   schlagwort: "rueckstossfreies Gewehr"
   beispiel: "Ruf das rueckstossfreie Gewehr"
-  taste: ["S", "A", "D", "D", "A"]
+  taste: ["down", "left", "right", "right", "left"]
 Flammenwerfer:
   schlagwort: "Flammenwerfer"
   beispiel: "Ruf den Flammenwerfer"
-  taste: ["S", "A", "W", "S", "W"]
+  taste: ["down", "left", "up", "down", "up"]
 Automatische_Kanone:
   schlagwort: "automatische Kanone"
   beispiel: "Ruf die automatische Kanone"
-  taste: ["S", "D", "S", "W", "W", "D"]
+  taste: ["down", "left", "down", "up", "up", "right"]
 Schweres_MG:
   schlagwort: "schweres Maschinengewehr"
   beispiel: "Ruf das schwere Maschinengewehr"
-  taste: ["S", "A", "W", "S", "S"]
+  taste: ["down", "left", "up", "down", "down"]
 Luftdetonations_Raketenwerfer:
   schlagwort: "Luftdetonations-Raketenwerfer"
   beispiel: "Ruf den Luftdetonations-Raketenwerfer"
-  taste: ["S", "W", "W", "A", "S"]
+  taste: ["down", "up", "up", "left", "down"]
 Kommando:
   schlagwort: "Kommando"
   beispiel: "Ruf das Kommando"
-  taste: ["S", "A", "W", "S", "D"]
+  taste: ["down", "left", "up", "down", "right"]
 Railgun:
   schlagwort: "Railgun"
   beispiel: "Ruf die Railgun"
-  taste: ["S", "D", "S", "W", "A", "D"]
+  taste: ["down", "right", "down", "up", "left", "right"]
 Speer:
   schlagwort: "Speer"
   beispiel: "Ruf den Speer"
-  taste: ["S", "S", "W", "S", "S"]
+  taste: ["down", "down", "up", "down", "down"]
 WASP:
   schlagwort: "WASP"
   beispiel: "Ruf den WASP-Werfer"
-  taste: ["S", "S", "W", "S", "D"]
+  taste: ["down", "down", "up", "down", "right"]
 
 # --- Orbitalkanonen ---
 Orbital_Gatling:
   schlagwort: "Gatling-Orbitalsperrfeuer"
   beispiel: "Ruf das Gatling-Orbitalsperrfeuer"
-  taste: ["D", "S", "A", "W", "W"]
+  taste: ["right", "down", "left", "up", "up"]
 Orbital_Luftstoss:
   schlagwort: "Orbital-Luftstossangriff"
   beispiel: "Ruf den Orbital-Luftstossangriff"
-  taste: ["D", "D", "D"]
+  taste: ["right", "right", "right"]
 Orbital_120mm:
   schlagwort: "120-Millimeter-Orbitalsperrfeuer"
   beispiel: "Ruf das 120er Orbitalsperrfeuer"
-  taste: ["D", "D", "S", "A", "D", "S"]
+  taste: ["right", "right", "down", "left", "right", "down"]
 Orbital_380mm:
   schlagwort: "380-Millimeter-Orbitalsperrfeuer"
   beispiel: "Ruf das 380er Orbitalsperrfeuer"
-  taste: ["D", "S", "W", "W", "A", "S", "S"]
+  taste: ["right", "down", "up", "up", "left", "down", "down"]
 Orbital_Linear:
   schlagwort: "lineares Orbitalsperrfeuer"
   beispiel: "Ruf das lineare Orbitalsperrfeuer"
-  taste: ["D", "S", "D", "S", "D", "S"]
+  taste: ["right", "down", "right", "down", "right", "down"]
 Orbital_Laser:
   schlagwort: "Orbitallaser"
   beispiel: "Ruf den Orbitallaser"
-  taste: ["D", "S", "W", "D", "S"]
+  taste: ["right", "down", "up", "right", "down"]
 Orbital_Napalm:
   schlagwort: "Napalm-Orbitalsperrfeuer"
   beispiel: "Ruf das Napalm-Orbitalsperrfeuer"
-  taste: ["D", "D", "S", "A", "D", "W"]
+  taste: ["right", "right", "down", "left", "right", "up"]
 Orbital_Schienenkanone:
   schlagwort: "Orbital-Schienenkanonen-Schlag"
   beispiel: "Ruf den Orbital-Schienenkanonen-Schlag"
-  taste: ["D", "W", "S", "S", "D"]
+  taste: ["right", "up", "down", "down", "right"]
 
 # --- Hangar ---
 Adler_Tieffliegerangriff:
   schlagwort: "Adler-Tieffliegerangriff"
   beispiel: "Ruf den Adler-Tieffliegerangriff"
-  taste: ["W", "D", "D"]
+  taste: ["up", "right", "right"]
 Adler_Luftschlag:
   schlagwort: "Adler-Luftschlag"
   beispiel: "Ruf den Adler-Luftschlag"
-  taste: ["W", "D", "S", "D"]
+  taste: ["up", "right", "down", "right"]
 Adler_Streubombe:
   schlagwort: "Adler-Streubombe"
   beispiel: "Ruf die Adler-Streubombe"
-  taste: ["W", "D", "S", "S", "D"]
+  taste: ["up", "right", "down", "down", "right"]
 Adler_Napalmluftschlag:
   schlagwort: "Adler-Napalmluftschlag"
   beispiel: "Ruf den Adler-Napalmluftschlag"
-  taste: ["W", "D", "S", "W"]
+  taste: ["up", "right", "down", "up"]
 Sprungpaket:
   schlagwort: "Sprungpaket"
   beispiel: "Ruf das Sprungpaket"
-  taste: ["S", "W", "W", "S", "W"]
+  taste: ["down", "up", "up", "down", "up"]
 Adler_Rauchbeschuss:
   schlagwort: "Adler-Rauchbeschuss"
   beispiel: "Ruf den Adler-Rauchbeschuss"
-  taste: ["W", "D", "W", "S"]
+  taste: ["up", "right", "up", "down"]
 Adler_Raketenpods:
   schlagwort: "Adler-Raketen-Pods"
   beispiel: "Ruf die Adler-Raketen-Pods"
-  taste: ["W", "D", "W", "A"]
+  taste: ["up", "right", "up", "left"]
 500kg_Bombe:
   schlagwort: "500-Kilo-Bombe"
   beispiel: "Ruf die 500-Kilo-Bombe"
-  taste: ["W", "D", "S", "S", "S"]
+  taste: ["up", "right", "down", "down", "down"]
 Aufklaerungsfahrzeug:
   schlagwort: "Aufklaerungsfahrzeug"
   beispiel: "Ruf das Aufklaerungsfahrzeug"
-  taste: ["A", "S", "D", "S", "D", "S", "W"]
+  taste: ["left", "down", "right", "down", "right", "down", "up"]
 
 # --- Bruecke ---
 Orbital_Praezisionsschlag:
   schlagwort: "Orbital-Praezisionsschlag"
   beispiel: "Ruf den Orbital-Praezisionsschlag"
-  taste: ["D", "D", "W"]
+  taste: ["right", "right", "up"]
 Orbital_Gasangriff:
   schlagwort: "Orbital-Gasangriff"
   beispiel: "Ruf den Orbital-Gasangriff"
-  taste: ["D", "D", "S", "D"]
+  taste: ["right", "right", "down", "right"]
 Orbital_EMP:
   schlagwort: "Orbital-EMP-Feuer"
   beispiel: "Ruf das Orbital-EMP-Feuer"
-  taste: ["D", "D", "A", "S"]
+  taste: ["right", "right", "left", "down"]
 Orbital_Rauchbeschuss:
   schlagwort: "Orbital-Rauchbeschuss"
   beispiel: "Ruf den Orbital-Rauchbeschuss"
-  taste: ["D", "D", "S", "W"]
+  taste: ["right", "right", "down", "up"]
 MG_Stellung:
   schlagwort: "schwere MG-Stellung"
   beispiel: "Ruf die schwere MG-Stellung"
-  taste: ["S", "W", "A", "D", "D", "A"]
+  taste: ["down", "up", "left", "right", "right", "left"]
 Schildgenerator_Relais:
   schlagwort: "Schildgenerator-Relais"
   beispiel: "Ruf das Schildgenerator-Relais"
-  taste: ["S", "S", "A", "D", "A", "D"]
+  taste: ["down", "down", "left", "right", "left", "right"]
 Tesla_Turm:
   schlagwort: "Tesla-Turm"
   beispiel: "Ruf den Tesla-Turm"
-  taste: ["S", "W", "D", "W", "A", "D"]
+  taste: ["down", "up", "right", "up", "left", "right"]
 
 # --- Technikerstation ---
 Minenfeld:
   schlagwort: "Anti-Personen-Minenfeld"
   beispiel: "Ruf das Anti-Personen-Minenfeld"
-  taste: ["S", "A", "W", "D"]
+  taste: ["down", "left", "up", "right"]
 Vorratspaket:
   schlagwort: "Vorratspaket"
   beispiel: "Ruf das Vorratspaket"
-  taste: ["S", "A", "S", "W", "W", "S"]
+  taste: ["down", "left", "down", "up", "up", "down"]
 Granatwerfer:
   schlagwort: "Granatwerfer"
   beispiel: "Ruf den Granatwerfer"
-  taste: ["S", "A", "W", "A", "S"]
+  taste: ["down", "left", "up", "left", "down"]
 Laserkanone:
   schlagwort: "Laserkanone"
   beispiel: "Ruf die Laserkanone"
-  taste: ["S", "A", "S", "W", "A"]
+  taste: ["down", "left", "down", "up", "left"]
 Brandminen:
   schlagwort: "Brandminen"
   beispiel: "Ruf die Brandminen"
-  taste: ["S", "A", "A", "S"]
+  taste: ["down", "left", "left", "down"]
 Guard_Dog_Rover:
   schlagwort: "Guard-Dog-Rover"
   beispiel: "Ruf den Guard-Dog-Rover"
-  taste: ["S", "W", "A", "W", "D", "D"]
+  taste: ["down", "up", "left", "up", "right", "right"]
 Ballistischer_Schild:
   schlagwort: "ballistischer Schild"
   beispiel: "Ruf den ballistischen Schild"
-  taste: ["S", "A", "S", "S", "W", "A"]
+  taste: ["down", "left", "down", "down", "up", "left"]
 Bogenwerfer:
   schlagwort: "Bogenwerfer"
   beispiel: "Ruf den Bogenwerfer"
-  taste: ["S", "D", "S", "W", "A", "A"]
+  taste: ["down", "right", "down", "up", "left", "left"]
 Panzerabwehrminen:
   schlagwort: "Panzerabwehrminen"
   beispiel: "Ruf die Panzerabwehrminen"
-  taste: ["S", "A", "W", "W"]
+  taste: ["down", "left", "up", "up"]
 Quasarkanone:
   schlagwort: "Quasarkanone"
   beispiel: "Ruf die Quasarkanone"
-  taste: ["S", "S", "W", "A", "D"]
+  taste: ["down", "down", "up", "left", "right"]
 Schildgenerator_Rucksack:
   schlagwort: "Schildgenerator-Rucksack"
   beispiel: "Ruf den Schildgenerator-Rucksack"
-  taste: ["S", "W", "A", "D", "A", "D"]
+  taste: ["down", "up", "left", "right", "left", "right"]
 
 # --- Robotik-Werkstatt ---
 MG_Geschuetz:
   schlagwort: "MG-Geschuetz"
   beispiel: "Ruf das MG-Geschuetz"
-  taste: ["S", "W", "D", "D", "W"]
+  taste: ["down", "up", "right", "right", "up"]
 Gatlinggeschuetz:
   schlagwort: "Gatlinggeschuetz"
   beispiel: "Ruf das Gatlinggeschuetz"
-  taste: ["S", "W", "D", "A"]
+  taste: ["down", "up", "right", "left"]
 Moersergeschuetz:
   schlagwort: "Moersergeschuetz"
   beispiel: "Ruf das Moersergeschuetz"
-  taste: ["S", "W", "D", "D", "S"]
+  taste: ["down", "up", "right", "right", "down"]
 Guard_Dog:
   schlagwort: "Guard Dog"
   beispiel: "Ruf den Guard Dog"
-  taste: ["S", "W", "A", "W", "D", "S"]
+  taste: ["down", "up", "left", "up", "right", "down"]
 Kanonengeschuetz:
   schlagwort: "automatisches Kanonengeschuetz"
   beispiel: "Ruf das automatische Kanonengeschuetz"
-  taste: ["S", "W", "D", "W", "A", "W"]
+  taste: ["down", "up", "right", "up", "left", "up"]
 Raketengeschuetz:
   schlagwort: "Raketengeschuetz"
   beispiel: "Ruf das Raketengeschuetz"
-  taste: ["S", "W", "D", "D", "A"]
+  taste: ["down", "up", "right", "right", "left"]
 EMP_Moersergeschuetz:
   schlagwort: "EMP-Moersergeschuetz"
   beispiel: "Ruf das EMP-Moersergeschuetz"
-  taste: ["S", "W", "D", "S", "D"]
+  taste: ["down", "up", "right", "down", "right"]
 Patriot_Exoanzug:
   schlagwort: "Patriot-Exoanzug"
   beispiel: "Ruf den Patriot-Exoanzug"
-  taste: ["A", "S", "D", "W", "A", "S", "S"]
+  taste: ["left", "down", "right", "up", "left", "down", "down"]
 Emancipator_Exoanzug:
   schlagwort: "Emancipator-Exoanzug"
   beispiel: "Ruf den Emancipator-Exoanzug"
-  taste: ["A", "S", "D", "W", "A", "S", "W"]
+  taste: ["left", "down", "right", "up", "left", "down", "up"]
 
 # --- Kriegsanleihen ---
 Sterilisierer:
   schlagwort: "Sterilisierer"
   beispiel: "Ruf den Sterilisierer"
-  taste: ["S", "A", "W", "S", "A"]
+  taste: ["down", "left", "up", "down", "left"]
 Guard_Dog_Hunde_Atem:
   schlagwort: "Guard-Dog-Hunde-Atem"
   beispiel: "Ruf den Guard-Dog-Hunde-Atem"
-  taste: ["S", "W", "A", "W", "D", "W"]
+  taste: ["down", "up", "left", "up", "right", "up"]
 Richtungsschild:
   schlagwort: "Richtungsschild"
   beispiel: "Ruf das Richtungsschild"
-  taste: ["S", "W", "A", "D", "W", "W"]
+  taste: ["down", "up", "left", "right", "up", "up"]
 Flammengeschuetz:
   schlagwort: "Flammengeschuetz"
   beispiel: "Ruf das Flammengeschuetz"
-  taste: ["S", "W", "A", "D", "D", "D"]
+  taste: ["down", "up", "left", "right", "right", "right"]
 Panzerabwehrstellung:
   schlagwort: "Panzerabwehrstellung"
   beispiel: "Ruf die Panzerabwehrstellung"
-  taste: ["S", "W", "D", "S", "W", "W"]
+  taste: ["down", "up", "right", "down", "right", "right"]
 
 # --- Missionsspezifisch ---
 Verstaerkung:
   schlagwort: "Verstaerkung"
   beispiel: "Rufe Verstaerkung"
-  taste: ["W", "S", "D", "A", "W"]
+  taste: ["up", "down", "right", "left", "up"]
 SOS_Bake:
   schlagwort: "SOS-Bake"
   beispiel: "Setz die SOS-Bake"
-  taste: ["W", "S", "D", "W"]
+  taste: ["up", "down", "right", "up"]
 Resupply:
   schlagwort: "Resupply"
   beispiel: "Ruf Resupply"
-  taste: ["S", "S", "W", "D"]
+  taste: ["down", "down", "up", "right"]
 SSSD_Lieferung:
   schlagwort: "SSSD-Lieferung"
   beispiel: "Ruf die SSSD-Lieferung"
-  taste: ["S", "S", "S", "W", "W"]
+  taste: ["down", "down", "down", "up", "up"]
 Prospecting_Drill:
   schlagwort: "Prospecting Drill"
   beispiel: "Ruf den Prospecting Drill"
-  taste: ["S", "S", "A", "D", "S", "S"]
+  taste: ["down", "down", "left", "right", "down", "down"]
 Seismische_Probe:
   schlagwort: "seismische Probe"
   beispiel: "Nimm die seismische Probe"
-  taste: ["W", "W", "A", "D", "S", "S"]
+  taste: ["up", "up", "left", "right", "down", "down"]
 Adler_Nachladen:
   schlagwort: "Adler nachladen"
   beispiel: "Lade den Adler nach"
-  taste: ["W", "W", "A", "W", "D"]
+  taste: ["up", "up", "left", "up", "right"]
 Illumination_Flare:
   schlagwort: "Illumination Flare"
   beispiel: "Schiess die Illumination Flare"
-  taste: ["D", "D", "A", "A"]
+  taste: ["right", "right", "left", "left"]
 SEAF_Artillerie:
   schlagwort: "Artillerie"
   beispiel: "Ruf die Artillerie"
-  taste: ["D", "W", "W", "S"]
+  taste: ["right", "up", "up", "down"]
 Ueber_Erde_Flagge:
   schlagwort: "Ueber-Erde-Flagge"
   beispiel: "Hol die Ueber-Erde-Flagge"
-  taste: ["S", "W", "S", "W"]
+  taste: ["down", "up", "down", "up"]
 Datenupload:
   schlagwort: "Datenupload"
   beispiel: "Starte den Datenupload"
-  taste: ["A", "D", "W", "W", "W"]
+  taste: ["left", "right", "up", "up", "up"]
 Hellbombe:
   schlagwort: "Hellbombe"
   beispiel: "Ruf die Hellbombe"
-  taste: ["S", "W", "A", "S", "W", "D", "S", "W"]
+  taste: ["down", "up", "left", "down", "up", "right", "down", "up"]
 Dunkles_Fluid_Behaelter:
   schlagwort: "dunkler Fluid-Behaelter"
   beispiel: "Hol den dunklen Fluid-Behaelter"
-  taste: ["W", "A", "D", "S", "W", "W"]
+  taste: ["up", "left", "right", "down", "up", "up"]
 Tektonischer_Bohrer:
   schlagwort: "tektonischer Bohrer"
   beispiel: "Ruf den tektonischen Bohrer"
-  taste: ["W", "S", "W", "S", "W", "S"]
+  taste: ["up", "down", "up", "down", "up", "down"]
 Schwarmbrecher_Bohrer:
   schlagwort: "Schwarmbrecher-Bohrer"
   beispiel: "Ruf den Schwarmbrecher-Bohrer"
-  taste: ["A", "W", "S", "D", "S", "S"]
+  taste: ["left", "up", "down", "right", "down", "down"]
