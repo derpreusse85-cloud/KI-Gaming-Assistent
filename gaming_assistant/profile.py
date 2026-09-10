@@ -5,6 +5,15 @@ ein YAML pro Spiel, ein Eintrag pro Tag mit schlagwort/beispiel/taste, optional
 beschreibung (statt der wortgebundenen Standardbeschreibung) und optional eine
 Taste, die waehrend der ganzen taste-Sequenz gehalten wird (halte_taste).
 
+Optionales Top-Level-Feld `initial_prompt_schlagwoerter`: eine kuratierte
+Kurzliste fuer den Whisper-initial_prompt (siehe prompt.py), statt automatisch
+ALLE Schlagwoerter zu verwenden. Grund: gemessen am 10.09.2026 kostet ein
+laengerer initial_prompt bei diesem Whisper-Modell spuerbar Latenz (grob eine
+Sekunde), waehrend die meisten Schlagwoerter normale deutsche Komposita sind,
+die das deutsch trainierte Modell ohnehin zuverlaessig erkennt. Fehlt das
+Feld, greift automatisch die alte Vorgabe (alle Schlagwoerter) - siehe
+prompt.initial_prompt_bauen().
+
 Python-Hinweis: "@dataclass" unten ist eine bequeme Kurzschreibweise fuer eine
 Klasse, die nur Daten haelt - Python erzeugt __init__ usw. automatisch aus den
 Feldern.
@@ -39,6 +48,9 @@ class Profil:
     name: str
     kontextlaenge: int
     tags: dict[str, TagEintrag] = field(default_factory=dict)
+    # Leere Liste = kein kuratierter initial_prompt hinterlegt, prompt.py
+    # faellt dann auf "alle Schlagwoerter" zurueck.
+    initial_prompt_schlagwoerter: list[str] = field(default_factory=list)
 
     def bekannte_tags(self) -> set[str]:
         """Menge aller gueltigen Tag-Namen - fuer den Parser (parser.py)."""
@@ -54,6 +66,7 @@ def laden(pfad: Path) -> Profil:
     # Profilweite Halte-Taste (z.B. "ctrl") - gilt als Vorgabe fuer jeden Tag,
     # der selbst keine eigene halte_taste angibt.
     profil_halte_taste = rohdaten.pop("halte_taste", None)
+    initial_prompt_schlagwoerter = [str(w) for w in rohdaten.pop("initial_prompt_schlagwoerter", [])]
 
     tags: dict[str, TagEintrag] = {}
     for tag_name, eintrag in rohdaten.items():
@@ -69,7 +82,12 @@ def laden(pfad: Path) -> Profil:
             halte_taste=eintrag.get("halte_taste", profil_halte_taste),
         )
 
-    return Profil(name=pfad.stem, kontextlaenge=kontextlaenge, tags=tags)
+    return Profil(
+        name=pfad.stem,
+        kontextlaenge=kontextlaenge,
+        tags=tags,
+        initial_prompt_schlagwoerter=initial_prompt_schlagwoerter,
+    )
 
 
 def liste_profile(verzeichnis: Path) -> list[str]:

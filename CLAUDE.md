@@ -43,11 +43,35 @@ enthaltene Kommandos loesen (wie vorgesehen) keine Aktion aus.
 * **Bekannter, nicht als kritisch eingestufter Fund:** bei rein digitaler Stille (Testfall, kein
   echtes Mikrofon-Rauschen) halluziniert Whisper gelegentlich Text statt leer zu bleiben. Im
   echten Spielbetrieb bisher nicht als Problem aufgefallen.
+* **Latenz gemessen und dokumentiert (10.09.2026), siehe `__main__.py::verarbeiten()`** (schreibt
+  pro Befehl eine Log-Zeile `Latenz: STT ...s, LLM ...s, ...`): realer End-zu-Ende-Durchlauf mit
+  echter Sprache (per Windows-TTS synthetisiert, nicht mit Stille/Rauschen getestet - dazu gleich
+  mehr) liegt bei **~0,33-0,35s pro Befehl** (STT ~0,2s, LLM ~0,14s dank LM-Studio-Prompt-Caching
+  fuer den identischen System-Prompt). **Nur der allererste Aufruf nach Programmstart oder
+  Tray-Profilwechsel kostet ~2,5s** (einmaliges Prefill des 3.541-Token-System-Prompts).
+  **Bewusst NICHT gebaut:** weder ein einmaliger Warmup-Aufruf beim Profil-Laden noch ein
+  wiederkehrender Warmhalter-Ping waehrend des Spielens - Grund: LM Studio (Modell + Prompt-
+  Cache) kann durch VRAM-Druck des Spiels jederzeit verdraengt werden (dasselbe Phaenomen wie
+  beim Whisper-Modell, siehe `Diktiertool.md`, Abschnitt "Bildraten-Einbruch"), ein einmaliger
+  Warmup schuetzt also nur den Start-Fall, nicht spaetere Verdraengungen mitten im Spiel: ein
+  wiederkehrender Ping wuerde davor zuverlaessiger schuetzen, aber dauerhafte GPU-Last waehrend
+  des Spielens verursachen. Nutzer hat sich explizit gegen beide Varianten entschieden - die
+  seltene ~2,5s-Verzoegerung nach Start/Verdraengung wird bewusst in Kauf genommen.
+* **`initial_prompt`-Laenge hat bei echter Sprache keinen messbaren Effekt auf die Latenz**
+  (getestet: 0/143/700 Zeichen -> alle ~0,19-0,2s STT-Zeit). Die kuratierte Kurzliste
+  (`initial_prompt_schlagwoerter` im Profil, nur Fremdwoerter/Akronyme statt aller 77
+  Schlagwoerter) wurde trotzdem eingebaut und bleibt drin (schadet nicht, evtl. fokussierter),
+  ist aber kein Latenz-Gewinn - **eine fruehere Messung, die genau das nahelegte, war ein
+  Test-Artefakt:** mit digitaler Stille/synthetischem Rauschen als Testaudio halluziniert
+  Whisper und loest teure Wiederholungsdurchlaeufe (`temperature_inc`) aus, was die Zeitmessung
+  verfaelscht hatte. **Lektion: Whisper-Latenz nur mit echter (oder zumindest TTS-synthetisierter)
+  Sprache messen, nie mit Stille oder Rauschen** - Windows-TTS (`System.Speech.Synthesis`,
+  Stimme "Microsoft Hedda Desktop", 16kHz-Mono-WAV) hat sich dafuer als schneller Ersatz fuer
+  eine echte Aufnahme bewaehrt.
 * **Naechste moegliche Schritte (nicht angefangen):** weitere Spielprofile nach demselben YAML-
   Schema ergaenzen; die in Gaming_assistent.md skizzierte zweistufige Trainingsdaten-
   Aufbereitung (Extraktor-Durchlaeufe auf den `training_log.py`-Rohdaten) fuer kuenftiges
-  Fine-Tuning; Whisper-`initial_prompt`-Wirksamkeit ist mitgebaut, aber ihr tatsaechlicher Nutzen
-  noch nicht gezielt evaluiert.
+  Fine-Tuning.
 
 * `Gaming_assistent.md` ist das massgebliche, vollstaendige Konzept — bei Widersprueche zwischen
   dieser Zusammenfassung hier und `Gaming_assistent.md` gilt **immer** `Gaming_assistent.md`.

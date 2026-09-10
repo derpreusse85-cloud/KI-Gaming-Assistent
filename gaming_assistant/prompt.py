@@ -71,16 +71,26 @@ def system_prompt_bauen(profil: Profil) -> str:
 
 
 def initial_prompt_bauen(profil: Profil) -> str:
-    """Baut die Whisper-initial_prompt-Liste aus den Schlagwoertern des Profils.
+    """Baut die Whisper-initial_prompt-Liste.
 
-    Idee laut Gaming_assistent.md: Whisper bekommt die im Spiel vorkommenden
-    Eigennamen vorab als Vokabular-Hinweis, bevor die LLM-Klassifikation
-    ueberhaupt laeuft. Noch ungetestet (siehe CLAUDE.md, "Naechster Schritt").
+    Idee laut Gaming_assistent.md: Whisper bekommt ungewoehnliche Eigennamen
+    vorab als Vokabular-Hinweis, bevor die LLM-Klassifikation ueberhaupt
+    laeuft. Gemessen am 10.09.2026: ein laengerer initial_prompt kostet bei
+    diesem Whisper-Modell spuerbar Latenz (grob eine Sekunde) - deshalb nutzt
+    diese Funktion bevorzugt die kuratierte Kurzliste aus dem Profil
+    (`initial_prompt_schlagwoerter`, nur echte Fremdwoerter/Akronyme/
+    Eigennamen, die dem deutschen Modell erfahrungsgemaess eher Probleme
+    machen als normale deutsche Komposita). Hat ein Profil diese Liste nicht
+    gepflegt, faellt die Funktion auf die alte Vorgabe zurueck: alle
+    Schlagwoerter automatisch sammeln.
     """
-    schlagwoerter: list[str] = []
-    for eintrag in profil.tags.values():
-        if eintrag.schlagwort not in schlagwoerter:
-            schlagwoerter.append(eintrag.schlagwort)
+    if profil.initial_prompt_schlagwoerter:
+        schlagwoerter = list(profil.initial_prompt_schlagwoerter)
+    else:
+        schlagwoerter = []
+        for eintrag in profil.tags.values():
+            if eintrag.schlagwort not in schlagwoerter:
+                schlagwoerter.append(eintrag.schlagwort)
 
     text = ", ".join(schlagwoerter)
     if len(text) > _MAX_INITIAL_PROMPT_CHARS:

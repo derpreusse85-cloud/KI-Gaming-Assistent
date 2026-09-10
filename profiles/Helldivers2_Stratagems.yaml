@@ -32,6 +32,31 @@ kontextlaenge: 8192
 # 09.09.2026).
 halte_taste: "ctrl"
 
+# Kuratierte Kurzliste fuer den Whisper-initial_prompt (siehe prompt.py). Gemessen am
+# 10.09.2026: ein initial_prompt aus ALLEN Schlagwoertern (700 Zeichen) kostet grob eine
+# Sekunde zusaetzliche Latenz pro Sprachbefehl. Deshalb hier nur echte Fremdwoerter/Akronyme/
+# Eigennamen, bei denen das deutsch trainierte Whisper-Modell eher stolpern koennte -- normale
+# deutsche Komposita (z.B. "Flammenwerfer", "Granatwerfer") brauchen keine Vokabular-Stuetze.
+# Erster Entwurf, noch nicht an echten Fehlerkennungen kalibriert -- falls im laufenden Betrieb
+# (siehe training_log.py) auffaellt, dass Whisper ein bestimmtes Wort zuverlaessig falsch
+# versteht, hier ergaenzen; falls sich diese Liste als unnoetig herausstellt, auch wieder kuerzen.
+initial_prompt_schlagwoerter:
+  - "EAT"
+  - "WASP"
+  - "Railgun"
+  - "Gatling"
+  - "Napalm"
+  - "Guard Dog"
+  - "Patriot"
+  - "Emancipator"
+  - "Tesla"
+  - "SOS"
+  - "Resupply"
+  - "SSSD"
+  - "Prospecting Drill"
+  - "Illumination Flare"
+  - "Quasar"
+
 # --- Waffen (Nachschub-Taktikausruestung) ---
 MG43:
   schlagwort: "MG-43"

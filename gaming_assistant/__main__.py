@@ -21,6 +21,7 @@ from __future__ import annotations
 
 import logging
 import threading
+import time
 
 from gaming_assistant import (
     audio,
@@ -87,21 +88,36 @@ def main() -> None:
 
     def verarbeiten(pcm: bytes) -> None:
         """Laeuft in einem eigenen Thread (siehe bei_ptt_loslassen), damit der
-        Push-to-talk-Listener waehrend Whisper/LLM nicht blockiert."""
+        Push-to-talk-Listener waehrend Whisper/LLM nicht blockiert.
+
+        Misst nebenbei, wie lange jeder Pipeline-Schritt braucht (Latenz-Frage
+        vom 10.09.2026) - time.monotonic() liefert eine Uhr, die nur fuer
+        Zeitdifferenzen gedacht ist (im Gegensatz zu time.time() laeuft sie nie
+        rueckwaerts, z.B. bei einer Systemzeit-Korrektur)."""
+        start = time.monotonic()
         profil_obj = zustand["profil"]
         roh_text = whisper_engine.transkribieren(pcm, zustand["initial_prompt"])
+        nach_stt = time.monotonic()
         if not roh_text:
-            log.debug("Keine Sprache erkannt - nichts zu tun")
+            log.debug("Keine Sprache erkannt - nichts zu tun (STT: %.2fs)", nach_stt - start)
             return
 
         antwort, finish_reason = klassifikator.klassifizieren(
             roh_text, zustand["system_prompt"], zustand["llm_bezeichner"]
         )
+        nach_llm = time.monotonic()
         tags = parser.tags_extrahieren(antwort, profil_obj.bekannte_tags(), finish_reason)
 
         for tag_name in tags:
             eintrag = profil_obj.tags[tag_name]
             keypress.ausloesen(eintrag.taste, eintrag.halte_taste)
+        nach_tasten = time.monotonic()
+
+        log.info(
+            "Latenz: STT %.2fs, LLM %.2fs, Tasten %.2fs, gesamt %.2fs (Text: %r, Tags: %s)",
+            nach_stt - start, nach_llm - nach_stt, nach_tasten - nach_llm, nach_tasten - start,
+            roh_text, tags,
+        )
 
         # Ungefiltertes Live-Logging fuer die spaetere Trainingsdaten-Aufbereitung
         # (siehe Gaming_assistent.md) - passiert unabhaengig davon, ob ein Tag
