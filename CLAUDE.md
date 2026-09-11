@@ -13,10 +13,12 @@ keine direkten Dateiverweise mehr darauf (12.09.2026 auch dort bereinigt).
 
 ## Stand der Arbeit (fuer den Wiedereinstieg in einer neuen Session)
 
-**Version 1.0 fertig und im echten Spiel bestaetigt (09.09.2026).** Push-to-Talk -> Whisper ->
-LLM-Klassifikation -> Tastensequenz funktioniert Ende-zu-Ende gegen das laufende Helldivers 2:
-richtig erkannte Tags loesen korrekt die passende Stratagem-Tastenfolge aus, nicht im Profil
-enthaltene Kommandos loesen (wie vorgesehen) keine Aktion aus.
+**Version 1.0 fertig und im echten Spiel bestaetigt (09.09.2026), seither auf v1.2 (12.09.2026,
+Git-Tags vorhanden).** Push-to-Talk -> Whisper -> LLM-Klassifikation -> Tastensequenz
+funktioniert Ende-zu-Ende gegen das laufende Helldivers 2: richtig erkannte Tags loesen korrekt
+die passende Stratagem-Tastenfolge aus, nicht im Profil enthaltene Kommandos loesen (wie
+vorgesehen) keine Aktion aus. v1.1: LM Studio abgeloest (siehe eigener Abschnitt weiter unten).
+v1.2: zweites Spielprofil (Helldivers 1) ergaenzt.
 
 * **Modulstruktur** (Paket `gaming_assistant/`, ein einziger Prozess, als Vorlage aus
   `F:\Projekte\KI Diktier Tool` uebernommen, aber ohne WebSocket/Token-Auth/Server-Client-Split):
@@ -42,6 +44,23 @@ enthaltene Kommandos loesen (wie vorgesehen) keine Aktion aus.
   Nutzer die Spielbelegung entsprechend umgestellt hat. Zwei Abtippfehler wurden im Zuge des
   Testens gefunden und korrigiert (`Panzerabwehrstellung`, `Automatische_Kanone`) — die
   `taste`-Werte gelten weiterhin als vorlaeufig aenderbar, nicht als endgueltig fixiert.
+* **`profiles/Helldivers1_Stratagems.yaml`** ist das zweite Profil (12.09.2026), 55 Stratageme.
+  Codes aus einer Wiki-Quelle abgetippt (die urspruenglich verlinkte Fandom-Seite war per
+  Cloudflare blockiert, `helldivers.wiki.gg` ging stattdessen), **NICHT im echten Spiel
+  getestet** - Nutzer besitzt Helldivers 1 nicht, steht so auch im Dateikopf. `taste`-Werte
+  koennen also falsch sein, vor produktivem Einsatz noch verifizieren. `schlagwort` traegt hier
+  durchgaengig zwei Woerter (englischer Original-Codename + deutsche Uebersetzung), Klassifikation
+  gegen das echte llama-server-Setup stichprobenartig getestet (inkl. zweier anfangs gefundener,
+  dann behobener Namenskonflikte: Maschinengewehr-Familie MG-94/MGX-42, Tiefflieger-Angriff-
+  Familie).
+* **Kommentar-Konvention fuer Profil-YAMLs (12.09.2026, Nutzerwunsch):** so minimal wie moeglich.
+  Kein Kopfkommentar mit Formaterklaerung (steht zentral in `Gaming_assistent.md`, Abschnitt
+  "Aktionslisten-Format"), keine Datums-/Aenderungshistorie in der Datei selbst (gehoert in die
+  Git-Historie). Pro-Tag-Kommentare nur, wo sie eine sonst nicht ersichtliche Mehrdeutigkeit
+  zwischen zwei Tags erklaeren. Gilt fuer beide bestehenden Profile und alle kuenftigen.
+* **Tray-Icon von Mikrofon auf Gamepad umgestellt** (`gaming_assistant/icons.py`, 12.09.2026,
+  Nutzerwunsch) - passender zum Gaming-Thema. Programmatisch aus PIL-Formen gezeichnet (kein
+  Bild geladen): kastenfoermiger Sockel, D-Pad-Kreuz links, zwei Aktionsknoepfe rechts.
 * **`schlagwort` ist jetzt optional** (11.09.2026, Nutzergespraech): ein Tag braucht mindestens
   eines von `schlagwort`/`beschreibung`, `profile.py::laden()` bricht sonst mit klarer
   Fehlermeldung ab. Hintergrund: `schlagwort` und `beschreibung` haben unabhaengige Aufgaben -
@@ -123,9 +142,27 @@ enthaltene Kommandos loesen (wie vorgesehen) keine Aktion aus.
   Stimme "Microsoft Hedda Desktop", 16kHz-Mono-WAV) hat sich dafuer als schneller Ersatz fuer
   eine echte Aufnahme bewaehrt.
 * **Naechste moegliche Schritte (nicht angefangen):** weitere Spielprofile nach demselben YAML-
-  Schema ergaenzen; die in Gaming_assistent.md skizzierte zweistufige Trainingsdaten-
-  Aufbereitung (Extraktor-Durchlaeufe auf den `training_log.py`-Rohdaten) fuer kuenftiges
-  Fine-Tuning.
+  Schema ergaenzen; eine zweistufige Trainingsdaten-Aufbereitung (Extraktor-Durchlaeufe auf den
+  `training_log.py`-Rohdaten - Durchlauf 1 prueft Plausibilitaet Rohtext/erkannter Tag,
+  Durchlauf 2 korrigiert nur die aussortierten Faelle) fuer kuenftiges Fine-Tuning.
+* **Ueberlegung (12.09.2026, noch nicht umgesetzt): LoRA-Adapter statt volles Fine-Tuning pro
+  Profil.** Da das Tool profilbasiert ist (unterschiedliche Tag-Listen je Spiel), wuerde ein
+  vollstaendig fine-getuntes Modell pro Profil bedeuten, dass fuer jedes Spiel eine eigene,
+  mehrere GB grosse Modellkopie vorgehalten werden muesste - und ein Profilwechsel muesste dann
+  das komplette Modell neu laden statt nur (wie aktuell) die Kontextlaenge anzupassen. Deshalb
+  angedachter Ansatz: LoRA- bzw. QLoRA-Adapter (kleine Zusatzgewichts-Datei, wenige MB statt
+  mehrere GB, wird zur Laufzeit auf das gemeinsame Basismodell geladen, ohne dieses selbst zu
+  veraendern - QLoRA betrifft nur die Trainingsphase selbst, das Ergebnis ist derselbe
+  Adapter-Dateityp). llama-server unterstuetzt das Laden eines Adapters ueber `--lora`. Pro
+  Spielprofil koennte ein eigener, winziger Adapter trainiert und direkt neben der jeweiligen
+  Profil-YAML abgelegt werden; beim Profilwechsel wuerde der Server (analog zum bereits
+  bestehenden Neustart bei geaenderter Kontextlaenge) mit dem passenden Adapter neu gestartet -
+  vertretbarer Umweg, falls sich dynamisches Nachladen eines noch nicht beim Start geladenen
+  Adapters ohne Neustart als nicht zuverlaessig herausstellt. Zweck waere dabei primaer nicht,
+  dem Modell Tag-Namen eines bestimmten Spiels beizubringen (das leistet schon der
+  System-Prompt), sondern die allgemeine Faehigkeit zu verbessern, Text anhand einer im Prompt
+  mitgegebenen Tag-Liste zuverlaessig zu klassifizieren - trainiert auf ueber alle Profile
+  hinweg gesammelten Daten, nicht auf ein einzelnes Spiel beschraenkt.
 
 * `Gaming_assistent.md` ist das massgebliche, vollstaendige Konzept — bei Widersprueche zwischen
   dieser Zusammenfassung hier und `Gaming_assistent.md` gilt **immer** `Gaming_assistent.md`.

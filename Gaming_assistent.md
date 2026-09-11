@@ -353,6 +353,34 @@ Offene Grenze des Ansatzes: Der Extraktor kann nur korrigieren, wenn sich aus de
 eindeutig ableiten lässt, was gemeint war. Bei echter Mehrdeutigkeit bleibt vermutlich
 weiterhin eine manuelle Sichtung durch den Nutzer nötig.
 
+### Einsatz des trainierten Modells: LoRA-Adapter statt volles Modell pro Profil
+
+Offene Frage, noch nicht umgesetzt: da das Tool profilbasiert ist (unterschiedliche Tag-Listen
+je Spiel), würde ein vollständig fine-getuntes Modell pro Profil bedeuten, dass für jedes Spiel
+eine eigene, mehrere GB grosse Modellkopie vorgehalten werden müsste — und ein Profilwechsel
+müsste dann das komplette Modell neu laden statt nur (wie aktuell) die Kontextlänge anzupassen.
+
+Stattdessen angedachter Ansatz: LoRA- bzw. QLoRA-Adapter statt vollem Fine-Tuning. Ein
+LoRA-Adapter ist eine kleine Zusatzgewichts-Datei (wenige MB statt mehrere GB), die zur Laufzeit
+auf das gemeinsame Basismodell geladen wird, ohne dieses selbst zu verändern. llama-server
+unterstützt das Laden eines Adapters über den Kommandozeilen-Parameter `--lora`. Pro
+Spielprofil könnte so ein eigener, winziger Adapter trainiert und direkt neben der jeweiligen
+Profil-YAML abgelegt werden; beim Profilwechsel würde der Server (analog zum bereits
+bestehenden Neustart bei geänderter Kontextlänge) mit dem zum neuen Profil passenden Adapter neu
+gestartet — etwas langsamer als der reine Kontextlängen-Wechsel, aber als vertretbarer Umweg
+akzeptiert, falls sich dynamisches Nachladen eines noch nicht beim Start geladenen Adapters ohne
+Neustart als nicht zuverlässig unterstützt herausstellt.
+
+QLoRA betrifft dabei nur die Trainingsphase selbst (quantisiertes Basismodell während des
+Trainings, um mit weniger VRAM auszukommen) — das Ergebnis ist am Ende derselbe
+Adapter-Dateityp wie bei normalem LoRA, für die Serving-Seite also kein Unterschied.
+
+Zweck ist dabei nicht in erster Linie, dem Modell die Tag-Namen eines bestimmten Spiels
+"beizubringen" (das leistet schon der System-Prompt), sondern die allgemeine Fähigkeit zu
+verbessern, gesprochenen Text zuverlässig anhand einer im Prompt mitgegebenen Tag-Liste zu
+klassifizieren und knapp mit dem `&&TAG&&`-Marker zu antworten — trainiert auf den über alle
+Profile hinweg gesammelten Trainingsdaten, nicht auf die Tags eines einzelnen Spiels beschränkt.
+
 ### Nebengedanke: Weiterverwendung der Trainingsdaten für Nero
 
 > Kein Bestandteil des Gaming-Tools selbst — nur als Idee festgehalten, wie die hier
@@ -428,12 +456,16 @@ mehr rein konzeptionell. Aktueller Stand, Modulstruktur und alle seither gewonne
 der Arbeit" — diese Konzeptdatei hier bleibt für das grundsätzliche Design und die
 Testreihen-Begründung maßgeblich, wird aber nicht mehr laufend nachgeführt.
 
-**In Planung (11.09.2026, noch nicht begonnen): eigenständiger Betrieb ohne LM Studio.**
-Hintergrund ist eine mögliche Veröffentlichung auf GitHub — ähnliche Sprache-zu-Tastenanschlag-
-Tools existieren zwar bereits, nutzen aber alle feste Kommandophrasen statt freier Phrasierung
-per LLM, was das Alleinstellungsmerkmal dieses Projekts wäre. Eine Pflicht-Abhängigkeit zu einer
-separat zu installierenden LM-Studio-Instanz wäre dafür aber eine hohe Einstiegshürde. Geplant:
-Git LFS einrichten, das Gemma-4-E4B-Modell (Apache-2.0-lizenziert, verifiziert 11.09.2026) direkt
-ins Repo übernehmen, und `llm.py`/`lmstudio.py` durch eine direkte llama.cpp-Anbindung ersetzen
-statt der LM-Studio-API. Details und offene Architekturfragen: `CLAUDE.md`, Abschnitt "Geplant:
-LM Studio ablösen".
+**Erledigt (12.09.2026): eigenständiger Betrieb ohne LM Studio.** Hintergrund war eine mögliche
+Veröffentlichung auf GitHub — ähnliche Sprache-zu-Tastenanschlag-Tools existieren zwar bereits,
+nutzen aber alle feste Kommandophrasen statt freier Phrasierung per LLM, was das
+Alleinstellungsmerkmal dieses Projekts wäre. Eine Pflicht-Abhängigkeit zu einer separat zu
+installierenden LM-Studio-Instanz wäre dafür eine hohe Einstiegshürde gewesen. Umgesetzt: `llm.py`
+spricht jetzt direkt mit einem selbst verwalteten `llama-server`-Subprozess (`llama_proc.py`,
+`lmstudio.py` entfernt) statt mit der LM-Studio-API. Kein Git LFS (verworfen wegen GitHub-
+Kostenlos-Kontingent) — die Modellgewichte bleiben komplett außerhalb des Repos, werden per
+Skript nachgeladen; die kleinen Server-Programme selbst liegen dagegen direkt im Repo. Details:
+`CLAUDE.md`, Abschnitt "LM Studio abgeloest".
+
+**Zweites Spielprofil ergänzt (12.09.2026): Helldivers 1** (`profiles/Helldivers1_Stratagems.yaml`,
+55 Stratageme) — noch nicht im echten Spiel getestet, Nutzer besitzt Helldivers 1 nicht.
