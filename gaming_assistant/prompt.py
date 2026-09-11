@@ -41,10 +41,14 @@ def system_prompt_bauen(profil: Profil) -> str:
     for tag_name, eintrag in profil.tags.items():
         if eintrag.beschreibung:
             beschreibung = eintrag.beschreibung
-        else:
+        elif len(eintrag.schlagwort) == 1:
             # Standard: wortgebundene Beschreibung, siehe "Bereits entschieden"
             # in Gaming_assistent.md (Praezision vor Vollstaendigkeit).
-            beschreibung = f'nur wenn im Befehl das Wort "{eintrag.schlagwort}" vorkommt'
+            beschreibung = f'nur wenn im Befehl das Wort "{eintrag.schlagwort[0]}" vorkommt'
+        else:
+            # Mehrere gleichwertige Woerter (z.B. offizieller Name + Spitzname).
+            woerter = '" oder "'.join(eintrag.schlagwort)
+            beschreibung = f'nur wenn im Befehl eines der Woerter "{woerter}" vorkommt'
         zeilen.append(f"&&{tag_name}&& - {beschreibung}")
 
     zeilen.append("")
@@ -89,8 +93,9 @@ def initial_prompt_bauen(profil: Profil) -> str:
     else:
         schlagwoerter = []
         for eintrag in profil.tags.values():
-            if eintrag.schlagwort not in schlagwoerter:
-                schlagwoerter.append(eintrag.schlagwort)
+            for wort in eintrag.schlagwort:
+                if wort not in schlagwoerter:
+                    schlagwoerter.append(wort)
 
     text = ", ".join(schlagwoerter)
     if len(text) > _MAX_INITIAL_PROMPT_CHARS:

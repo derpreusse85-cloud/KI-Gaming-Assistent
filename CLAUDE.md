@@ -35,6 +35,31 @@ enthaltene Kommandos loesen (wie vorgesehen) keine Aktion aus.
   Nutzer die Spielbelegung entsprechend umgestellt hat. Zwei Abtippfehler wurden im Zuge des
   Testens gefunden und korrigiert (`Panzerabwehrstellung`, `Automatische_Kanone`) — die
   `taste`-Werte gelten weiterhin als vorlaeufig aenderbar, nicht als endgueltig fixiert.
+* **`schlagwort` unterstuetzt jetzt mehrere gleichwertige Woerter pro Tag** (11.09.2026,
+  `profile.py::TagEintrag.schlagwort` ist jetzt immer eine Liste, `prompt.py` passt die
+  Tag-Beschreibung entsprechend an: "eines der Woerter X oder Y"). In der YAML durchgaengig als
+  Liste in eckigen Klammern geschrieben, auch bei nur einem Wort (`["MG-43"]`), fuer eine
+  einheitliche, leicht erweiterbare Schreibweise (Motivation: spaetere GitHub-Nutzer sollen
+  eigene Schlagwoerter leicht ergaenzen koennen). Mehrere zusaetzliche Schlagwoerter ergaenzt und
+  jeweils einzeln gegen LM Studio auf Kollisionen mit den bestehenden Konfliktclustern getestet:
+  `EAT` + "Panzerabwehrkanone" (bewusst NICHT das blosse "Panzerabwehr" - das kollidierte im Test
+  mit `Panzerabwehrstellung`), `Automatische_Kanone` + "Autocannon", `Kanonengeschuetz` +
+  "Autocannon-Geschuetz" (unterscheidet sich im Test sauber von `Automatische_Kanone`s
+  "Autocannon"), `Luftdetonations_Raketenwerfer` + "Airburst", `Minenfeld` + "AP-Minenfeld",
+  `Panzerabwehrminen` + "AT-Minen", `Moersergeschuetz` + "Moerser",
+  `EMP_Moersergeschuetz` + "EMP-Moerser", `Hellbombe` + "Hellbomb"/"Hoellenbombe". Ausserdem bei
+  den sechs Hangar-Adler-Tags (`Adler_Tieffliegerangriff`, `_Luftschlag`, `_Streubombe`,
+  `_Napalmluftschlag`, `_Rauchbeschuss`, `_Raketenpods`) das Wort "Adler" versuchsweise entfernt
+  und behalten, weil auch der Risikofall Rauchbeschuss/Orbital-Rauchbeschuss (Cluster B) im Test
+  weiterhin korrekt unterschieden wurde; `Orbital_Schienenkanone` verlor ebenso das "Orbital"-
+  Praefix (einzigartiges Wort im Profil, keine Kollision mit `Railgun`). `Adler_Nachladen`
+  (Missionsspezifisch, nicht Hangar) bewusst unveraendert gelassen - "nachladen" allein waere zu
+  generisch. **Arbeitsweise, die sich bewaehrt hat:** jede Aenderung einzeln mit einem kleinen
+  Testskript (`lmstudio.sicherstellen_geladen` + `llm.klassifizieren` + `parser.tags_extrahieren`
+  gegen mehrere Formulierungen inkl. der bekannten Konfliktcluster) gegen das echte LM Studio
+  verifiziert, bevor sie in die YAML uebernommen wurde - dabei genau ein Fall gefunden und korrigiert
+  (`Panzerabwehr` -> `Panzerabwehrkanone`). Abschliessender Regressionstest ueber 32 Faelle
+  (alle Aenderungen plus Referenzfaelle wie Guard-Dog-Familie, NONE-Erkennung): 32/32 korrekt.
 * **`vendor/whisper.cpp` und Whisper-Modell sind eigenstaendige Kopien**, keine Pfad-
   Abhaengigkeit zum Diktier-Tool-Repo (aus dessen fertigem Build kopiert: nur `whisper-
   server.exe` + noetige DLLs, nur die Q5-Deutsch-Modellvariante). `scripts/build_whisper.ps1`/

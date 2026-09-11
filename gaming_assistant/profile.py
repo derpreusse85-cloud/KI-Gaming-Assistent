@@ -5,6 +5,11 @@ ein YAML pro Spiel, ein Eintrag pro Tag mit schlagwort/beispiel/taste, optional
 beschreibung (statt der wortgebundenen Standardbeschreibung) und optional eine
 Taste, die waehrend der ganzen taste-Sequenz gehalten wird (halte_taste).
 
+`schlagwort` darf in der YAML entweder ein einzelnes Wort (String) oder eine
+Liste mehrerer gleichwertiger Woerter/Bezeichnungen sein (z.B. offizieller
+Name und gaengiger Spitzname). Intern wird daraus immer eine Liste - siehe
+TagEintrag.schlagwort unten.
+
 Optionales Top-Level-Feld `initial_prompt_schlagwoerter`: eine kuratierte
 Kurzliste fuer den Whisper-initial_prompt (siehe prompt.py), statt automatisch
 ALLE Schlagwoerter zu verwenden. Grund: gemessen am 10.09.2026 kostet ein
@@ -31,7 +36,9 @@ import yaml
 class TagEintrag:
     """Alle Angaben zu genau einem Tag (z.B. &&500kg_Bombe&&) aus dem Profil."""
 
-    schlagwort: str
+    # Immer eine Liste, auch wenn die YAML nur ein einzelnes Wort angibt
+    # (siehe _schlagwort_liste() beim Laden).
+    schlagwort: list[str]
     beispiel: str
     taste: list[str]
     # None = Standardbeschreibung ("nur wenn das Wort ... vorkommt") wird
@@ -57,6 +64,14 @@ class Profil:
         return set(self.tags.keys())
 
 
+def _schlagwort_liste(wert) -> list[str]:
+    """Normalisiert das schlagwort-Feld auf eine Liste - egal ob die YAML
+    einen einzelnen String oder bereits eine Liste angibt."""
+    if isinstance(wert, list):
+        return [str(w) for w in wert]
+    return [str(wert)]
+
+
 def laden(pfad: Path) -> Profil:
     """Liest eine Profil-YAML-Datei ein und baut daraus ein Profil-Objekt."""
     with pfad.open(encoding="utf-8") as datei:
@@ -75,7 +90,7 @@ def laden(pfad: Path) -> Profil:
             # Dict einliest (sollte bei sauberem YAML nicht vorkommen).
             continue
         tags[tag_name] = TagEintrag(
-            schlagwort=str(eintrag["schlagwort"]),
+            schlagwort=_schlagwort_liste(eintrag["schlagwort"]),
             beispiel=str(eintrag["beispiel"]),
             taste=[str(t) for t in eintrag["taste"]],
             beschreibung=eintrag.get("beschreibung"),
