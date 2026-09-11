@@ -86,6 +86,30 @@ enthaltene Kommandos loesen (wie vorgesehen) keine Aktion aus.
   Die vorherige Testreihe (vier Runden, zuletzt 105/107 auf der vollen 77-Tag-Helldivers-2-Liste)
   ist im Detail in `Gaming_assistent.md`, Abschnitt "Testreihe" dokumentiert.
 
+## Geplant: LM Studio abloesen (noch nicht begonnen)
+
+Ueberlegung vom 11.09.2026, weil eine Veroeffentlichung auf GitHub ernsthaft in Betracht gezogen
+wird. Recherche des Nutzers ergab: aehnliche Sprache-zu-Tastenanschlag-Tools existieren bereits,
+nutzen aber alle feste Kommandophrasen statt freier Phrasierung per LLM — das waere das
+Alleinstellungsmerkmal dieses Projekts. Eine Pflicht-Abhaengigkeit zu einer separat zu
+installierenden LM-Studio-Instanz waere fuer ein Open-Source-Tool aber eine hohe Einstiegshuerde.
+
+**Ziel:** der Assistent soll komplett ohne LM Studio auskommen.
+
+* **Git LFS einrichten**, das Gemma-4-E4B-Modell direkt ins Repo uebernehmen — analog dazu, wie
+  `vendor/whisper.cpp` + Whisper-Modell bereits als eigenstaendige Kopie im Projekt liegen (siehe
+  oben, "keine Pfad-Abhaengigkeit zum Diktier-Tool-Repo"). Konsequente Fortsetzung desselben
+  Prinzips (keine Fremdabhaengigkeiten) auf die LLM-Komponente.
+* **`gaming_assistant/lmstudio.py` und `llm.py` ersetzen**: statt der LM-Studio-OpenAI-API soll
+  llama.cpp das LLM direkt ansteuern. Architekturentscheidung noch offen: Python-Bindings
+  (`llama-cpp-python`) vs. eigener Subprozess (Vorlage: `gaming_assistant/whisper_proc.py`, das
+  bereits denselben Subprozess-Ansatz fuer whisper.cpp nutzt).
+* **Lizenzfrage bereits geklaert (11.09.2026, per Websuche verifiziert):** Gemma 4 (die hier
+  genutzte Version, `google/gemma-4-e4b`) laeuft seit April 2026 unter **Apache 2.0** — keine
+  Redistributions-Einschraenkungen, unproblematisch fuers Einbetten der Modellgewichte per Git
+  LFS in ein oeffentliches Repo. Nur Gemma 1-3 liefen noch unter den restriktiveren, selbst
+  geschriebenen "Gemma Terms of Use"; fuer dieses Projekt nicht relevant. Kein offener Punkt mehr.
+
 ## Uebertragbare Lektionen aus dem Vorgaengerprojekt
 
 Volle Doku in `Diktiertool.md`:

@@ -418,8 +418,18 @@ existiert) nach Bedarf ergänzen.
 
 ## Status
 
-Rein konzeptionell — bisher keine Umsetzung, nur Architektur- und Prompt-Design durchdacht.
-Testreihe mit Gemma 4 E4B ist gelaufen, zuletzt gegen die vollständige 77-Tag-Helldivers-2-Liste
-(105/107, siehe „Testreihe" und `CLAUDE.md`) — der Prompt-Ansatz gilt damit als belastbar.
-Nächster sinnvoller Schritt: mit der Umsetzung beginnen (siehe `CLAUDE.md` für den aktuellen
-Stand und den Einstiegspunkt bei den wiederverwendbaren Bausteinen).
+**Umgesetzt, Version 1.0 (09.09.2026), im echten Spiel gegen Helldivers 2 bestätigt** — nicht
+mehr rein konzeptionell. Aktueller Stand, Modulstruktur und alle seither gewonnenen Erkenntnisse
+(Latenzmessung, Design-Entscheidung `halte_taste` usw.) stehen in `CLAUDE.md`, Abschnitt "Stand
+der Arbeit" — diese Konzeptdatei hier bleibt für das grundsätzliche Design und die
+Testreihen-Begründung maßgeblich, wird aber nicht mehr laufend nachgeführt.
+
+**In Planung (11.09.2026, noch nicht begonnen): eigenständiger Betrieb ohne LM Studio.**
+Hintergrund ist eine mögliche Veröffentlichung auf GitHub — ähnliche Sprache-zu-Tastenanschlag-
+Tools existieren zwar bereits, nutzen aber alle feste Kommandophrasen statt freier Phrasierung
+per LLM, was das Alleinstellungsmerkmal dieses Projekts wäre. Eine Pflicht-Abhängigkeit zu einer
+separat zu installierenden LM-Studio-Instanz wäre dafür aber eine hohe Einstiegshürde. Geplant:
+Git LFS einrichten, das Gemma-4-E4B-Modell (Apache-2.0-lizenziert, verifiziert 11.09.2026) direkt
+ins Repo übernehmen, und `llm.py`/`lmstudio.py` durch eine direkte llama.cpp-Anbindung ersetzen
+statt der LM-Studio-API. Details und offene Architekturfragen: `CLAUDE.md`, Abschnitt "Geplant:
+LM Studio ablösen".
