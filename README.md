@@ -23,7 +23,7 @@ Rechner bereits eingerichtet. Falls das Projekt mal auf einen neuen Rechner umzi
 
 * **Windows 10/11 (64-Bit)** — `pynput`/`pystray`/`whisper-server.exe` sind Windows-spezifisch,
   keine plattformuebergreifende Unterstuetzung vorgesehen.
-* **GPU mit Vulkan-Unterstuetzung**, mindestens **10 GB VRAM insgesamt**. Gemessen auf diesem
+* **GPU mit Vulkan-Unterstuetzung**, mindestens **12 GB VRAM insgesamt**. Gemessen auf diesem
   Rechner (`lms ps`): Whisper-Modell ~0,57 GB, Gemma 4 E4B bei Kontext 8192 ~6,33 GB — zusammen
   ~6,9 GB fuers Tool allein, der Rest ist Platz fuers Spiel selbst (Helldivers 2 & Co. brauchen
   ebenfalls mehrere GB VRAM). Ohne GPU laeuft Whisper
