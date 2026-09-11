@@ -9,19 +9,31 @@ Das vollstaendige Konzept samt aller Design-Entscheidungen und der Testreihe ste
 `Gaming_assistent.md`; der aktuelle Entwicklungsstand in `CLAUDE.md`. Dieses README ist die
 kurze Gebrauchsanleitung fuer den taeglichen Betrieb.
 
-## Voraussetzungen
+## Einrichtung (einmalig nach dem Klonen)
 
-* **Kein separates LLM-Programm noetig** — der Assistent startet ein eigenes llama.cpp
-  (`llama-server.exe`, Vulkan) als Hintergrundprozess automatisch mit. Einmalig vorher
-  einrichten: `.\scripts\fetch_llama.ps1` laedt den Server nach `vendor\llama.cpp\`.
-* Ein Mikrofon.
-* **Modelldatei herunterladen** (nicht im Repo enthalten, zu gross fuer GitHub):
-  `.\scripts\download_llm.ps1` laedt `gemma-4-E4B-it-Q4_K_M.gguf` automatisch in den Ordner
-  `gemma-4-E4B-it-GGUF/` — Details siehe `gemma-4-E4B-it-GGUF/README.md`.
+**Kein separates LLM-Programm noetig** — der Assistent startet ein eigenes llama.cpp
+(`llama-server.exe`, Vulkan) und whisper.cpp (`whisper-server.exe`) als Hintergrundprozesse
+automatisch mit. Beide liegen als fertige Binaries direkt im Repo (`vendor/`) - dafuer muss
+nichts heruntergeladen oder kompiliert werden.
 
-Whisper (eigener `vendor/whisper.cpp`-Build + Modell) und das Python-venv sind auf diesem
-Rechner bereits eingerichtet. Falls das Projekt mal auf einen neuen Rechner umzieht: siehe
-`scripts/setup_venv.ps1`, `scripts/build_whisper.ps1` und `scripts/fetch_models.ps1`.
+Was fehlt, sind nur die beiden grossen Modelldateien (zu gross fuers Repo) und die
+Python-Umgebung - dafuer einmalig ausfuehren:
+
+```powershell
+.\scripts\setup.ps1
+```
+
+Das ruft nacheinander `setup_venv.ps1` (Python-venv + Abhaengigkeiten), `download_llm.ps1`
+(Gemma-4-E4B-Modell, ca. 5 GB) und `fetch_models.ps1` (Whisper-Modell, ca. 0,5 GB) auf. Jedes
+der drei Skripte laesst sich bei Bedarf auch einzeln erneut ausfuehren (z.B. um nur ein Modell
+neu herunterzuladen).
+
+**Nur im Ausnahmefall noetig** (Reparatur, falls `vendor/` beschaedigt ist, oder eine andere
+Plattform/Architektur gebraucht wird): `scripts\fetch_llama.ps1` laedt `llama-server.exe` neu,
+`scripts\build_whisper.ps1` kompiliert `whisper-server.exe` selbst (braucht dafuer Git, CMake,
+VS Build Tools, Vulkan SDK).
+
+Ein Mikrofon wird ausserdem gebraucht.
 
 ### Mindestanforderungen
 

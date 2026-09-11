@@ -3,7 +3,18 @@
 __pycache__/
 *.pyc
 config.json
-vendor/
+.claude/
+# vendor/: die fertigen Server-Binaries (llama-server.exe, whisper-server.exe +
+# DLLs) sind klein genug fuers normale Git und liegen deshalb direkt im Repo -
+# nur der ggf. von build_whisper.ps1 geklonte Quellcode/Build-Zwischenstand
+# bleibt ausgeschlossen. vendor/llama.cpp/ braucht keine eigene Regel:
+# fetch_llama.ps1 legt dort ohnehin nur fertige Binaries ab, nie Quellcode.
+vendor/whisper.cpp/*
+!vendor/whisper.cpp/build
+vendor/whisper.cpp/build/*
+!vendor/whisper.cpp/build/bin
+vendor/whisper.cpp/build/bin/*
+!vendor/whisper.cpp/build/bin/Release
 models/
 training_data/
 logs/
@@ -13,3 +24,6 @@ gemma-4-E4B-it-GGUF/*.gguf
 # fuers Ausfuehren des Programms noetig.
 Beispiele.txt
 *.png
+
+# Persoenliche projektuebergreifende Referenzdoku, nicht Teil dieses Repos.
+llamaCCP.md

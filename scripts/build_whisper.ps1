@@ -1,5 +1,8 @@
-# Klont und baut whisper.cpp mit Vulkan-Backend - eigener Build fuer dieses Projekt,
-# bewusst keine Abhaengigkeit zum Diktier-Tool-Repo (siehe CLAUDE.md).
+# Fallback-/Reparatur-Skript: klont und baut whisper.cpp mit Vulkan-Backend selbst.
+# Fuer den Normalfall NICHT noetig - whisper-server.exe liegt bereits fertig im Repo
+# (klein genug fuers normale Git, siehe CLAUDE.md). Nur noetig, falls
+# vendor\whisper.cpp\build\ fehlt/beschaedigt ist oder eine andere
+# Plattform/Architektur gebraucht wird.
 # Voraussetzungen: Git, CMake, VS Build Tools (Desktopentwicklung mit C++), Vulkan SDK.
 $ErrorActionPreference = 'Stop'
 $root = Split-Path -Parent $PSScriptRoot

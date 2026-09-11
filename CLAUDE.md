@@ -74,11 +74,15 @@ enthaltene Kommandos loesen (wie vorgesehen) keine Aktion aus.
   (alle Aenderungen plus Referenzfaelle wie Guard-Dog-Familie, NONE-Erkennung): 32/32 korrekt.
 * **`vendor/whisper.cpp` und Whisper-Modell sind eigenstaendige Kopien**, keine Pfad-
   Abhaengigkeit zum Diktier-Tool-Repo (aus dessen fertigem Build kopiert: nur `whisper-
-  server.exe` + noetige DLLs, nur die Q5-Deutsch-Modellvariante). `scripts/build_whisper.ps1`/
-  `scripts/fetch_models.ps1` bleiben als Vorlage liegen, falls die Kopie mal neu erzeugt werden
-  muss. `scripts/setup_venv.ps1` legt EIN venv an. Analog dazu ist `vendor/llama.cpp/` eine
-  eigenstaendige Kopie des offiziellen llama.cpp-Vulkan-Windows-Release-Zips (per
-  `scripts/fetch_llama.ps1`, gepinnter Build `b10909`) - siehe "LM Studio abgeloest" weiter unten.
+  server.exe` + noetige DLLs, nur die Q5-Deutsch-Modellvariante). Analog dazu ist
+  `vendor/llama.cpp/` eine eigenstaendige Kopie des offiziellen llama.cpp-Vulkan-Windows-
+  Release-Zips (gepinnter Build `b10909`), auf `llama-server.exe` + noetige DLLs verschlankt
+  (die vielen mitgelieferten Zusatzwerkzeuge wie `llama-cli.exe`/`llama-bench.exe`/etc. werden
+  nicht gebraucht). **Beide Server-Binaries liegen seit 12.09.2026 direkt im Repo** (siehe
+  "Server-Binaries eingebettet" weiter unten) statt separat heruntergeladen werden zu muessen -
+  `scripts/build_whisper.ps1`/`scripts/fetch_llama.ps1` bleiben nur noch als
+  Fallback-/Reparatur-Skripte fuer den Ausnahmefall bestehen. `scripts/setup.ps1` buendelt die
+  Ersteinrichtung (venv + beide Modell-Downloads) in einem Aufruf.
 * **Bekannter, nicht als kritisch eingestufter Fund:** bei rein digitaler Stille (Testfall, kein
   echtes Mikrofon-Rauschen) halluziniert Whisper gelegentlich Text statt leer zu bleiben. Im
   echten Spielbetrieb bisher nicht als Problem aufgefallen.
@@ -235,6 +239,26 @@ dokumentiert, siehe ggf. dortiges Projekt-Gedaechtnis.)
   genutzte Version) laeuft seit April 2026 unter **Apache 2.0** — keine Redistributions-
   Einschraenkungen fuer die Modellgewichte. Nur Gemma 1-3 liefen noch unter den restriktiveren,
   selbst geschriebenen "Gemma Terms of Use"; fuer dieses Projekt nicht relevant.
+* **Server-Binaries eingebettet (12.09.2026), Ersteinrichtung auf ein Skript gebuendelt.**
+  Nachtraeglich aufgefallen: die eigentlichen Server-Programme (`llama-server.exe`,
+  `whisper-server.exe`) sind winzig im Vergleich zu den Modellgewichten - nach dem Verschlanken
+  auf nur die tatsaechlich gebrauchten Dateien (Rest siehe "Modulstruktur" oben) ~81 MB
+  (llama.cpp) bzw. ~54 MB (whisper.cpp), jede einzelne Datei weit unter GitHubs 100-MB-Grenze
+  fuer normale (nicht-LFS-)Dateien. Anders als bei den Modellgewichten (mehrere GB, siehe oben)
+  gibt es hier also **kein** Kontingent-Problem. Deshalb: `.gitignore` von einem pauschalen
+  `vendor/`-Ausschluss auf eine gezielte Regel umgestellt (verschachtelte `!`-Ausnahmen fuer
+  `vendor/whisper.cpp/build/bin/Release/`, damit ein evtl. von `build_whisper.ps1` geklonter
+  Quellcode/Build-Zwischenstand weiterhin ignoriert bleibt, aber die fertigen Binaries darin
+  nicht; `vendor/llama.cpp/` braucht keine eigene Regel, da dort nie Quellcode anfaellt) - beide
+  Binary-Sets sind jetzt direkt im Repo committet. `fetch_llama.ps1`/`build_whisper.ps1` sind
+  dadurch fuer den Normalfall ueberfluessig geworden, bleiben aber als Fallback-/
+  Reparatur-Skripte bestehen (z.B. falls `vendor/` beschaedigt ist oder eine andere
+  Plattform/Architektur gebraucht wird) - `fetch_llama.ps1` entfernt dabei automatisch dieselben
+  ueberfluessigen Zusatzwerkzeuge, die einmalig manuell aus `vendor/llama.cpp/` geloescht wurden.
+  Uebrig bleiben fuer eine Ersteinrichtung nur noch die Python-Umgebung und die beiden grossen
+  Modell-Downloads (LLM ~5 GB, Whisper ~0,5 GB) - dafuer neu `scripts/setup.ps1`, das
+  `setup_venv.ps1`/`download_llm.ps1`/`fetch_models.ps1` nacheinander aufruft (keine
+  Logik-Duplizierung, die drei Skripte bleiben einzeln nutzbar).
 
 ## Uebertragbare Lektionen aus dem Vorgaengerprojekt
 
