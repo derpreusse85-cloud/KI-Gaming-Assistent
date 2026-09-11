@@ -89,12 +89,31 @@ enthaltene Kommandos loesen (wie vorgesehen) keine Aktion aus.
 ## Geplant: LM Studio abloesen (noch nicht begonnen)
 
 Ueberlegung vom 11.09.2026, weil eine Veroeffentlichung auf GitHub ernsthaft in Betracht gezogen
-wird. Recherche des Nutzers ergab: aehnliche Sprache-zu-Tastenanschlag-Tools existieren bereits,
-nutzen aber alle feste Kommandophrasen statt freier Phrasierung per LLM — das waere das
-Alleinstellungsmerkmal dieses Projekts. Eine Pflicht-Abhaengigkeit zu einer separat zu
-installierenden LM-Studio-Instanz waere fuer ein Open-Source-Tool aber eine hohe Einstiegshuerde.
+wird. Eine Pflicht-Abhaengigkeit zu einer separat zu installierenden LM-Studio-Instanz waere fuer
+ein Open-Source-Tool eine hohe Einstiegshuerde.
 
 **Ziel:** der Assistent soll komplett ohne LM Studio auskommen.
+
+**Konkurrenz-Recherche (11.09.2026, per Websuche), Korrektur einer fruehen Annahme:** die
+urspruengliche Annahme "kein Tool nutzt ein LLM statt fester Kommandophrasen" haelt so **nicht**
+stand — **Wingman AI** (wingman-ai.com, Kern Open Source) macht das bereits: freie Formulierung,
+LLM interpretiert Intent, loest Tastendruck/Aktion aus, laeuft optional komplett lokal (LM
+Studio/Ollama). Der tatsaechliche Unterschied liegt woanders: Wingman AI ist als
+**Companion-Plattform** aufgebaut (Charaktere mit eigener Persoenlichkeit, Sprachsynthese-
+Antworten inkl. geklonter Stimmen, Chat-Historie, Rollenspiel-Fokus, Skill-Oekosystem fuer
+Spotify/Websuche/Bildgenerierung usw. — Tastendruck ist nur eine von vielen Faehigkeiten).
+**Dieses Projekt bleibt bewusst ein reiner Befehls-zu-Tastendruck-Uebersetzer ohne Persoenlichkeit,
+Konversation oder Sprachausgabe** — das ist die tatsaechlich belastbare Abgrenzung, nicht "LLM
+statt fester Phrasen" allein. Zwei andere geprueften Kandidaten sind keine echte Konkurrenz:
+VoiceMacro LLM nutzt ein LLM nur zur Makro-*Erstellung*, nicht zur Laufzeit-Spracherkennung;
+ottomate ist lokal + kommerziell, nutzt aber eher klassische lokale Spracherkennungsmodelle statt
+erkennbar ein generatives LLM zur Intent-Klassifikation. Passende Formulierung fuer einen
+kuenftigen README/Pitch: *"Wingman AI ist eine Companion-Plattform mit Charakteren und
+Rollenspiel-Fokus, bei der Tastendruck-Steuerung eine von vielen Faehigkeiten ist. Dieses Tool
+ist bewusst schlank: ein reiner Sprache-zu-Tastendruck-Uebersetzer ohne Konversation oder
+Persoenlichkeit."* (Nebenbefund: Wingman AIs "Wingmen"-Konzept aehnelt eher dem separaten
+Nero-Projekt des Nutzers als diesem Gaming-Tool — fuer Nero selbst nicht in diesem Repo
+dokumentiert, siehe ggf. dortiges Projekt-Gedaechtnis.)
 
 * **Git LFS einrichten**, das Gemma-4-E4B-Modell direkt ins Repo uebernehmen — analog dazu, wie
   `vendor/whisper.cpp` + Whisper-Modell bereits als eigenstaendige Kopie im Projekt liegen (siehe
