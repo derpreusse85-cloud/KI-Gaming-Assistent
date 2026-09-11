@@ -1,56 +1,10 @@
-# Helldivers-1-Spielprofil, Aktionsliste nach dem in Gaming_assistent.md festgelegten Schema
-# (Abschnitt "Aktionslisten-Format"): schlagwort -> Grundlage fuer die wortgebundene
-# Tag-Beschreibung im Prompt und fuer die automatische Whisper-initial_prompt-Liste;
-# beispiel -> Few-Shot-Beispiel im Prompt; taste -> Tastenkombination, nie im Prompt gezeigt.
-#
-# Codes/Namen per Claude aus der Wiki-Seite helldivers.wiki.gg/wiki/Helldivers_1:Stratagem_Codes
-# abgetippt (12.09.2026) - die urspruenglich vom Nutzer verlinkte Fandom-Seite war per
-# Cloudflare-Bot-Schutz nicht abrufbar. NICHT gegen Screenshots/das echte Spiel geprueft (anders
-# als beim Helldivers-2-Profil) - vor dem produktiven Einsatz gegenpruefen. Nutzer besitzt
-# Helldivers 1 nicht, konnte also bislang gar nicht im echten Spiel testen (anders als beim
-# Helldivers-2-Profil, das direkt im Spiel bestaetigt wurde) - Tastenbelegung/Codes gelten bis
-# auf Weiteres als ungeprueft, auch die "taste"-Werte koennen falsch sein.
-#
-# "schlagwort" traegt hier durchgaengig zwei Woerter: [0] der englische Original-Codename/-Name
-# aus dem Spiel (z.B. "EAT-17", "Obliterator"), [1] eine deutsche Uebersetzung/Umschreibung
-# (Nutzerwunsch, analog zum bereits im Helldivers-2-Profil bewaehrten Muster "EAT" +
-# "Panzerabwehrkanone"). Die deutschen Woerter sind Claudes Uebersetzungsvorschlaege, nicht
-# gegen echte Spielausgaben geprueft - koennen/sollten bei Bedarf noch angepasst werden.
-#
-# "halte_taste: ctrl" gilt laut Nutzerangabe (12.09.2026) genau wie bei Helldivers 2 - die
-# Strg-Taste wird waehrend der ganzen Richtungssequenz gehalten.
-#
-# Konfliktkandidaten (12.09.2026 mit kleinem Testskript gegen das echte llama-server-Setup
-# verifiziert, analog zum Vorgehen beim Helldivers-2-Profil):
-#   A Maschinengewehr-Familie: MG-94 und MGX-42 teilten sich urspruenglich das blosse
-#     Schlagwort "Maschinengewehr" - behoben (Nutzer-Anpassung) durch Ergaenzung der Modell-
-#     nummer ("Maschinengewehr 94"/"Maschinengewehr 42"), im Test sauber unterschieden. Die
-#     nummernlose Formulierung "Ruf das Maschinengewehr" bleibt bewusst mehrdeutig (waehlt im
-#     Test deterministisch MG_94) - echte Mehrdeutigkeit der Eingabe, kein Fehler.
-#   B Tiefflieger-Angriff-Familie: Strafing Run ("Tiefflieger-Angriff") und Heavy Strafing Run
-#     ("Schwerer Tiefflieger-Angriff") teilen sich einen Wortstamm, wurden im Test aber
-#     trotzdem sauber unterschieden ("Ruf den Tiefflieger-Angriff" vs. "Ruf den schweren
-#     Tiefflieger-Angriff").
-#
-# Kontextlaenge: gemessen am tatsaechlich generierten System-Prompt (12.09.2026, per
-# llama-server /tokenize-Endpunkt, siehe CLAUDE.md/Gaming_assistent.md Abschnitt
-# "Sampling-Parameter" zur Messmethode): 3.128 Prompt-Tokens bei 55 Tags. 4096 laesst
-# ausreichend Marge fuer max_tokens und kuenftig ergaenzte Stratageme.
+# Codes aus einer Wiki-Quelle abgetippt, nicht im echten Spiel getestet (Nutzer besitzt
+# Helldivers 1 nicht) - taste-Werte koennen falsch sein.
+
 kontextlaenge: 4096
 
 halte_taste: "ctrl"
 
-# Kuratierte Kurzliste fuer den Whisper-initial_prompt (siehe prompt.py) - hier besonders
-# wichtig, weil anders als beim Helldivers-2-Profil fast durchgaengig englische Codenamen als
-# erstes Schlagwort verwendet werden (siehe Kopfkommentar). Ohne diese Liste wuerde prompt.py
-# automatisch ALLE Schlagwoerter (Englisch + Deutsch, 1.694 Zeichen) nehmen und stumpf auf 700
-# Zeichen abschneiden - trifft dabei zufaellig, welche Woerter noch reinpassen. Deshalb hier
-# bewusst nur die kurzen alphanumerischen Codes (z.B. "MG-94") und ungewoehnlichen/fremd
-# klingenden Einzelwoerter (z.B. "Humblebee", "Thunderer") ausgewaehlt - die meisten Mehrwort-
-# Phrasen mit gaengigen englischen Woertern (z.B. "Guard Dog", "Jump Pack") duerften einem
-# deutschen Whisper-Modell keine Probleme machen, aehnlich wie bei den ausgelassenen normalen
-# deutschen Komposita im Helldivers-2-Profil. Wie dort: noch nicht an echten Fehlerkennungen
-# kalibriert, bei Bedarf ergaenzen/kuerzen.
 initial_prompt_schlagwoerter:
   - "MG-94"
   - "MGX-42"
@@ -91,15 +45,13 @@ Resupply:
   taste: ["down", "down", "up", "right"]
 
 MG_94:
-  # Konfliktkandidat A (siehe Kopfkommentar): urspruenglich blosses "Maschinengewehr",
-  # per Modellnummer von MGX_42 abgegrenzt.
+  # Teilt sich sonst "Maschinengewehr" mit MGX_42 - per Modellnummer abgegrenzt.
   schlagwort: ["MG-94", "Maschinengewehr 94"]
   beispiel: "Wirf mir die MG-94 zu"
   taste: ["down", "left", "down", "up", "right"]
 
 MGX_42:
-  # Konfliktkandidat A (siehe Kopfkommentar): urspruenglich blosses "Maschinengewehr",
-  # per Modellnummer von MG_94 abgegrenzt.
+  # Teilt sich sonst "Maschinengewehr" mit MG_94 - per Modellnummer abgegrenzt.
   schlagwort: ["MGX-42", "Maschinengewehr 42"]
   beispiel: "Wirf mir die MGX-42 zu"
   taste: ["down", "left", "down", "up", "up", "left"]
@@ -140,7 +92,6 @@ RL_112:
   taste: ["down", "left", "right", "right", "left"]
 
 EAT_17:
-  # Gleicher Name/Uebersetzung wie EAT im Helldivers-2-Profil.
   schlagwort: ["EAT-17", "Panzerabwehrkanone"]
   beispiel: "Wirf mir die Panzerabwehrkanone zu"
   taste: ["down", "left", "right", "up", "down"]
@@ -300,8 +251,7 @@ Vindicator_Dive_Bomb:
   taste: ["right", "right", "right"]
 
 Strafing_Run:
-  # Konfliktkandidat B: teilt sich den Wortstamm "Tiefflieger-Angriff" mit Heavy_Strafing_Run,
-  # siehe Kopfkommentar.
+  # Teilt Wortstamm "Tiefflieger-Angriff" mit Heavy_Strafing_Run.
   schlagwort: ["Strafing Run", "Tiefflieger-Angriff"]
   beispiel: "Ruf den Tiefflieger-Angriff"
   taste: ["right", "right", "up"]
@@ -312,8 +262,7 @@ Incendiary_Bombs:
   taste: ["right", "up", "left", "right"]
 
 Heavy_Strafing_Run:
-  # Konfliktkandidat B: teilt sich den Wortstamm "Tiefflieger-Angriff" mit Strafing_Run,
-  # siehe Kopfkommentar.
+  # Teilt Wortstamm "Tiefflieger-Angriff" mit Strafing_Run.
   schlagwort: ["Heavy Strafing Run", "Schwerer Tiefflieger-Angriff"]
   beispiel: "Ruf den schweren Tiefflieger-Angriff"
   taste: ["right", "right", "down", "up"]
@@ -356,13 +305,11 @@ Railcannon_Strike:
 # -- Special Stratagems -------------------------------------------------------
 
 Reinforce:
-  # Gleicher Name/Uebersetzung wie Verstaerkung im Helldivers-2-Profil.
   schlagwort: ["Reinforce", "Verstaerkung"]
   beispiel: "Ruf Verstaerkung"
   taste: ["up", "down", "right", "left", "up"]
 
 Hellbomb:
-  # Gleiche deutsche Uebersetzung wie Hellbombe im Helldivers-2-Profil.
   schlagwort: ["Hellbomb", "Hoellenbombe"]
   beispiel: "Ruf die Hoellenbombe"
   taste: ["up", "left", "right", "down", "up", "down"]
