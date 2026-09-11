@@ -1,0 +1,375 @@
+# Helldivers-1-Spielprofil, Aktionsliste nach dem in Gaming_assistent.md festgelegten Schema
+# (Abschnitt "Aktionslisten-Format"): schlagwort -> Grundlage fuer die wortgebundene
+# Tag-Beschreibung im Prompt und fuer die automatische Whisper-initial_prompt-Liste;
+# beispiel -> Few-Shot-Beispiel im Prompt; taste -> Tastenkombination, nie im Prompt gezeigt.
+#
+# Codes/Namen per Claude aus der Wiki-Seite helldivers.wiki.gg/wiki/Helldivers_1:Stratagem_Codes
+# abgetippt (12.09.2026) - die urspruenglich vom Nutzer verlinkte Fandom-Seite war per
+# Cloudflare-Bot-Schutz nicht abrufbar. NICHT gegen Screenshots/das echte Spiel geprueft (anders
+# als beim Helldivers-2-Profil) - vor dem produktiven Einsatz gegenpruefen.
+#
+# "schlagwort" traegt hier durchgaengig zwei Woerter: [0] der englische Original-Codename/-Name
+# aus dem Spiel (z.B. "EAT-17", "Obliterator"), [1] eine deutsche Uebersetzung/Umschreibung
+# (Nutzerwunsch, analog zum bereits im Helldivers-2-Profil bewaehrten Muster "EAT" +
+# "Panzerabwehrkanone"). Die deutschen Woerter sind Claudes Uebersetzungsvorschlaege, nicht
+# gegen echte Spielausgaben geprueft - koennen/sollten bei Bedarf noch angepasst werden.
+#
+# "halte_taste: ctrl" gilt laut Nutzerangabe (12.09.2026) genau wie bei Helldivers 2 - die
+# Strg-Taste wird waehrend der ganzen Richtungssequenz gehalten.
+#
+# Konfliktkandidaten (12.09.2026 mit kleinem Testskript gegen das echte llama-server-Setup
+# verifiziert, analog zum Vorgehen beim Helldivers-2-Profil):
+#   A Maschinengewehr-Familie: MG-94 und MGX-42 teilten sich urspruenglich das blosse
+#     Schlagwort "Maschinengewehr" - behoben (Nutzer-Anpassung) durch Ergaenzung der Modell-
+#     nummer ("Maschinengewehr 94"/"Maschinengewehr 42"), im Test sauber unterschieden. Die
+#     nummernlose Formulierung "Ruf das Maschinengewehr" bleibt bewusst mehrdeutig (waehlt im
+#     Test deterministisch MG_94) - echte Mehrdeutigkeit der Eingabe, kein Fehler.
+#   B Tiefflieger-Angriff-Familie: Strafing Run ("Tiefflieger-Angriff") und Heavy Strafing Run
+#     ("Schwerer Tiefflieger-Angriff") teilen sich einen Wortstamm, wurden im Test aber
+#     trotzdem sauber unterschieden ("Ruf den Tiefflieger-Angriff" vs. "Ruf den schweren
+#     Tiefflieger-Angriff").
+#
+# Kontextlaenge: gemessen am tatsaechlich generierten System-Prompt (12.09.2026, per
+# llama-server /tokenize-Endpunkt, siehe CLAUDE.md/Gaming_assistent.md Abschnitt
+# "Sampling-Parameter" zur Messmethode): 3.128 Prompt-Tokens bei 55 Tags. 4096 laesst
+# ausreichend Marge fuer max_tokens und kuenftig ergaenzte Stratageme.
+kontextlaenge: 4096
+
+halte_taste: "ctrl"
+
+# Kuratierte Kurzliste fuer den Whisper-initial_prompt (siehe prompt.py) - hier besonders
+# wichtig, weil anders als beim Helldivers-2-Profil fast durchgaengig englische Codenamen als
+# erstes Schlagwort verwendet werden (siehe Kopfkommentar). Ohne diese Liste wuerde prompt.py
+# automatisch ALLE Schlagwoerter (Englisch + Deutsch, 1.694 Zeichen) nehmen und stumpf auf 700
+# Zeichen abschneiden - trifft dabei zufaellig, welche Woerter noch reinpassen. Deshalb hier
+# bewusst nur die kurzen alphanumerischen Codes (z.B. "MG-94") und ungewoehnlichen/fremd
+# klingenden Einzelwoerter (z.B. "Humblebee", "Thunderer") ausgewaehlt - die meisten Mehrwort-
+# Phrasen mit gaengigen englischen Woertern (z.B. "Guard Dog", "Jump Pack") duerften einem
+# deutschen Whisper-Modell keine Probleme machen, aehnlich wie bei den ausgelassenen normalen
+# deutschen Komposita im Helldivers-2-Profil. Wie dort: noch nicht an echten Fehlerkennungen
+# kalibriert, bei Bedarf ergaenzen/kuerzen.
+initial_prompt_schlagwoerter:
+  - "MG-94"
+  - "MGX-42"
+  - "LAS-98"
+  - "AC-22"
+  - "FLAM-40"
+  - "TOX-13"
+  - "RL-112"
+  - "EAT-17"
+  - "REP-80"
+  - "APC"
+  - "HAV"
+  - "Obliterator"
+  - "Rumbler"
+  - "Commando"
+  - "Bastion"
+  - "Humblebee"
+  - "Demolisher"
+  - "Exosuit"
+  - "Thunderer"
+  - "Tesla"
+  - "Angel"
+  - "Distractor"
+  - "Emplacement"
+  - "Railcannon"
+  - "Shredder"
+  - "Incendiary"
+  - "Kinetic"
+  - "Conductors"
+  - "Reinforce"
+  - "Hellbomb"
+
+# -- Supply Stratagems -----------------------------------------------------
+
+Resupply:
+  schlagwort: ["Resupply", "Nachschub"]
+  beispiel: "Ruf Nachschub"
+  taste: ["down", "down", "up", "right"]
+
+MG_94:
+  # Konfliktkandidat A (siehe Kopfkommentar): urspruenglich blosses "Maschinengewehr",
+  # per Modellnummer von MGX_42 abgegrenzt.
+  schlagwort: ["MG-94", "Maschinengewehr 94"]
+  beispiel: "Wirf mir die MG-94 zu"
+  taste: ["down", "left", "down", "up", "right"]
+
+MGX_42:
+  # Konfliktkandidat A (siehe Kopfkommentar): urspruenglich blosses "Maschinengewehr",
+  # per Modellnummer von MG_94 abgegrenzt.
+  schlagwort: ["MGX-42", "Maschinengewehr 42"]
+  beispiel: "Wirf mir die MGX-42 zu"
+  taste: ["down", "left", "down", "up", "up", "left"]
+
+LAS_98:
+  schlagwort: ["LAS-98", "Laserkanone"]
+  beispiel: "Ruf die Laserkanone"
+  taste: ["down", "left", "down", "up", "left"]
+
+AC_22:
+  schlagwort: ["AC-22", "Autokanone"]
+  beispiel: "Ruf die AC-22"
+  taste: ["down", "left", "down", "up", "up", "right"]
+
+Obliterator:
+  schlagwort: ["Obliterator", "Granatwerfer"]
+  beispiel: "Ruf den Granatwerfer"
+  taste: ["down", "left", "up", "left", "down"]
+
+M_25_Rumbler:
+  schlagwort: ["Rumbler", "Schrotflinte"]
+  beispiel: "Wirf mir die Schrotflinte zu"
+  taste: ["down", "left", "up", "left", "left"]
+
+FLAM_40:
+  schlagwort: ["FLAM-40", "Flammenwerfer"]
+  beispiel: "Ruf den Flammenwerfer"
+  taste: ["down", "left", "down", "right", "left"]
+
+TOX_13:
+  schlagwort: ["TOX-13", "Giftgewehr"]
+  beispiel: "Ruf das Giftgewehr"
+  taste: ["down", "left", "down", "right", "right"]
+
+RL_112:
+  schlagwort: ["RL-112", "Rueckstossfreies Gewehr"]
+  beispiel: "Ruf das rueckstossfreie Gewehr"
+  taste: ["down", "left", "right", "right", "left"]
+
+EAT_17:
+  # Gleicher Name/Uebersetzung wie EAT im Helldivers-2-Profil.
+  schlagwort: ["EAT-17", "Panzerabwehrkanone"]
+  beispiel: "Wirf mir die Panzerabwehrkanone zu"
+  taste: ["down", "left", "right", "up", "down"]
+
+MLS_4X_Commando:
+  schlagwort: ["Commando", "Kommando"]
+  beispiel: "Ruf den Raketenwerfer"
+  taste: ["down", "left", "up", "down", "right"]
+
+AD_334_Guard_Dog:
+  schlagwort: ["Guard Dog", "Wachhund"]
+  beispiel: "Ruf den Wachhund"
+  taste: ["down", "up", "left", "up", "right", "down"]
+
+AD_289_Angel:
+  schlagwort: ["Angel", "Engel"]
+  beispiel: "Ruf den Heilroboter"
+  taste: ["down", "up", "left", "left", "right", "down"]
+
+Resupply_Pack:
+  schlagwort: ["Resupply Pack", "Nachschub"]
+  beispiel: "Ruf ein Nachschubpaket"
+  taste: ["down", "up", "down", "down", "right"]
+
+LIFT_850_Jump_Pack:
+  schlagwort: ["Jump Pack", "Sprungausruestung"]
+  beispiel: "Ruf die Sprungausruestung"
+  taste: ["down", "up", "up", "down", "up"]
+
+SH_32_Kinetic_Shield:
+  schlagwort: ["Kinetic Shield", "Schutzschild"]
+  beispiel: "Ruf den Schutzschild"
+  taste: ["down", "up", "left", "right", "left", "down"]
+
+SH_20_Shield_Pack:
+  schlagwort: ["Shield Generator Pack", "Schildgenerator"]
+  beispiel: "Ruf den Schildgenerator"
+  taste: ["down", "up", "left", "right", "left", "right"]
+
+REP_80:
+  schlagwort: ["REP-80", "Reparaturwerkzeug"]
+  beispiel: "Ruf das Reparaturwerkzeug"
+  taste: ["down", "down", "left", "right", "down"]
+
+REC_6_Demolisher:
+  schlagwort: ["Demolisher", "Sprengstoffwerfer"]
+  beispiel: "Ruf den Sprengstoffwerfer"
+  taste: ["down", "left", "right", "up", "up"]
+
+EXO_44_Walker:
+  schlagwort: ["Walker Exosuit", "Kampfanzug"]
+  beispiel: "Ruf den Kampfanzug"
+  taste: ["down", "right", "up", "left", "down", "down"]
+
+EXO_48_Obsidian:
+  schlagwort: ["Obsidian Exosuit", "Obsidiananzug"]
+  beispiel: "Ruf den Obsidiananzug"
+  taste: ["down", "right", "up", "left", "down", "left"]
+
+EXO_51_Lumberer:
+  schlagwort: ["Lumberer Exosuit", "Holzfaeller-Anzug"]
+  beispiel: "Ruf den Holzfaeller-Anzug"
+  taste: ["down", "right", "up", "left", "down", "right"]
+
+MC_109_Motorcycle:
+  schlagwort: ["Hammer Motorcycle", "Motorrad"]
+  beispiel: "Ruf das Motorrad"
+  taste: ["down", "right", "down", "left", "left", "up"]
+
+TD_110_Bastion:
+  schlagwort: ["Bastion", "Panzerfahrzeug"]
+  beispiel: "Ruf das Panzerfahrzeug"
+  taste: ["down", "right", "down", "left", "up", "right"]
+
+M5_APC:
+  schlagwort: ["APC", "Truppentransporter"]
+  beispiel: "Ruf den Truppentransporter"
+  taste: ["down", "right", "down", "left", "left", "right"]
+
+M5_32_HAV:
+  schlagwort: ["HAV", "Kampfpanzer"]
+  beispiel: "Ruf den Kampfpanzer"
+  taste: ["down", "right", "down", "left", "up", "down"]
+
+# -- Defensive Stratagems ----------------------------------------------------
+
+Humblebee_UAV:
+  schlagwort: ["Humblebee", "Aufklaerungsdrohne"]
+  beispiel: "Ruf die Aufklaerungsdrohne"
+  taste: ["left", "up", "right"]
+
+Distractor_Beacon:
+  schlagwort: ["Distractor Beacon", "Ablenkungsbake"]
+  beispiel: "Wirf die Ablenkungsbake"
+  taste: ["left", "down", "right"]
+
+AT_47_Emplacement:
+  schlagwort: ["Anti-Tank Emplacement", "Panzerabwehrgeschuetz"]
+  beispiel: "Ruf das Panzerabwehrgeschuetz"
+  taste: ["left", "left", "up", "up", "right", "left"]
+
+MG_11_Minigun_Turret:
+  schlagwort: ["Minigun Turret", "Minigun-Geschuetz"]
+  beispiel: "Ruf das Minigun-Geschuetz"
+  taste: ["left", "down", "up", "right", "left"]
+
+RX_34_Railcannon_Turret:
+  schlagwort: ["Railcannon Turret", "Railgun-Geschuetz"]
+  beispiel: "Ruf das Railgun-Geschuetz"
+  taste: ["left", "down", "up", "left", "right"]
+
+GL_8_Launcher_Turret:
+  schlagwort: ["Launcher Turret", "Granatwerfer-Geschuetz"]
+  beispiel: "Ruf das Granatwerfer-Geschuetz"
+  taste: ["left", "down", "up", "right", "right", "down"]
+
+AC_6_Tesla_Tower:
+  schlagwort: ["Tesla Tower", "Teslaturm"]
+  beispiel: "Ruf den Teslaturm"
+  taste: ["left", "down", "down", "up", "right", "left"]
+
+AP_Mines:
+  schlagwort: ["Anti-Personnel Mines", "Antipersonenminen"]
+  beispiel: "Leg Antipersonenminen"
+  taste: ["left", "right", "down", "up"]
+
+AP_Barrier:
+  schlagwort: ["Anti-Personnel Barrier", "Stacheldrahtzaun"]
+  beispiel: "Ruf den Stacheldrahtzaun"
+  taste: ["left", "right", "down", "down", "right"]
+
+Smoke_Round:
+  schlagwort: ["Thunderer Smoke Round", "Rauchgranate"]
+  beispiel: "Ruf die Rauchgranate"
+  taste: ["right", "down", "up", "up", "down"]
+
+Stun_Mines:
+  schlagwort: ["Stun Mines", "Betaeubungsminen"]
+  beispiel: "Leg Betaeubungsminen"
+  taste: ["left", "right", "up", "down"]
+
+# -- Offensive Stratagems -----------------------------------------------------
+
+Static_Field_Conductors:
+  schlagwort: ["Static Field Conductors", "EMP-Feld"]
+  beispiel: "Ruf das EMP-Feld"
+  taste: ["right", "up", "left", "down"]
+
+Heavy_Airstrike:
+  schlagwort: ["Heavy Airstrike", "Schwerer Luftschlag"]
+  beispiel: "Ruf den schweren Luftschlag"
+  taste: ["right", "up", "down", "right", "left"]
+
+Vindicator_Dive_Bomb:
+  schlagwort: ["Dive Bomb", "Sturzbombe"]
+  beispiel: "Ruf die Sturzbombe"
+  taste: ["right", "right", "right"]
+
+Strafing_Run:
+  # Konfliktkandidat B: teilt sich den Wortstamm "Tiefflieger-Angriff" mit Heavy_Strafing_Run,
+  # siehe Kopfkommentar.
+  schlagwort: ["Strafing Run", "Tiefflieger-Angriff"]
+  beispiel: "Ruf den Tiefflieger-Angriff"
+  taste: ["right", "right", "up"]
+
+Incendiary_Bombs:
+  schlagwort: ["Incendiary Bombs", "Brandbomben"]
+  beispiel: "Ruf die Brandbomben"
+  taste: ["right", "up", "left", "right"]
+
+Heavy_Strafing_Run:
+  # Konfliktkandidat B: teilt sich den Wortstamm "Tiefflieger-Angriff" mit Strafing_Run,
+  # siehe Kopfkommentar.
+  schlagwort: ["Heavy Strafing Run", "Schwerer Tiefflieger-Angriff"]
+  beispiel: "Ruf den schweren Tiefflieger-Angriff"
+  taste: ["right", "right", "down", "up"]
+
+Close_Air_Support:
+  schlagwort: ["Close Air Support", "Nahluftunterstuetzung"]
+  beispiel: "Ruf die Nahluftunterstuetzung"
+  taste: ["right", "right", "down", "left"]
+
+Missile_Barrage:
+  schlagwort: ["Missile Barrage", "Raketensperrfeuer"]
+  beispiel: "Ruf das Raketensperrfeuer"
+  taste: ["right", "down", "down", "down", "left", "down"]
+
+Thunderer_Barrage:
+  schlagwort: ["Thunderer Barrage", "Artilleriesperrfeuer"]
+  beispiel: "Ruf das Artilleriesperrfeuer"
+  taste: ["right", "down", "up", "up", "left", "down"]
+
+Sledge_Artillery:
+  schlagwort: ["Precision Artillery", "Praezisionsartillerie"]
+  beispiel: "Ruf die Praezisionsartillerie"
+  taste: ["right", "up", "left", "up", "down", "right"]
+
+Orbital_Laser_Strike:
+  schlagwort: ["Orbital Laser Strike", "Orbitallaser"]
+  beispiel: "Ruf den Orbitallaser"
+  taste: ["right", "up", "left", "up", "right", "left"]
+
+Shredder_Missile_Strike:
+  schlagwort: ["Shredder Missile Strike", "Raketenschlag"]
+  beispiel: "Ruf den Raketenschlag"
+  taste: ["right", "left", "right", "left", "down", "down", "right"]
+
+Railcannon_Strike:
+  schlagwort: ["Railcannon Strike", "Railgun-Schlag"]
+  beispiel: "Ruf den Railgun-Schlag"
+  taste: ["right", "down", "up", "down", "left"]
+
+# -- Special Stratagems -------------------------------------------------------
+
+Reinforce:
+  # Gleicher Name/Uebersetzung wie Verstaerkung im Helldivers-2-Profil.
+  schlagwort: ["Reinforce", "Verstaerkung"]
+  beispiel: "Ruf Verstaerkung"
+  taste: ["up", "down", "right", "left", "up"]
+
+Hellbomb:
+  # Gleiche deutsche Uebersetzung wie Hellbombe im Helldivers-2-Profil.
+  schlagwort: ["Hellbomb", "Hoellenbombe"]
+  beispiel: "Ruf die Hoellenbombe"
+  taste: ["up", "left", "right", "down", "up", "down"]
+
+Metal_Detector:
+  schlagwort: ["Metal Detector", "Metalldetektor"]
+  beispiel: "Ruf den Metalldetektor"
+  taste: ["down", "down", "right", "up"]
+
+Emergency_Beacon:
+  schlagwort: ["Emergency Beacon", "Notfallbake"]
+  beispiel: "Aktiviere die Notfallbake"
+  taste: ["up", "down", "right", "up"]
