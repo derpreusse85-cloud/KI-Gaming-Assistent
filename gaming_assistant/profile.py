@@ -1,9 +1,26 @@
 """Laden eines Spielprofils (YAML-Datei aus profiles/).
 
 Format ist in Gaming_assistent.md, Abschnitt "Aktionslisten-Format" festgelegt:
-ein YAML pro Spiel, ein Eintrag pro Tag mit schlagwort/beispiel/taste, optional
-beschreibung (statt der wortgebundenen Standardbeschreibung) und optional eine
-Taste, die waehrend der ganzen taste-Sequenz gehalten wird (halte_taste).
+ein YAML pro Spiel, ein Eintrag pro Tag mit beispiel/taste, dazu schlagwort
+und/oder beschreibung (siehe unten), und optional eine Taste, die waehrend
+der ganzen taste-Sequenz gehalten wird (halte_taste).
+
+`schlagwort` und `beschreibung` haben zwei unabhaengige Aufgaben, die sich
+nicht gegenseitig ausschliessen (11.09.2026, Nutzergespraech):
+* `beschreibung` (falls gesetzt) steuert, wie das LLM den Tag im System-Prompt
+  erklaert bekommt - frei formulierbar statt der wortgebundenen Standard-
+  beschreibung. Ideal fuer Spiele mit wenigen, eindeutigen Kommandos, die
+  keine Wortbindung brauchen (siehe "Aktionslisten-Format" in
+  Gaming_assistent.md).
+* `schlagwort` (falls gesetzt) speist unabhaengig davon die automatische
+  Whisper-`initial_prompt`-Vokabelliste (siehe prompt.py). Praktisch auch
+  bei einem Tag MIT `beschreibung`: steht dort z.B. ein Fremdwort, kann genau
+  dieses Wort zusaetzlich als `schlagwort` eingetragen werden, nur damit es
+  im initial_prompt landet - unabhaengig davon, ob es fuer die Klassifikation
+  selbst gebraucht wird.
+* Ein Tag braucht **mindestens eines von beiden** - fehlen beide, gibt es
+  weder eine Klassifikations-Beschreibung noch ein initial_prompt-Wort, und
+  `laden()` bricht mit einer klaren Fehlermeldung ab (siehe unten).
 
 `schlagwort` darf in der YAML entweder ein einzelnes Wort (String) oder eine
 Liste mehrerer gleichwertiger Woerter/Bezeichnungen sein (z.B. offizieller
@@ -66,7 +83,10 @@ class Profil:
 
 def _schlagwort_liste(wert) -> list[str]:
     """Normalisiert das schlagwort-Feld auf eine Liste - egal ob die YAML
-    einen einzelnen String oder bereits eine Liste angibt."""
+    das Feld weglaesst (None), einen einzelnen String oder bereits eine
+    Liste angibt."""
+    if wert is None:
+        return []
     if isinstance(wert, list):
         return [str(w) for w in wert]
     return [str(wert)]
@@ -89,11 +109,19 @@ def laden(pfad: Path) -> Profil:
             # Ueberspringt z.B. reine Kommentarzeilen, die YAML nicht als
             # Dict einliest (sollte bei sauberem YAML nicht vorkommen).
             continue
+        schlagwort = _schlagwort_liste(eintrag.get("schlagwort"))
+        beschreibung = eintrag.get("beschreibung")
+        if not schlagwort and not beschreibung:
+            raise ValueError(
+                f"Profil {pfad.name!r}, Tag {tag_name!r}: weder 'schlagwort' noch "
+                "'beschreibung' angegeben - mindestens eines von beiden wird gebraucht "
+                "(schlagwort fuers initial_prompt, beschreibung fuer den System-Prompt)."
+            )
         tags[tag_name] = TagEintrag(
-            schlagwort=_schlagwort_liste(eintrag["schlagwort"]),
+            schlagwort=schlagwort,
             beispiel=str(eintrag["beispiel"]),
             taste=[str(t) for t in eintrag["taste"]],
-            beschreibung=eintrag.get("beschreibung"),
+            beschreibung=beschreibung,
             halte_taste=eintrag.get("halte_taste", profil_halte_taste),
         )
 

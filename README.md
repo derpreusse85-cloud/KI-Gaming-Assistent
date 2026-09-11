@@ -83,14 +83,25 @@ LANDEGESTELL:
   schlagwort: ["Landegestell", "Fahrgestell"]  # eines davon muss im Befehl woertlich vorkommen
   beispiel: "Fahrgestell einfahren"            # Few-Shot-Beispiel fuer das LLM
   taste: ["shift", "n"]                        # wird als Tipp-Sequenz ausgefuehrt (nacheinander, nicht gleichzeitig)
+
+ORBITALSCHLAG:
+  beschreibung: "nur wenn ein Orbitalschlag angefordert wird"  # frei formuliert statt Wortbindung
+  beispiel: "Ruf den Orbitalschlag"
+  taste: ["ctrl", "o"]
 ```
 
-* **`schlagwort`**: immer eine Liste in eckigen Klammern, auch bei nur einem Wort (`["EAT"]`).
-  Bindet den Tag an das woertliche Vorkommen **eines** dieser Woerter im Befehl (Praezision vor
-  Vollstaendigkeit) — praktisch fuer Synonyme, Abkuerzungen oder englische Alternativbegriffe.
-  Eigene Woerter lassen sich einfach mit Komma innerhalb der Klammern ergaenzen. Optional durch
-  ein `beschreibung`-Feld ersetzbar, falls ein Tag eine freiere, inhaltliche Beschreibung statt
-  Wortbindung braucht.
+* **`schlagwort`** und **`beschreibung`** haben zwei unabhaengige Aufgaben — ein Tag braucht
+  mindestens eines von beiden, oft reicht eines allein:
+  * **`schlagwort`**: eine Liste in eckigen Klammern, auch bei nur einem Wort (`["EAT"]`). Ohne
+    eigene `beschreibung` bindet es den Tag an das woertliche Vorkommen **eines** dieser Woerter
+    im Befehl (Praezision vor Vollstaendigkeit) — praktisch fuer Spiele mit vielen aehnlich
+    klingenden Kommandos wie Helldivers 2. Eigene Woerter lassen sich einfach mit Komma innerhalb
+    der Klammern ergaenzen. Unabhaengig davon speist `schlagwort` auch das Whisper-Vokabular
+    (`initial_prompt`) — kann also selbst bei einem Tag mit eigener `beschreibung` sinnvoll sein,
+    einfach um ein einzelnes Fremdwort daraus dort bekannt zu machen.
+  * **`beschreibung`** (optional): ersetzt die wortgebundene Standardbeschreibung durch freien
+    Text. Sinnvoll bei Spielen mit wenigen, eindeutigen Kommandos, die keine strikte Wortbindung
+    brauchen (siehe `ORBITALSCHLAG` oben) — dann kann `schlagwort` komplett entfallen.
 * **`taste`**: Liste einzelner Tasten, die **nacheinander** getippt werden (kein gleichzeitig
   gehaltener Hotkey). Sondertasten wie `ctrl`, `shift`, `alt`, `tab`, `up`/`down`/`left`/`right`
   sind moeglich, sonst einzelne Zeichen.

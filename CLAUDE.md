@@ -35,6 +35,17 @@ enthaltene Kommandos loesen (wie vorgesehen) keine Aktion aus.
   Nutzer die Spielbelegung entsprechend umgestellt hat. Zwei Abtippfehler wurden im Zuge des
   Testens gefunden und korrigiert (`Panzerabwehrstellung`, `Automatische_Kanone`) — die
   `taste`-Werte gelten weiterhin als vorlaeufig aenderbar, nicht als endgueltig fixiert.
+* **`schlagwort` ist jetzt optional** (11.09.2026, Nutzergespraech): ein Tag braucht mindestens
+  eines von `schlagwort`/`beschreibung`, `profile.py::laden()` bricht sonst mit klarer
+  Fehlermeldung ab. Hintergrund: `schlagwort` und `beschreibung` haben unabhaengige Aufgaben -
+  `beschreibung` (falls gesetzt) bestimmt die Klassifikations-Beschreibung im System-Prompt,
+  `schlagwort` (falls gesetzt) speist unabhaengig davon nur die `initial_prompt`-Vokabelliste;
+  ein Tag mit `beschreibung` kann trotzdem ein `schlagwort` haben, nur um ein einzelnes Fremdwort
+  daraus im initial_prompt bekannt zu machen. Fuer Helldivers 2 mit seinen vielen aehnlichen
+  Stratagem-Namen wird durchgaengig die wortgebundene Standardbeschreibung (ueber `schlagwort`,
+  ohne eigenes `beschreibung`) gebraucht; ein Spiel mit wenigen, eindeutigen Kommandos koennte
+  stattdessen durchgaengig `beschreibung` ohne `schlagwort` nutzen - beide Modi laufen ueber
+  denselben `prompt.py`-Code, keine Sonderbehandlung noetig.
 * **`schlagwort` unterstuetzt jetzt mehrere gleichwertige Woerter pro Tag** (11.09.2026,
   `profile.py::TagEintrag.schlagwort` ist jetzt immer eine Liste, `prompt.py` passt die
   Tag-Beschreibung entsprechend an: "eines der Woerter X oder Y"). In der YAML durchgaengig als
