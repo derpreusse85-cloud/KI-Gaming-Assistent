@@ -27,8 +27,8 @@ from gaming_assistant import (
     audio,
     config,
     keypress,
+    llama_proc,
     llm,
-    lmstudio,
     logbuf,
     parser,
     profile,
@@ -57,15 +57,26 @@ def main() -> None:
     # haelt, die nur einmal beim Start entstehen).
     zustand: dict = {"profil": None, "system_prompt": "", "initial_prompt": "", "llm_bezeichner": ""}
 
+    # Muss VOR dem ersten profil_laden()-Aufruf angelegt sein, da profil_laden
+    # bereits beim allerersten Start (siehe unten) llama_server.sicherstellen()
+    # aufruft.
+    llama_server = llama_proc.LlamaServer(cfg)
+
     def profil_laden(name: str) -> None:
         pfad = profil_verzeichnis / f"{name}.yaml"
         profil_obj = profile.laden(pfad)
         zustand["profil"] = profil_obj
         zustand["system_prompt"] = prompt.system_prompt_bauen(profil_obj)
         zustand["initial_prompt"] = prompt.initial_prompt_bauen(profil_obj)
-        # Laedt (oder wechselt) das LLM mit der im Profil hinterlegten
-        # Kontextlaenge - siehe Gaming_assistent.md, Abschnitt "Sampling-Parameter".
-        zustand["llm_bezeichner"] = lmstudio.sicherstellen_geladen(cfg, profil_obj.kontextlaenge)
+        # Startet (oder - falls die Kontextlaenge sich geaendert hat - startet
+        # neu) den llama-server-Subprozess mit der im Profil hinterlegten
+        # Kontextlaenge - siehe Gaming_assistent.md, Abschnitt "Sampling-Parameter",
+        # und llama_proc.py fuer die Neustart-Logik.
+        llama_server.sicherstellen(profil_obj.kontextlaenge)
+        # llama-server bedient immer nur ein einziges Modell - anders als bei
+        # LM Studio frueher gibt es keinen echten "Bezeichner" mehr zu waehlen,
+        # der Wert hier ist nur noch Log-/Protokoll-Kosmetik in llm.py/training_log.py.
+        zustand["llm_bezeichner"] = "gaming-llm"
         cfg["profil"]["aktiv"] = name
         config.save(cfg)
         log.info("Profil aktiv: %s (%d Tags, Kontext %d)", name, len(profil_obj.tags), profil_obj.kontextlaenge)
@@ -162,7 +173,7 @@ def main() -> None:
         log.info("Gaming-Assistent wird beendet ...")
         ptt_listener.stop()
         whisper_server.stop()
-        lmstudio.alle_entladen(cfg)
+        llama_server.stop()
         whisper_engine.close()
         klassifikator.close()
 

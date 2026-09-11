@@ -61,16 +61,22 @@ DEFAULTS: dict[str, Any] = {
         "startup_timeout_s": 180,
     },
     "llm": {
-        "api_base": "http://localhost:1234/v1",
-        "model": "google/gemma-4-e4b",
+        "llama_bin": "vendor/llama.cpp/llama-server.exe",
+        "model": "gemma-4-E4B-it-GGUF/gemma-4-E4B-it-Q4_K_M.gguf",
+        # 999 = so viele Layer, dass garantiert alle auf die GPU passen (llama.cpp
+        # kappt intern automatisch auf die tatsaechliche Layer-Zahl des Modells) -
+        # entspricht dem, was frueher LM Studios "gpu_offload: max" gemacht hat.
+        "n_gpu_layers": 999,
+        "threads": 8,
+        # Eigener Port, damit weder Whisper (8930 hier) noch ein evtl. parallel
+        # laufendes Diktier-Tool kollidiert.
+        "llama_host": "127.0.0.1",
+        "llama_port": 8931,
+        "startup_timeout_s": 180,
         # 0.0 = Greedy Decoding, siehe Gaming_assistent.md "Sampling-Parameter".
         "temperature": 0.0,
         "max_tokens": 40,
         "timeout_s": 30,
-        "manage_loading": True,
-        "gpu_offload": "max",
-        "ttl_s": 0,
-        "unload_other_models": True,
     },
     "log_level": "INFO",
     "training_log": {"verzeichnis": "training_data/raw"},

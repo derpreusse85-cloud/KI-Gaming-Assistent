@@ -18,8 +18,9 @@ enthaltene Kommandos loesen (wie vorgesehen) keine Aktion aus.
   (System-Prompt + Whisper-initial_prompt aus dem Profil generieren), `parser.py`
   (Tag-Extraktion, verwirft bei Zweifel statt zu raten), `keypress.py` (Tastensequenz per
   pynput), `whisper_proc.py` + `stt.py` (whisper-server-Subprozess + Einzel-Transkription, kein
-  rollierendes Fenster), `lmstudio.py` + `llm.py` (Modell laden ueber `lms`-CLI +
-  Klassifikations-Request), `ptt.py` + `ptt_dialog.py` + `audio.py` (Push-to-Talk inkl.
+  rollierendes Fenster), `llama_proc.py` + `llm.py` (llama-server-Subprozess, startet bei
+  Kontextlaengen-Aenderung automatisch neu, + Klassifikations-Request), `ptt.py` +
+  `ptt_dialog.py` + `audio.py` (Push-to-Talk inkl.
   Tray-Dialog zum Aendern der PTT-Taste zur Laufzeit, Mikrofon-Aufnahme), `tray.py` + `icons.py`
   + `logbuf.py` (Tray-Icon mit Profil- und PTT-Auswahl-Menue, Log-Fenster), `training_log.py`
   (ungefiltertes JSONL-Live-Logging fuer spaeteres Fine-Tuning), `__main__.py` (verdrahtet
@@ -75,24 +76,31 @@ enthaltene Kommandos loesen (wie vorgesehen) keine Aktion aus.
   Abhaengigkeit zum Diktier-Tool-Repo (aus dessen fertigem Build kopiert: nur `whisper-
   server.exe` + noetige DLLs, nur die Q5-Deutsch-Modellvariante). `scripts/build_whisper.ps1`/
   `scripts/fetch_models.ps1` bleiben als Vorlage liegen, falls die Kopie mal neu erzeugt werden
-  muss. `scripts/setup_venv.ps1` legt EIN venv an.
+  muss. `scripts/setup_venv.ps1` legt EIN venv an. Analog dazu ist `vendor/llama.cpp/` eine
+  eigenstaendige Kopie des offiziellen llama.cpp-Vulkan-Windows-Release-Zips (per
+  `scripts/fetch_llama.ps1`, gepinnter Build `b10909`) - siehe "LM Studio abgeloest" weiter unten.
 * **Bekannter, nicht als kritisch eingestufter Fund:** bei rein digitaler Stille (Testfall, kein
   echtes Mikrofon-Rauschen) halluziniert Whisper gelegentlich Text statt leer zu bleiben. Im
   echten Spielbetrieb bisher nicht als Problem aufgefallen.
-* **Latenz gemessen und dokumentiert (10.09.2026), siehe `__main__.py::verarbeiten()`** (schreibt
-  pro Befehl eine Log-Zeile `Latenz: STT ...s, LLM ...s, ...`): realer End-zu-Ende-Durchlauf mit
-  echter Sprache (per Windows-TTS synthetisiert, nicht mit Stille/Rauschen getestet - dazu gleich
-  mehr) liegt bei **~0,33-0,35s pro Befehl** (STT ~0,2s, LLM ~0,14s dank LM-Studio-Prompt-Caching
-  fuer den identischen System-Prompt). **Nur der allererste Aufruf nach Programmstart oder
-  Tray-Profilwechsel kostet ~2,5s** (einmaliges Prefill des 3.541-Token-System-Prompts).
-  **Bewusst NICHT gebaut:** weder ein einmaliger Warmup-Aufruf beim Profil-Laden noch ein
-  wiederkehrender Warmhalter-Ping waehrend des Spielens - Grund: LM Studio (Modell + Prompt-
-  Cache) kann durch VRAM-Druck des Spiels jederzeit verdraengt werden (dasselbe Phaenomen wie
-  beim Whisper-Modell, siehe `Diktiertool.md`, Abschnitt "Bildraten-Einbruch"), ein einmaliger
-  Warmup schuetzt also nur den Start-Fall, nicht spaetere Verdraengungen mitten im Spiel: ein
-  wiederkehrender Ping wuerde davor zuverlaessiger schuetzen, aber dauerhafte GPU-Last waehrend
-  des Spielens verursachen. Nutzer hat sich explizit gegen beide Varianten entschieden - die
-  seltene ~2,5s-Verzoegerung nach Start/Verdraengung wird bewusst in Kauf genommen.
+* **Latenz gemessen und dokumentiert (10.09.2026, nach der LM-Studio-Abloesung am 12.09.2026 mit
+  llama-server neu verifiziert), siehe `__main__.py::verarbeiten()`** (schreibt pro Befehl eine
+  Log-Zeile `Latenz: STT ...s, LLM ...s, ...`): realer End-zu-Ende-Durchlauf mit echter Sprache
+  (per Windows-TTS synthetisiert, nicht mit Stille/Rauschen getestet - dazu gleich mehr) liegt bei
+  **~0,33-0,35s pro Befehl** (STT ~0,2s, LLM ~0,14s dank Prompt-Caching fuer den identischen
+  System-Prompt). Mit llama-server (`cache_prompt: true` in `llm.py`) **eher noch etwas besser**:
+  per Testskript gemessene Wiederholungs-Latenz **~0,09-0,11s**, siehe "LM Studio abgeloest"
+  unten. **Nur der allererste Aufruf nach Programmstart oder Tray-Profilwechsel kostet laenger**
+  (vorher ~2,5s mit LM Studio, jetzt gemessen ~1,5s mit llama-server - einmaliges Prefill des
+  System-Prompts, je nach Profil mehrere Tausend Tokens). **Bewusst NICHT gebaut:** weder ein
+  einmaliger Warmup-Aufruf beim Profil-Laden noch ein wiederkehrender Warmhalter-Ping waehrend des
+  Spielens - Grund: der llama-server-Prozess (Modell + Prompt-Cache) kann durch VRAM-Druck des
+  Spiels jederzeit verdraengt werden (dasselbe Phaenomen wie beim Whisper-Modell, siehe
+  `Diktiertool.md`, Abschnitt "Bildraten-Einbruch"), ein einmaliger Warmup schuetzt also nur den
+  Start-Fall, nicht spaetere Verdraengungen mitten im Spiel: ein wiederkehrender Ping wuerde davor
+  zuverlaessiger schuetzen, aber dauerhafte GPU-Last waehrend des Spielens verursachen. Nutzer hat
+  sich explizit gegen beide Varianten entschieden - die seltene Verzoegerung nach Start/Verdraengung
+  wird bewusst in Kauf genommen. Diese Begruendung ist backend-unabhaengig und gilt nach der
+  LM-Studio-Abloesung unveraendert weiter.
 * **`initial_prompt`-Laenge hat bei echter Sprache keinen messbaren Effekt auf die Latenz**
   (getestet: 0/143/700 Zeichen -> alle ~0,19-0,2s STT-Zeit). Die kuratierte Kurzliste
   (`initial_prompt_schlagwoerter` im Profil, nur Fremdwoerter/Akronyme statt aller 77
@@ -116,19 +124,79 @@ enthaltene Kommandos loesen (wie vorgesehen) keine Aktion aus.
   siehe dort fuer die Begruendung.
 * **Kernentscheidungen kurz:** ein Prozess statt Server/Client, Push-to-Talk, Whisper
   `large-v3-turbo-german-q5` fest auf Deutsch, LLM-Klassifikation statt Stringmatch
-  (`google/gemma-4-e4b`, `temperature=0`, Denkmodus in diesem LM-Studio-Setup bereits aus),
+  (Gemma 4 E4B, `temperature=0`, Denkmodus per `--reasoning off` an llama-server explizit aus -
+  frueher LM-Studio-GUI-Schalter, siehe "LM Studio abgeloest" unten),
   Tags im Format `&&TAG&&`, `&&NONE&&` bei Uneindeutigkeit, YAML-Profil pro Spiel mit
   `schlagwort`/`beispiel`/`taste`/`kontextlaenge`-Feldern (Details siehe „Aktionslisten-Format").
   Die vorherige Testreihe (vier Runden, zuletzt 105/107 auf der vollen 77-Tag-Helldivers-2-Liste)
   ist im Detail in `Gaming_assistent.md`, Abschnitt "Testreihe" dokumentiert.
 
-## Geplant: LM Studio abloesen (noch nicht begonnen)
+## LM Studio abgeloest (12.09.2026)
 
 Ueberlegung vom 11.09.2026, weil eine Veroeffentlichung auf GitHub ernsthaft in Betracht gezogen
-wird. Eine Pflicht-Abhaengigkeit zu einer separat zu installierenden LM-Studio-Instanz waere fuer
-ein Open-Source-Tool eine hohe Einstiegshuerde.
+wurde. Eine Pflicht-Abhaengigkeit zu einer separat zu installierenden LM-Studio-Instanz waere fuer
+ein Open-Source-Tool eine hohe Einstiegshuerde. **Ziel erreicht:** der Assistent kommt jetzt
+komplett ohne LM Studio aus.
 
-**Ziel:** der Assistent soll komplett ohne LM Studio auskommen.
+**Architekturentscheidung: eigener Subprozess statt Python-Bindings.** Die beiden Kandidaten aus
+der urspruenglichen Planung waren `llama-cpp-python` (Python-Bindings) oder ein eigener
+Subprozess (Vorlage: `whisper_proc.py`/`whisper-server.exe`, dasselbe Muster). Entschieden fuer
+den Subprozess: `llama-server.exe` (offizieller vorgefertigter Windows/Vulkan-Build von
+`github.com/ggml-org/llama.cpp`) bringt von Haus aus dieselbe OpenAI-kompatible
+`/v1/chat/completions`-API mit, die vorher LM Studio lieferte, sodass `llm.py` kaum geaendert
+werden musste; kein Kompilieren noetig; keine Unsicherheit wegen fehlender vorgefertigter Wheels
+fuer das hier verwendete Python 3.14 auf Windows; passt zum bereits etablierten Whisper-Muster
+(gleicher Vulkan-Backend, gleiche Prozess-Isolation).
+
+**Neue Module:** `gaming_assistant/llama_proc.py` (`LlamaServer`-Klasse, ersetzt `lmstudio.py`)
+startet/ueberwacht `llama-server.exe` genau wie `whisper_proc.py` das fuer Whisper tut - mit
+einer Besonderheit: die Kontextlaenge (`-c`) ist nur beim Start setzbar, nicht zur Laufzeit
+aenderbar. Deshalb gibt es `LlamaServer.sicherstellen(kontextlaenge)`, das bei jedem
+Profilwechsel aufgerufen wird und nur dann neu startet, wenn sich die Kontextlaenge tatsaechlich
+geaendert hat (getestet: kein Neustart bei gleicher Kontextlaenge, sauberer Neustart bei anderer).
+`gaming_assistant/llm.py` blieb strukturell fast unveraendert - nur die Ziel-URL (jetzt
+`http://127.0.0.1:<port>/v1/chat/completions` statt LM Studios `api_base`) und ein neuer
+`"cache_prompt": true`-Payload-Parameter kamen dazu (siehe naechster Punkt).
+
+**Wichtiger Fund beim Testen, nicht im urspruenglichen Plan vorhergesehen: Denkmodus muss aktiv
+per `--reasoning off` an `llama-server` abgeschaltet werden.** Der in diesem llama.cpp-Build
+verwendete Gemma-4-Chat-Template-Standard aktiviert den Denkmodus automatisch, sobald eine
+System-Message vorhanden ist (bei diesem Projekt immer der Fall) - ohne das Flag verbrauchte das
+Modell seine kompletten `max_tokens` fuers Nachdenken (`reasoning_content` im Response-JSON), die
+eigentliche Tag-Antwort blieb leer, `finish_reason` war `"length"`. Mit `--reasoning off` in
+`llama_proc.py::LlamaServer.start()` verhaelt sich das Modell wie zuvor unter LM Studio (kein
+unaufgefordertes Denken). Ebenfalls beim manuellen Testen entdeckt: `llama-server` startet ohne
+explizites `-np 1` standardmaessig mit mehreren parallelen Slots (hier beobachtet: 4), was den
+VRAM-Bedarf des KV-Cache vervierfacht, obwohl immer nur ein Push-to-Talk-Nutzer gleichzeitig
+spricht - `-np 1` ist deshalb ebenfalls fest in `llama_proc.py` gesetzt.
+
+**Latenz nach der Umstellung neu gemessen (12.09.2026, Testskript gegen die echte Helldivers-2-
+Kontextlaenge 8192):** Wiederholungs-Latenz (Prompt-Cache greift) **~0,09-0,11s** (vorher LM
+Studio: ~0,14s), Cold-Start-Latenz (erster Aufruf direkt nach Programmstart) **~1,5s** (vorher LM
+Studio: ~2,5s) - beides eine spuerbare Verbesserung, kein Regressions-Risiko. `finish_reason`-Werte
+(`"stop"`/`"length"`) stimmen mit der OpenAI-Konvention ueberein, auf die sich `parser.py`
+verlaesst - per Test bestaetigt.
+
+**VRAM-Bedarf neu gemessen:** llama-server (Gemma 4 E4B, Q4_K_M, Kontext 8192, ein Slot) ~3,3 GB
+(gemessen per Windows-GPU-Performance-Counter, Differenz mit/ohne laufenden Prozess) - deutlich
+weniger als die fruehere LM-Studio-Messung von ~6,33 GB bei gleicher Kontextlaenge (vermutlich
+groesserer Overhead durch LM Studios eigene Verwaltung/anderes Quant-Handling; nicht weiter
+untersucht, da fuer dieses Projekt nicht relevant).
+
+**Verwendete llama.cpp-Version:** gepinnter Release-Tag `b10909` (`llama-b10909-bin-win-vulkan-x64.zip`),
+per `scripts/fetch_llama.ps1` nach `vendor/llama.cpp/` geladen - bewusst gepinnt statt "latest",
+da llama.cpp mehrmals woechentlich neue Builds veroeffentlicht (Reproduzierbarkeit,
+keine unbemerkten Breaking Changes).
+
+**Config-Migration:** `cfg["llm"]` hat ein neues Schema (`llama_bin`, `model` als Dateipfad statt
+LM-Studio-Katalogname, `n_gpu_layers`, `llama_host`/`llama_port` statt `api_base`,
+`manage_loading`/`gpu_offload`/`ttl_s`/`unload_other_models` entfallen komplett). Eine bereits
+vorhandene `config.json` mit dem alten Schema wuerde durch `_deep_merge` sonst den alten
+`"model": "google/gemma-4-e4b"`-Wert ueber den neuen Datei-Pfad-Default legen (Schluesselname-
+Kollision, gleicher Name "model", andere Bedeutung) - beim Umstieg einmalig den `llm`-Block aus
+der lokalen `config.json` entfernt, damit er sauber aus den neuen `DEFAULTS` befuellt wird. Kein
+automatischer Config-Migrator gebaut (Projekt war zu diesem Zeitpunkt noch nicht veroeffentlicht,
+Einzelfall).
 
 **Konkurrenz-Recherche (11.09.2026, per Websuche), Korrektur einer fruehen Annahme:** die
 urspruengliche Annahme "kein Tool nutzt ein LLM statt fester Kommandophrasen" haelt so **nicht**
@@ -163,26 +231,22 @@ dokumentiert, siehe ggf. dortiges Projekt-Gedaechtnis.)
   `gemma-4-E4B-it-GGUF/README.md` und Haupt-`README.md`) und kopieren sie selbst in den Ordner —
   gleiches Prinzip wie schon bei Whisper (`vendor/whisper.cpp` + Modell, siehe oben), nur ohne
   Git-Versionierung der Gewichte.
-* **`gaming_assistant/lmstudio.py` und `llm.py` ersetzen**: statt der LM-Studio-OpenAI-API soll
-  llama.cpp das LLM direkt ansteuern. Architekturentscheidung noch offen: Python-Bindings
-  (`llama-cpp-python`) vs. eigener Subprozess (Vorlage: `gaming_assistant/whisper_proc.py`, das
-  bereits denselben Subprozess-Ansatz fuer whisper.cpp nutzt).
 * **Lizenzfrage bereits geklaert (11.09.2026, per Websuche verifiziert):** Gemma 4 (die hier
-  genutzte Version, `google/gemma-4-e4b`) laeuft seit April 2026 unter **Apache 2.0** — keine
-  Redistributions-Einschraenkungen, unproblematisch fuers Einbetten der Modellgewichte per Git
-  LFS in ein oeffentliches Repo. Nur Gemma 1-3 liefen noch unter den restriktiveren, selbst
-  geschriebenen "Gemma Terms of Use"; fuer dieses Projekt nicht relevant. Kein offener Punkt mehr.
+  genutzte Version) laeuft seit April 2026 unter **Apache 2.0** — keine Redistributions-
+  Einschraenkungen fuer die Modellgewichte. Nur Gemma 1-3 liefen noch unter den restriktiveren,
+  selbst geschriebenen "Gemma Terms of Use"; fuer dieses Projekt nicht relevant.
 
 ## Uebertragbare Lektionen aus dem Vorgaengerprojekt
 
 Volle Doku in `Diktiertool.md`:
 
-* **LM Studio ignoriert `enable_thinking`.** Wirksam ist nur `/no_think` im Prompt
-  (Qwen-Konvention, nicht bei allen Modellen) bzw. bei manchen Modellen der Schalter
-  Inference -> Custom Fields -> "Enable Thinking" direkt in LM Studio. Bei diesem Projekt
-  besonders wichtig, da Denk-Tokens vor der Tag-Ausgabe eine im Spiel spuerbare Verzoegerung
-  verursachen wuerden. Fuer `google/gemma-4-e2b` und `google/gemma-4-e4b` bereits getestet und
-  bestaetigt aus, siehe "Stand der Arbeit" oben.
+* **(LM-Studio-spezifisch, vor der Abloesung relevant) LM Studio ignoriert `enable_thinking`.**
+  Wirksam war nur `/no_think` im Prompt (Qwen-Konvention, nicht bei allen Modellen) bzw. bei
+  manchen Modellen der Schalter Inference -> Custom Fields -> "Enable Thinking" direkt in LM
+  Studio. Bei diesem Projekt besonders wichtig, da Denk-Tokens vor der Tag-Ausgabe eine im Spiel
+  spuerbare Verzoegerung verursachen wuerden. Nach der Abloesung (siehe "LM Studio abgeloest")
+  gilt die analoge Lektion fuer llama-server: dort ist es der explizite `--reasoning off`-
+  Kommandozeilen-Flag statt eines GUI-Schalters.
 * **`/load` von whisper-server beendet sich mit `exit(1)`** bei ungueltigem Modellpfad. Nie
   einen extern gelieferten Pfad durchreichen, nur Namen gegen einen eigenen Verzeichnis-Scan
   aufloesen.

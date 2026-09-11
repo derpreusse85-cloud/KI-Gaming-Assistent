@@ -8,3 +8,8 @@ models/
 training_data/
 logs/
 gemma-4-E4B-it-GGUF/*.gguf
+
+# Referenzmaterial (Screenshots/Notizen beim Profil-Erstellen genutzt), nicht
+# fuers Ausfuehren des Programms noetig.
+Beispiele.txt
+*.png

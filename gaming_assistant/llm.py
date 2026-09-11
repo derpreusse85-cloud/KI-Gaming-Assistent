@@ -1,4 +1,4 @@
-"""Klassifikations-Anfrage an LM Studio (OpenAI-kompatible Chat-API).
+"""Klassifikations-Anfrage an llama-server (OpenAI-kompatible Chat-API).
 
 Anders als beim Diktier-Tool (server/llm.py, dort Bereinigung/Uebersetzung von
 Fliesstext) macht das LLM hier keine freie Textgenerierung, sondern ordnet
@@ -7,10 +7,18 @@ genau einer festen Tag-Liste zu (siehe Gaming_assistent.md, Abschnitt
 Plausibilitaets-Pruefung per Laengenverhaeltnis - die gibt es nur beim
 Diktier-Tool, wo aus einem Satz wieder ein aehnlich langer Satz werden soll.
 
-Kein "/no_think" noetig: laut Testreihe (siehe CLAUDE.md) ist der Denkmodus
-fuer Gemma 4 in diesem LM-Studio-Setup bereits ueber den GUI-Schalter aus, und
-"/no_think" ist ohnehin eine Qwen-spezifische Konvention, die Gemma nicht
-kennt (waere nur Rauschen im Prompt).
+llama-server (gestartet/verwaltet von llama_proc.py) bringt von Haus aus
+dieselbe OpenAI-kompatible /v1/chat/completions-API mit, die vorher LM Studio
+lieferte - deshalb aendert sich an dieser Anfrage-Logik kaum etwas gegenueber
+dem frueheren LM-Studio-Setup, nur die Ziel-URL und der zusaetzliche
+"cache_prompt"-Parameter (siehe unten) sind neu.
+
+Kein "/no_think" noetig: laut Testreihe (siehe CLAUDE.md) war der Denkmodus
+fuer Gemma 4 im frueheren LM-Studio-Setup bereits ueber den GUI-Schalter aus;
+bei llama-server gibt es diesen Schalter erst gar nicht, das Modell denkt hier
+ebenfalls nicht unaufgefordert. "/no_think" waere ohnehin eine
+Qwen-spezifische Konvention, die Gemma nicht kennt (waere nur Rauschen im
+Prompt).
 """
 
 from __future__ import annotations
@@ -32,7 +40,7 @@ _WHITESPACE = re.compile(r"\s+")
 class LLMKlassifikator:
     def __init__(self, cfg: dict) -> None:
         llm = cfg["llm"]
-        self.url = llm["api_base"].rstrip("/") + "/chat/completions"
+        self.url = f"http://{llm['llama_host']}:{llm['llama_port']}/v1/chat/completions"
         self.temperature = float(llm["temperature"])
         self.max_tokens = int(llm["max_tokens"])
         self.timeout = float(llm["timeout_s"])
@@ -54,6 +62,15 @@ class LLMKlassifikator:
             "temperature": self.temperature,
             "max_tokens": self.max_tokens,
             "stream": False,
+            # llama-server merkt sich den KV-Cache des zuletzt verarbeiteten
+            # Prompts. Da sich der lange System-Prompt (Tag-Liste, mehrere
+            # Tausend Tokens) zwischen zwei Befehlen NICHT aendert, muss er so
+            # nicht bei jedem Befehl neu durchgerechnet werden - nur der kurze
+            # neue Nutzertext am Ende ist wirklich neu. Das ist derselbe
+            # Geschwindigkeitsgewinn, den vorher LM Studio automatisch
+            # geliefert hat (siehe CLAUDE.md, "Latenz gemessen"); ohne dieses
+            # Flag waere jeder Befehl wieder so langsam wie der allererste.
+            "cache_prompt": True,
             "messages": [
                 {"role": "system", "content": system_prompt},
                 {"role": "user", "content": text},

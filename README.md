@@ -11,8 +11,9 @@ kurze Gebrauchsanleitung fuer den taeglichen Betrieb.
 
 ## Voraussetzungen
 
-* **LM Studio muss laufen**, mit `google/gemma-4-e4b` in der Modellliste (muss nicht manuell
-  geladen sein — das Tool laedt es beim Start selbst mit den passenden Parametern).
+* **Kein separates LLM-Programm noetig** — der Assistent startet ein eigenes llama.cpp
+  (`llama-server.exe`, Vulkan) als Hintergrundprozess automatisch mit. Einmalig vorher
+  einrichten: `.\scripts\fetch_llama.ps1` laedt den Server nach `vendor\llama.cpp\`.
 * Ein Mikrofon.
 * **Modelldatei herunterladen** (nicht im Repo enthalten, zu gross fuer GitHub):
   `.\scripts\download_llm.ps1` laedt `gemma-4-E4B-it-Q4_K_M.gguf` automatisch in den Ordner
@@ -24,23 +25,22 @@ Rechner bereits eingerichtet. Falls das Projekt mal auf einen neuen Rechner umzi
 
 ### Mindestanforderungen
 
-* **Windows 10/11 (64-Bit)** — `pynput`/`pystray`/`whisper-server.exe` sind Windows-spezifisch,
-  keine plattformuebergreifende Unterstuetzung vorgesehen.
-* **GPU mit Vulkan-Unterstuetzung**, mindestens **12 GB VRAM insgesamt**. Gemessen auf diesem
-  Rechner (`lms ps`): Whisper-Modell ~0,57 GB, Gemma 4 E4B bei Kontext 8192 ~6,33 GB — zusammen
-  ~6,9 GB fuers Tool allein, der Rest ist Platz fuers Spiel selbst (Helldivers 2 & Co. brauchen
-  ebenfalls mehrere GB VRAM). Ohne GPU laeuft Whisper
+* **Windows 10/11 (64-Bit)** — `pynput`/`pystray`/`whisper-server.exe`/`llama-server.exe` sind
+  Windows-spezifisch, keine plattformuebergreifende Unterstuetzung vorgesehen.
+* **GPU mit Vulkan-Unterstuetzung**, mindestens **8 GB VRAM insgesamt**. Gemessen auf diesem
+  Rechner: Whisper-Modell ~0,57 GB, llama-server (Gemma 4 E4B, Q4_K_M, Kontext 8192, ein Slot)
+  ~3,3 GB — zusammen ~3,9 GB fuers Tool allein, der Rest ist Platz fuers Spiel selbst
+  (Helldivers 2 & Co. brauchen ebenfalls mehrere GB VRAM). Ohne GPU laeuft Whisper
   zwar auch auf der CPU, ist dann aber laut Diktier-Tool-Messung (`Diktiertool.md`) fuer
   Push-to-Talk-Latenz zu langsam (z. B. `medium` 8,17 s statt <0,2 s je Aeusserung) — GPU ist
   hier praktisch Pflicht, nicht nur "nice to have".
 * **16 GB RAM.**
-* Ein LM-Studio-Konto/-Installation mit heruntergeladenem `google/gemma-4-e4b`.
 
 ### Empfohlene Anforderungen
 
 * **Dedizierte GPU mit 16 GB+ VRAM** (getestet mit einer RX 7900 XTX, 24 GB) — mehr Reserve
-  bedeutet, dass LM Studio waehrend des Spielens seltener aus dem VRAM verdraengt wird (siehe
-  `CLAUDE.md`, Abschnitt "Latenz gemessen" zu den Folgen einer Verdraengung).
+  bedeutet, dass der llama.cpp-Prozess waehrend des Spielens seltener aus dem VRAM verdraengt
+  wird (siehe `CLAUDE.md`, Abschnitt "Latenz gemessen" zu den Folgen einer Verdraengung).
 * **32 GB RAM.**
 * **SSD** fuer schnelleres Laden von Whisper-Modell und LLM.
 
@@ -112,7 +112,9 @@ ORBITALSCHLAG:
   `taste`-Sequenz zusaetzlich gehalten wird — bei Helldivers 2 z. B. Strg, weil das Spiel
   Stratagem-Codes so entgegennimmt.
 * **`kontextlaenge`**: einmalig ermitteln (Prompt-Tokens des generierten System-Prompts plus
-  Marge) und hier eintragen — wird beim Laden des Profils an LM Studio durchgereicht.
+  Marge) und hier eintragen — wird beim Laden des Profils an den llama-server-Subprozess
+  durchgereicht. Weicht sie vom bisher aktiven Profil ab, startet llama-server automatisch mit
+  der neuen Kontextlaenge neu (kurze Pause beim Profilwechsel spuerbar, sonst kein Neustart noetig).
 * **`initial_prompt_schlagwoerter`** (optional): kuratierte Liste einzelner Fremdwoerter/
   Akronyme/Eigennamen fuers Whisper-Vokabular. Bei echter Sprache ohne messbaren Latenz-Effekt
   (siehe `CLAUDE.md`), aber unschaedlich; kann auch ganz weggelassen werden.

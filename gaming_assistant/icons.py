@@ -5,8 +5,9 @@ einziges Icon-Set reduziert (dort gab es getrennte Formen fuer Server/Client,
 hier gibt es nur den einen Prozess).
 
 Python-Hinweis: PIL (Pillow) ist eine Bildbearbeitungs-Bibliothek. Hier wird
-kein Bild geladen, sondern eines komplett aus Formen (Kreis, Rechteck)
-zusammengezeichnet.
+kein Bild geladen, sondern eines komplett aus Formen (Kreis, Rechteck, Ellipse)
+zusammengezeichnet - diesmal ein stilisiertes Gamepad statt eines Mikrofons,
+passend zum Gaming-Thema des Tools.
 """
 
 from __future__ import annotations
@@ -29,9 +30,17 @@ def icon(zustand: str = "bereit") -> Image.Image:
     bild = Image.new("RGBA", (SIZE, SIZE), (0, 0, 0, 0))
     zeichner = ImageDraw.Draw(bild)
     zeichner.ellipse((5, 5, SIZE - 5, SIZE - 5), fill=fill, outline=outline, width=4)
-    # Stilisiertes Mikrofon, wie beim Diktier-Client - macht auf einen Blick
-    # klar, dass es sich um ein Sprach-Tool handelt.
-    zeichner.rounded_rectangle((26, 16, 38, 38), radius=6, fill=(255, 255, 255, 235))
-    zeichner.arc((20, 26, 44, 46), start=0, end=180, fill=(255, 255, 255, 235), width=4)
-    zeichner.line((32, 46, 32, 52), fill=(255, 255, 255, 235), width=4)
+    weiss = (255, 255, 255, 235)
+    # Stilisiertes Gamepad statt Mikrofon (Gaming-Thema): breiter Rumpf mit
+    # zwei nach unten ausgebeulten Griffen (klassische Controller-Silhouette,
+    # aehnlich dem 🎮-Emoji), D-Pad-Kreuz links, zwei Aktionsknoepfe rechts.
+    zeichner.rounded_rectangle((15, 22, 49, 38), radius=8, fill=weiss)   # Rumpf (schmaler, passt besser in den Kreis)
+    zeichner.ellipse((12, 28, 26, 44), fill=weiss)                      # linker Griff
+    zeichner.ellipse((38, 28, 52, 44), fill=weiss)                      # rechter Griff
+    # D-Pad-Kreuz (links im Rumpf)
+    zeichner.line((18, 30, 26, 30), fill=fill, width=3)
+    zeichner.line((22, 26, 22, 34), fill=fill, width=3)
+    # Zwei Aktionsknoepfe (rechts im Rumpf)
+    zeichner.ellipse((36, 25, 41, 30), fill=fill)
+    zeichner.ellipse((43, 30, 48, 35), fill=fill)
     return bild
