@@ -7,3 +7,4 @@ vendor/
 models/
 training_data/
 logs/
+gemma-4-E4B-it-GGUF/*.gguf

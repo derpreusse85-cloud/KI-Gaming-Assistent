@@ -14,6 +14,9 @@ kurze Gebrauchsanleitung fuer den taeglichen Betrieb.
 * **LM Studio muss laufen**, mit `google/gemma-4-e4b` in der Modellliste (muss nicht manuell
   geladen sein — das Tool laedt es beim Start selbst mit den passenden Parametern).
 * Ein Mikrofon.
+* **Modelldatei herunterladen** (nicht im Repo enthalten, zu gross fuer GitHub):
+  `.\scripts\download_llm.ps1` laedt `gemma-4-E4B-it-Q4_K_M.gguf` automatisch in den Ordner
+  `gemma-4-E4B-it-GGUF/` — Details siehe `gemma-4-E4B-it-GGUF/README.md`.
 
 Whisper (eigener `vendor/whisper.cpp`-Build + Modell) und das Python-venv sind auf diesem
 Rechner bereits eingerichtet. Falls das Projekt mal auf einen neuen Rechner umzieht: siehe

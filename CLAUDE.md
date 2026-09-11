@@ -151,10 +151,18 @@ Persoenlichkeit."* (Nebenbefund: Wingman AIs "Wingmen"-Konzept aehnelt eher dem 
 Nero-Projekt des Nutzers als diesem Gaming-Tool — fuer Nero selbst nicht in diesem Repo
 dokumentiert, siehe ggf. dortiges Projekt-Gedaechtnis.)
 
-* **Git LFS einrichten**, das Gemma-4-E4B-Modell direkt ins Repo uebernehmen — analog dazu, wie
-  `vendor/whisper.cpp` + Whisper-Modell bereits als eigenstaendige Kopie im Projekt liegen (siehe
-  oben, "keine Pfad-Abhaengigkeit zum Diktier-Tool-Repo"). Konsequente Fortsetzung desselben
-  Prinzips (keine Fremdabhaengigkeiten) auf die LLM-Komponente.
+* **Entscheidung revidiert (12.09.2026): kein Git LFS, Modell bleibt ausserhalb des Repos.**
+  Git LFS war eingerichtet und getestet (`git lfs track`), aber verworfen: die Hauptdatei
+  `gemma-4-E4B-it-Q4_K_M.gguf` liegt bei ~4,97 GiB, knapp unter GitHubs 5-GiB-Limit pro
+  LFS-Datei, und zusammen mit der `mmproj`-Datei (~0,95 GB) weit ueber dem kostenlosen
+  LFS-Kontingent (1 GB Speicher/Bandbreite pro Monat) — fuer ein oeffentliches Repo ohne
+  bezahlten Datenpaket-Zusatz nicht praktikabel. Stattdessen: der Ordner
+  `gemma-4-E4B-it-GGUF/` bleibt im Repo (mit eigener `README.md` als Download-Anleitung), die
+  `*.gguf`-Dateien selbst sind ueber `.gitignore` ausgeschlossen. Nutzer laden die Modelldatei
+  manuell herunter (Quelle: `unsloth/gemma-4-E4B-it-GGUF` auf Hugging Face, siehe
+  `gemma-4-E4B-it-GGUF/README.md` und Haupt-`README.md`) und kopieren sie selbst in den Ordner —
+  gleiches Prinzip wie schon bei Whisper (`vendor/whisper.cpp` + Modell, siehe oben), nur ohne
+  Git-Versionierung der Gewichte.
 * **`gaming_assistant/lmstudio.py` und `llm.py` ersetzen**: statt der LM-Studio-OpenAI-API soll
   llama.cpp das LLM direkt ansteuern. Architekturentscheidung noch offen: Python-Bindings
   (`llama-cpp-python`) vs. eigener Subprozess (Vorlage: `gaming_assistant/whisper_proc.py`, das
