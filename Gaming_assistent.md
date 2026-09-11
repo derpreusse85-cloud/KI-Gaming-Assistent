@@ -233,21 +233,24 @@ gepflegt:
 # profiles/star_citizen.yaml
 kontextlaenge: 4096  # Top-Level-Feld, einmalig ermittelt (siehe "Sampling-Parameter")
 LANDEGESTELL:
-  schlagwort: "Landegestell"
+  schlagwort: ["Landegestell", "Fahrgestell"]
   beispiel: "Fahrgestell einfahren"
   taste: ["shift", "n"]
 ORBITALSCHLAG:
-  schlagwort: "Orbitalschlag"
+  schlagwort: ["Orbitalschlag"]
   beispiel: "Ruf den Orbitalschlag"
   taste: ["ctrl", "o"]
 ```
 
 * **YAML statt JSON/TOML**, weil Kommentare möglich sind und sich die Datei gut von Hand
   editieren lässt.
-* **`schlagwort`** ist die Grundlage für die im Prompt aufgezählten Tags — daraus wird
-  standardmäßig die wortgebundene Beschreibung generiert (`&&TAG&& — nur wenn im Befehl das
-  Wort "{schlagwort}" vorkommt`), siehe „Bereits entschieden" zur Schlagwort-Bindung als
-  Prompt-Strategie für dieses Spiel. Optional überschreibbar über ein zusätzliches
+* **`schlagwort`** ist immer eine Liste (auch bei nur einem Wort) und die Grundlage für die im
+  Prompt aufgezählten Tags — daraus wird standardmäßig die wortgebundene Beschreibung generiert
+  (`&&TAG&& — nur wenn im Befehl eines der Wörter "..." vorkommt`), siehe „Bereits entschieden"
+  zur Schlagwort-Bindung als Prompt-Strategie für dieses Spiel. Mehrere gleichwertige Wörter
+  (Synonyme, Abkürzungen, englische Alternativbegriffe) lassen sich einfach als weitere
+  Listeneinträge ergänzen — umgesetzt und gegen Konfliktcluster getestet im Helldivers-2-Profil,
+  siehe `CLAUDE.md`. Optional überschreibbar über ein zusätzliches
   `beschreibung`-Feld, falls ein Tag statt Schlagwort-Bindung eine freiere, inhaltliche
   Beschreibung braucht (Einzelfall, siehe `Verstärkung`-Tradeoff). **`schlagwort`** ist
   zusätzlich die Quelle für die automatisch zusammengesetzte Whisper-`initial_prompt`-Liste

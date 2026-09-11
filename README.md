@@ -80,14 +80,17 @@ kontextlaenge: 4096          # Kontextlaenge fuers LLM, siehe unten
 halte_taste: "ctrl"          # optional: Taste, die waehrend jeder Tasten-Sequenz gehalten wird
 
 LANDEGESTELL:
-  schlagwort: "Landegestell"           # muss im gesprochenen Befehl woertlich vorkommen
-  beispiel: "Fahrgestell einfahren"    # Few-Shot-Beispiel fuer das LLM
-  taste: ["shift", "n"]                # wird als Tipp-Sequenz ausgefuehrt (nacheinander, nicht gleichzeitig)
+  schlagwort: ["Landegestell", "Fahrgestell"]  # eines davon muss im Befehl woertlich vorkommen
+  beispiel: "Fahrgestell einfahren"            # Few-Shot-Beispiel fuer das LLM
+  taste: ["shift", "n"]                        # wird als Tipp-Sequenz ausgefuehrt (nacheinander, nicht gleichzeitig)
 ```
 
-* **`schlagwort`**: Bindet den Tag an das woertliche Vorkommen dieses Worts im Befehl (Praezision
-  vor Vollstaendigkeit). Optional durch ein `beschreibung`-Feld ersetzbar, falls ein Tag eine
-  freiere, inhaltliche Beschreibung statt Wortbindung braucht.
+* **`schlagwort`**: immer eine Liste in eckigen Klammern, auch bei nur einem Wort (`["EAT"]`).
+  Bindet den Tag an das woertliche Vorkommen **eines** dieser Woerter im Befehl (Praezision vor
+  Vollstaendigkeit) — praktisch fuer Synonyme, Abkuerzungen oder englische Alternativbegriffe.
+  Eigene Woerter lassen sich einfach mit Komma innerhalb der Klammern ergaenzen. Optional durch
+  ein `beschreibung`-Feld ersetzbar, falls ein Tag eine freiere, inhaltliche Beschreibung statt
+  Wortbindung braucht.
 * **`taste`**: Liste einzelner Tasten, die **nacheinander** getippt werden (kein gleichzeitig
   gehaltener Hotkey). Sondertasten wie `ctrl`, `shift`, `alt`, `tab`, `up`/`down`/`left`/`right`
   sind moeglich, sonst einzelne Zeichen.
