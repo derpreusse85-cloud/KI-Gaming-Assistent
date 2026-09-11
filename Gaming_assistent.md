@@ -101,11 +101,11 @@ Wichtige Prompt-Anforderungen:
 * Parser muss den/die Tag(s) robust per Regex extrahieren, nicht auf exakte
   Gesamt-Antwort-Gleichheit prüfen (falls das LLM trotz Anweisung zusätzlichen Text ausgibt).
 * Wie beim Bereinigungs-Prompt gilt: kurzer klarer Fließtext mit konkreten Beispielen schlägt
-  eine lange Regelliste (siehe `Diktiertool.md`, Abschnitt Fallstricke).
+  eine lange Regelliste (Erfahrung aus dem Diktier-Tool-Vorgängerprojekt).
 * **Ein Beispiel pro Tag reicht in der Regel**, solange die tatsächlich gesprochenen Kommandos
   strukturell nah an den Prompt-Beispielen bleiben. Das hält den Prompt kurz und minimiert die
   Prefill-Latenz — mehr Beispiele pro Tag bringen hier voraussichtlich abnehmenden Ertrag
-  (ähnlich der Beobachtung beim Bereinigungs-Prompt in `Diktiertool.md`).
+  (ähnlich der Beobachtung beim Bereinigungs-Prompt im Diktier-Tool).
 
 ## Mehrere Befehle in einer Äußerung
 
@@ -125,7 +125,7 @@ Möglich, z. B. "Landegestell ausfahren und um Landeerlaubnis bitten" →
   von Gemma 4 E4B (genau der Grund für den Wechsel von E2B, siehe „Modellwahl für die
   Intent-Erkennung"), statt Kombinationen auswendiglernen zu lassen.
 * **Fallback nicht nötig gewesen:** gezielte Beispiele mit echten Tags für konkrete Kombinationen
-  (ursprünglich vorgeschlagene Methode aus `Gemma4.md`) waren als Rückfalloption vorgesehen,
+  (ursprünglich vorgeschlagene Methode aus einer frühen Recherche-Notiz) waren als Rückfalloption vorgesehen,
   falls der generische Ansatz nicht robust genug generalisiert. Bestätigt in allen drei
   Testrunden (08.–09.09.2026, zuletzt 3/3 bei der vollständigen 77-Tag-Liste, siehe
   „Testreihe"): der generische Platzhalter-Ansatz reichte durchgehend aus, der Fallback blieb
@@ -159,7 +159,7 @@ Spielraum in der Formulierung unproblematisch ist.
 * **`max_tokens` und Kontextlänge bewusst minimal halten**, nicht nur wegen Latenz, sondern auch
   um den VRAM-Bedarf zu minimieren — das Modell teilt sich die GPU mit dem laufenden Spiel
   (analog zur Kontextlängen-Reduktion im Diktier-Tool, dort 1,04 GB VRAM gespart bei
-  unveränderter Geschwindigkeit, siehe `Diktiertool.md`).
+  unveränderter Geschwindigkeit).
 * **"Minimal" heißt: minimal für das jeweilige Profil, nicht ein einzelner globaler Wert.**
   Da der System-Prompt komplett pro Spielprofil generiert wird (siehe „Aktionslisten-Format"),
   variiert sein Umfang stark mit der Tag-Zahl — vom Kommando-Klassifikator mit einer Handvoll
@@ -169,8 +169,8 @@ Spielraum in der Formulierung unproblematisch ist.
   nicht auf einen einzigen knappen Wert fürs kleinste Profil — sonst schneidet sie bei
   umfangreichen Profilen den Prompt ab.
 * **Kontextlänge als explizites Feld im Profil, nicht automatisch zur Laufzeit berechnet.**
-  Analog zu `llm_context_length`, das im Diktier-Tool schon je Profil überschreibbar ist (siehe
-  `Diktiertool.md`, Abschnitt Betriebsmodi). Einmalig beim Erstellen/Testen eines Profils
+  Analog zu `llm_context_length`, das im Diktier-Tool schon je Profil überschreibbar ist.
+  Einmalig beim Erstellen/Testen eines Profils
   ermittelt (gemessene Prompt-Tokens plus Marge für `max_tokens` und künftig ergänzte Tags) und
   als `kontextlaenge`-Feld im Profil hinterlegt — einfacher als eine Tokenizer-Anfrage zur
   Laufzeit, und konsistent mit dem bestehenden Diktier-Tool-Muster. Für das Helldivers-2-Profil:
@@ -188,15 +188,15 @@ Der Marker-Parser braucht denselben Abschneide-/Plausibilitätsschutz wie `LLMCl
 
 ## Latenz und Denkmodus
 
-`disable_reasoning`/das LM-Studio-„Enable Thinking"-Problem (siehe `Diktiertool.md`) gilt hier
+`disable_reasoning`/das LM-Studio-„Enable Thinking"-Problem (aus dem Diktier-Tool bekannt) gilt hier
 verschärft: ein Modell, das erst hunderte Tokens nachdenkt, bevor es `&&LANDEGESTELL&&`
 ausspuckt, macht aus einem Sprachbefehl eine im Spiel spürbare Verzögerung — stärker relevant
 als beim Diktieren, wo eine LLM-Nachbearbeitung erst nach dem Loslassen der Taste läuft und ein
 paar hundert ms weniger auffallen.
 
 **Geprüft und verworfen: Denkmodus über ein `<|think|>`-Token im System-Prompt steuern.** Diese
-Behauptung taucht in Recherchematerial auf, ist aber dieselbe, die für Gemma 4 in
-`Diktiertool.md` bereits widerlegt wurde — die Chat-Vorlage erzeugt das Token selbst aus der
+Behauptung taucht in Recherchematerial auf, ist aber dieselbe, die für Gemma 4 im Diktier-Tool
+bereits widerlegt wurde — die Chat-Vorlage erzeugt das Token selbst aus der
 Variable `enable_thinking`, ein Prompt-Trick greift nicht. Eigener Test (07.09.2026, gegen
 `google/gemma-4-e2b` **und** `google/gemma-4-e4b`, je gegen eine laufende und eine frisch
 geladene Instanz): `chat_template_kwargs.enable_thinking` (weggelassen/`true`/`false`) liefert in
@@ -271,7 +271,7 @@ ORBITALSCHLAG:
 * **Ein Profil pro Spiel**, nicht eine globale Liste, um Tastenkombinations-Kollisionen
   zwischen verschiedenen Spielen zu vermeiden.
 * **Manuelle Profilauswahl über das Tray-Menü**, analog zu `profiles` und dem Menü „Modus" im
-  Diktier-Tool (siehe `Diktiertool.md`). Es gibt bewusst **keine automatische Spielerkennung**
+  Diktier-Tool. Es gibt bewusst **keine automatische Spielerkennung**
   (kein Fenstertitel-/Prozessname-Scan) — der Nutzer wählt das passende Profil vor dem Spielen
   selbst aus.
 
@@ -375,15 +375,16 @@ Sprachstil passen und nicht neutral/systemhaft klingen.
 ## Bereits entschieden
 
 * **Eigenständiges Projekt, eigenes Repo** statt Betriebsprofil im Diktier-Tool oder Branch
-  dort. Als Referenz liegt eine Kopie der Diktier-Tool-`CLAUDE.md` als `Diktiertool.md` bei,
-  dazu diese Konzeptdatei; das Repo bekommt eine eigene, schlanke `CLAUDE.md` mit nur den
-  übertragbaren Lektionen.
+  dort. Als Referenz diente anfangs eine lokale Kopie der Diktier-Tool-`CLAUDE.md`
+  (`Diktiertool.md`, seit 12.09.2026 nicht mehr Teil des Git-Repos, siehe dortiger Hinweis in
+  `CLAUDE.md`), dazu diese Konzeptdatei; das Repo bekommt eine eigene, schlanke `CLAUDE.md` mit
+  nur den übertragbaren Lektionen.
 * **Ein Prozess statt Server-Client** (siehe oben) — läuft komplett lokal auf dem Spiele-PC.
 * **Kein Mehrsprachigkeits-Support** — Kommandos werden ausschließlich auf Deutsch gesprochen,
   Whisper wird fest auf Deutsch statt auf automatische Spracherkennung eingestellt.
 * **Whisper-Modell: `large-v3-turbo-german-q5`** — dasselbe Modell, das im Diktier-Tool für den
   Gaming-Modus vorgesehen ist (547 MB, gemessen zeichengleich zur vollen Fassung, 3,5 % lockere
-  Wortfehlerrate, siehe `Diktiertool.md`). Passt hier besonders, weil Kommandos kurz sind und
+  Wortfehlerrate). Passt hier besonders, weil Kommandos kurz sind und
   kein LLM den Whisper-Text nachbessert.
 * **Bei mehrdeutigen Tags: Präzision vor Vollständigkeit, notfalls über Wortbindung.** Erster
   Klassifikationstest (08.09.2026, siehe „Testreihe") zeigte, dass Gemma 4 E4B bei

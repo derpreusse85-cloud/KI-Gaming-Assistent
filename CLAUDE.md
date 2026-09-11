@@ -5,6 +5,12 @@ feste Aktion klassifiziert und als Tastenkombination ausgeloest. Konzept siehe
 `Gaming_assistent.md`. Nicht nur fuer Helldivers 2 gedacht — dessen Profil ist nur das erste von
 mehreren geplanten Spielprofilen.
 
+**Hinweis:** `Diktiertool.md` (Kopie der `CLAUDE.md` des unabhaengigen Diktier-Tool-Projekts) und
+`Gemma4.md` (rohe Recherche-Notizen) liegen nur lokal vor, nicht im Git-Repo (seit 12.09.2026,
+siehe `.gitignore`). Die daraus fuer dieses Projekt relevanten Erkenntnisse stehen bereits
+zusammengefasst an ihrer jeweiligen Stelle in diesem Dokument sowie in `Gaming_assistent.md` -
+keine direkten Dateiverweise mehr darauf (12.09.2026 auch dort bereinigt).
+
 ## Stand der Arbeit (fuer den Wiedereinstieg in einer neuen Session)
 
 **Version 1.0 fertig und im echten Spiel bestaetigt (09.09.2026).** Push-to-Talk -> Whisper ->
@@ -81,7 +87,7 @@ enthaltene Kommandos loesen (wie vorgesehen) keine Aktion aus.
   nicht gebraucht). **Beide Server-Binaries liegen seit 12.09.2026 direkt im Repo** (siehe
   "Server-Binaries eingebettet" weiter unten) statt separat heruntergeladen werden zu muessen -
   `scripts/build_whisper.ps1`/`scripts/fetch_llama.ps1` bleiben nur noch als
-  Fallback-/Reparatur-Skripte fuer den Ausnahmefall bestehen. `scripts/setup.ps1` buendelt die
+  Fallback-/Reparatur-Skripte fuer den Ausnahmefall bestehen. `setup.ps1` buendelt die
   Ersteinrichtung (venv + beide Modell-Downloads) in einem Aufruf.
 * **Bekannter, nicht als kritisch eingestufter Fund:** bei rein digitaler Stille (Testfall, kein
   echtes Mikrofon-Rauschen) halluziniert Whisper gelegentlich Text statt leer zu bleiben. Im
@@ -98,8 +104,8 @@ enthaltene Kommandos loesen (wie vorgesehen) keine Aktion aus.
   System-Prompts, je nach Profil mehrere Tausend Tokens). **Bewusst NICHT gebaut:** weder ein
   einmaliger Warmup-Aufruf beim Profil-Laden noch ein wiederkehrender Warmhalter-Ping waehrend des
   Spielens - Grund: der llama-server-Prozess (Modell + Prompt-Cache) kann durch VRAM-Druck des
-  Spiels jederzeit verdraengt werden (dasselbe Phaenomen wie beim Whisper-Modell, siehe
-  `Diktiertool.md`, Abschnitt "Bildraten-Einbruch"), ein einmaliger Warmup schuetzt also nur den
+  Spiels jederzeit verdraengt werden (dasselbe Phaenomen wie beim Whisper-Modell, aus der
+  Diktier-Tool-Messreihe bekannt), ein einmaliger Warmup schuetzt also nur den
   Start-Fall, nicht spaetere Verdraengungen mitten im Spiel: ein wiederkehrender Ping wuerde davor
   zuverlaessiger schuetzen, aber dauerhafte GPU-Last waehrend des Spielens verursachen. Nutzer hat
   sich explizit gegen beide Varianten entschieden - die seltene Verzoegerung nach Start/Verdraengung
@@ -256,13 +262,13 @@ dokumentiert, siehe ggf. dortiges Projekt-Gedaechtnis.)
   Plattform/Architektur gebraucht wird) - `fetch_llama.ps1` entfernt dabei automatisch dieselben
   ueberfluessigen Zusatzwerkzeuge, die einmalig manuell aus `vendor/llama.cpp/` geloescht wurden.
   Uebrig bleiben fuer eine Ersteinrichtung nur noch die Python-Umgebung und die beiden grossen
-  Modell-Downloads (LLM ~5 GB, Whisper ~0,5 GB) - dafuer neu `scripts/setup.ps1`, das
+  Modell-Downloads (LLM ~5 GB, Whisper ~0,5 GB) - dafuer neu `setup.ps1`, das
   `setup_venv.ps1`/`download_llm.ps1`/`fetch_models.ps1` nacheinander aufruft (keine
   Logik-Duplizierung, die drei Skripte bleiben einzeln nutzbar).
 
 ## Uebertragbare Lektionen aus dem Vorgaengerprojekt
 
-Volle Doku in `Diktiertool.md`:
+Kurzfassungen der fuer dieses Projekt relevanten Erkenntnisse aus dem Diktier-Tool:
 
 * **(LM-Studio-spezifisch, vor der Abloesung relevant) LM Studio ignoriert `enable_thinking`.**
   Wirksam war nur `/no_think` im Prompt (Qwen-Konvention, nicht bei allen Modellen) bzw. bei

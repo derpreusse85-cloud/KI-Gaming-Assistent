@@ -20,7 +20,7 @@ Was fehlt, sind nur die beiden grossen Modelldateien (zu gross fuers Repo) und d
 Python-Umgebung - dafuer einmalig ausfuehren:
 
 ```powershell
-.\scripts\setup.ps1
+.\setup.ps1
 ```
 
 Das ruft nacheinander `setup_venv.ps1` (Python-venv + Abhaengigkeiten), `download_llm.ps1`
@@ -43,7 +43,7 @@ Ein Mikrofon wird ausserdem gebraucht.
   Rechner: Whisper-Modell ~0,57 GB, llama-server (Gemma 4 E4B, Q4_K_M, Kontext 8192, ein Slot)
   ~3,3 GB — zusammen ~3,9 GB fuers Tool allein, der Rest ist Platz fuers Spiel selbst
   (Helldivers 2 & Co. brauchen ebenfalls mehrere GB VRAM). Ohne GPU laeuft Whisper
-  zwar auch auf der CPU, ist dann aber laut Diktier-Tool-Messung (`Diktiertool.md`) fuer
+  zwar auch auf der CPU, ist dann aber laut einer frueheren Messreihe fuer
   Push-to-Talk-Latenz zu langsam (z. B. `medium` 8,17 s statt <0,2 s je Aeusserung) — GPU ist
   hier praktisch Pflicht, nicht nur "nice to have".
 * **16 GB RAM.**
