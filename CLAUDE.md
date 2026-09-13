@@ -237,6 +237,40 @@ umschaltbar inkl. Log-Datei (siehe "Stand der Arbeit" unten fuer Details).
   Sprache messen, nie mit Stille oder Rauschen** - Windows-TTS (`System.Speech.Synthesis`,
   Stimme "Microsoft Hedda Desktop", 16kHz-Mono-WAV) hat sich dafuer als schneller Ersatz fuer
   eine echte Aufnahme bewaehrt.
+* **Erste feste Testinfrastruktur (14.09.2026):** `tests/test_profil_klassifikation.py` - vorher
+  waren alle Klassifikationstests Wegwerf-Skripte im Scratchpad, die nach jeder Session wieder
+  geloescht wurden. Nutzerwunsch: Skripte nicht mehr staendig neu schreiben muessen. Urspruenglich
+  Elite-Dangerous-spezifisch angelegt (38 feste Faelle), auf Nutzerwunsch noch am selben Tag
+  verallgemeinert: **jedes** Tag jedes Profils wird automatisch mit seinem eigenen `beispiel`-Feld
+  getestet (muss zu sich selbst klassifizieren) - keine Notwendigkeit, fuer jedes Profil von Hand
+  Testfaelle zu schreiben. Zusaetzlich ein `ZUSATZFAELLE`-Dict fuer handverlesene Paraphrasen/
+  Mehrfachbefehle je Profil (bisher nur fuer Elite Dangerous befuellt, bewusst OHNE die Energie/
+  Engage-Testfaelle - die Datei ist Teil des oeffentlichen Repos). Reine Textklassifikation ohne
+  Whisper/Mikrofon, startet `llama-server` selbst; Aufruf ohne Argumente testet alle Profile in
+  `profiles/`, mit Profilnamen als Argumente nur die genannten. Kein pytest o.ae. eingefuehrt,
+  einfaches eigenstaendiges Skript passend zur bisherigen Projekt-Schlichtheit (kein
+  Test-Framework als neue Abhaengigkeit). Bei der Verallgemeinerung gegen alle drei Profile
+  verifiziert: **175/175 korrekt** (39 Elite Dangerous inkl. neu entdecktem Paraphrasen-Fall
+  "Frachtluke" fuer `Ladeluke`, 57 Helldivers 1, 79 Helldivers 2 - allesamt automatisch aus den
+  jeweiligen `beispiel`-Feldern abgeleitet, ohne manuelles Zutun fuer die beiden
+  Helldivers-Profile). Dazu (Nutzeridee, direkt danach) ein zweites,
+  allgemeineres Werkzeug: `tests/profil_interaktiv_testen.py` - profilunabhaengig (fragt beim
+  Start, welches Profil getestet werden soll, oder nimmt den Namen als Kommandozeilenargument),
+  interaktive Eingabeschleife statt fester Testfaelle, zeigt pro Eingabe den erkannten Tag und
+  die zugehoerige Tastenfolge an (bzw. bei Feuergruppen-Tags den Hinweis "wird zur Laufzeit
+  berechnet"), loest dabei aber bewusst NICHTS wirklich aus (reiner Trockentest, kein
+  `keypress.ausloesen()`-Aufruf) - gedacht fuer alle, die eine neue oder geaenderte Profil-YAML
+  ausprobieren wollen, bevor sie damit ins echte Spiel gehen (z.B. spaeter beigesteuerte
+  Community-Profile ueber den Reddit-Post). Drittes Werkzeug (Nutzerwunsch, fuer andere Nutzer
+  mit abweichender Hardware): `tests/latenz_messen.py` formalisiert das wiederholt in dieser und
+  frueheren Sessions genutzte Ad-hoc-Messverfahren (Windows-Sprachsynthese als Testaudio statt
+  Stille, siehe "Lektion" oben) zu einem eigenstaendigen, jederzeit erneut ausfuehrbaren Skript -
+  misst STT-Latenz, LLM-Cold-Start und LLM-Wiederholungslatenz gegen das aktuell aktive Profil.
+  Bewusst NICHT auf die deutsche Stimme "Hedda" festgelegt (nutzt die jeweilige
+  System-Standardstimme), damit es auch auf Rechnern ohne diese eine installierte Stimme
+  funktioniert - fuer die reine Zeitmessung ist die inhaltliche Erkennungsqualitaet
+  nebensaechlich. Keine neue Python-Abhaengigkeit: Sprachsynthese laeuft ueber einen
+  PowerShell-Unterprozess (Windows-eigenes `System.Speech`), nicht ueber eine TTS-Bibliothek.
 * **Naechste moegliche Schritte:** offene Punkte am Elite-Dangerous-Profil (drei fehlende Tasten
   fuer `Schildzellenbank`/`ECM`/`Dueppel` selbst im Spiel belegen und eintragen, `kontextlaenge`
   einmal real nachmessen statt Schaetzwert, Test der uebrigen 15 Kommandos im echten Spiel - die

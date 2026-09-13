@@ -98,7 +98,8 @@ llama-server-basierte Pipeline neu verifiziert): ein normaler Befehl braucht End
 (Spracherkennung + Klassifikation) **~0,24s** (Spracherkennung ~0,18s, Klassifikation ~0,065s
 dank Prompt-Caching). Nur der allererste Befehl nach Programmstart oder einem Profilwechsel
 dauert laenger (**~1,45s**, einmaliges Verarbeiten des langen System-Prompts) - danach bleibt es
-durchgehend schnell.
+durchgehend schnell. Auf anderer Hardware koennen diese Werte abweichen - mit
+`tests/latenz_messen.py` (siehe unten) laesst sich das auf dem eigenen Rechner nachmessen.
 
 **Tray-Menue:**
 
@@ -186,7 +187,25 @@ angefasst werden. Zwei Dinge trotzdem im Blick behalten:
 * **Namenskollisionen pruefen.** Ein neues Kommando mit aehnlichem Namen/Wortstamm wie ein
   bestehender Tag kann die Klassifikation durcheinanderbringen (siehe die dokumentierten
   Konfliktcluster am Anfang von `Helldivers2.yaml`). Am besten kurz mit ein paar
-  Testformulierungen gegen den echten llama-server pruefen, bevor die Aenderung endgueltig ist.
+  Testformulierungen gegen den echten llama-server pruefen, bevor die Aenderung endgueltig ist:
+  * `tests/profil_interaktiv_testen.py` — interaktives Werkzeug fuer **jedes** Profil (auch neu
+    angelegte): Profil auswaehlen, beliebige Saetze eintippen, sofort sehen, welcher Tag/welche
+    Taste dabei rauskaeme - reiner Trockentest, es wird nichts wirklich gedrueckt. Aufruf:
+    `.venv\Scripts\python.exe tests\profil_interaktiv_testen.py [Profilname]`.
+  * `tests/test_profil_klassifikation.py` — automatischer Regressionstest fuer **jedes** Profil:
+    testet jeden Tag mit seinem eigenen `beispiel`-Feld (muss zu sich selbst klassifizieren),
+    plus optionale handverlesene Zusatzfaelle je Profil. Aufruf ohne Argument testet alle
+    Profile, mit Profilnamen als Argument nur die genannten:
+    `.venv\Scripts\python.exe tests\test_profil_klassifikation.py [Profilname ...]`.
+  
+  Beide brauchen einen laufenden llama-server (wird vom Skript selbst gestartet), aber kein
+  Mikrofon.
+
+Ausserdem gibt es `tests/latenz_messen.py`, um die Latenz (Spracherkennung + Klassifikation) auf
+der eigenen Hardware nachzumessen — praktisch, da die in diesem README genannten Werte auf einem
+bestimmten Testrechner gemessen wurden und auf anderer Hardware abweichen koennen. Erzeugt sich
+sein Testaudio selbst per Windows-Sprachsynthese (keine Aufnahme noetig) und misst gegen das
+aktuell aktive Profil. Aufruf: `.venv\Scripts\python.exe tests\latenz_messen.py`.
 * **`kontextlaenge` im Auge behalten.** Jeder zusaetzliche Tag macht den generierten
   System-Prompt etwas laenger. Bei einzelnen neuen Kommandos passt das meist locker in die
   vorhandene Marge, bei vielen auf einmal ggf. neu messen und `kontextlaenge` anpassen - sonst
