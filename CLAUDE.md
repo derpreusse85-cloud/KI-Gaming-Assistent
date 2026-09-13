@@ -13,12 +13,14 @@ keine direkten Dateiverweise mehr darauf (12.09.2026 auch dort bereinigt).
 
 ## Stand der Arbeit (fuer den Wiedereinstieg in einer neuen Session)
 
-**Version 1.0 fertig und im echten Spiel bestaetigt (09.09.2026), seither auf v1.2 (12.09.2026,
+**Version 1.0 fertig und im echten Spiel bestaetigt (09.09.2026), seither auf v1.3 (13.09.2026,
 Git-Tags vorhanden).** Push-to-Talk -> Whisper -> LLM-Klassifikation -> Tastensequenz
 funktioniert Ende-zu-Ende gegen das laufende Helldivers 2: richtig erkannte Tags loesen korrekt
 die passende Stratagem-Tastenfolge aus, nicht im Profil enthaltene Kommandos loesen (wie
 vorgesehen) keine Aktion aus. v1.1: LM Studio abgeloest (siehe eigener Abschnitt weiter unten).
-v1.2: zweites Spielprofil (Helldivers 1) ergaenzt.
+v1.2: zweites Spielprofil (Helldivers 1) ergaenzt. v1.3: drittes Spielprofil (Elite Dangerous)
+ergaenzt, Trainingsdaten-Aufzeichnung per Tray abschaltbar, GitHub-Veroeffentlichung vorbereitet
+(siehe eigener Abschnitt "Veroeffentlichung vorbereitet" weiter unten).
 
 * **Modulstruktur** (Paket `gaming_assistant/`, ein einziger Prozess, als Vorlage aus
   `F:\Projekte\KI Diktier Tool` uebernommen, aber ohne WebSocket/Token-Auth/Server-Client-Split):
@@ -55,6 +57,26 @@ v1.2: zweites Spielprofil (Helldivers 1) ergaenzt.
   gegen das echte llama-server-Setup stichprobenartig getestet (inkl. zweier anfangs gefundener,
   dann behobener Namenskonflikte: Maschinengewehr-Familie MG-94/MGX-42, Tiefflieger-Angriff-
   Familie).
+* **`profiles/EliteDangerous.yaml`** ist das dritte Profil (13.09.2026), 13 Kommandos
+  (Energieverteilung Waffen/Schilde/Antrieb, Fahrgestell, FSD, Ladeluke, Stop, Boost, Heatsink,
+  Schildzellenbank, ECM, Dueppel/Chaff). Anders als die Helldivers-Profile durchgaengig freie
+  `beschreibung` statt Wortbindung (nur 13 klar unterscheidbare Kommandos, keine grosse
+  Konfliktgefahr wie bei 55-77 Stratagemen). Gegen den echten llama-server getestet: 31/31 korrekt
+  (13 Profil-Beispiele + 8 freie Paraphrasen wie "Spring in den Hyperraum" fuer FSD, ohne dass
+  eines der genannten Woerter vorkommt + Mehrfachbefehle in beiden Reihenfolgen + 2 NONE-Faelle).
+  **Drei Kommandos (`Schildzellenbank`, `ECM`, `Dueppel`) haben im Spiel standardmaessig keine
+  Taste** - `taste: []` mit erklaerendem Kommentar, muss von jedem Nutzer selbst im Spiel belegt
+  werden, kein vorlaeufiger/fehlender Wert wie bei den anderen Profilen. `kontextlaenge: 4096` ist
+  ein grober Startwert, nicht einzeln nachgemessen (bei nur 13 Tags/2.132 Zeichen System-Prompt
+  aber mit deutlicher Marge). **NICHT im echten Spiel getestet**, Nutzer besitzt Elite Dangerous
+  aber selbst und kann es im Gegensatz zu Helldivers 1 grundsaetzlich noch verifizieren.
+  **Geprueft und verworfen:** zusaetzliche Ausloesewoerter "Energie"/"Engage" fuer den FSD-Tag
+  (Star-Trek-Anspielung, Nutzerwunsch) - "Energie" kollidiert reproduzierbar mit
+  `EnergieRuecksetzten` (Modell ordnet "Energie" allein immer diesem Tag zu, auch bei expliziter
+  Wortbindung inkl. "Energie" als Schlagwort fuer FSD), "Engage" allein waere kollisionsfrei
+  gewesen, aber Nutzer wollte laut eigener Aussage "beides oder keins" statt einer
+  "halbgebackenen" Loesung mit nur einem der beiden Woerter - `Frameshiftdrive` blieb deshalb
+  unveraendert bei der reinen FSD-Beschreibung ohne Zusatzwoerter.
 * **Kommentar-Konvention fuer Profil-YAMLs (12.09.2026, Nutzerwunsch):** so minimal wie moeglich.
   Kein Kopfkommentar mit Formaterklaerung (steht zentral in `Gaming_assistent.md`, Abschnitt
   "Aktionslisten-Format"), keine Datums-/Aenderungshistorie in der Datei selbst (gehoert in die
@@ -63,6 +85,19 @@ v1.2: zweites Spielprofil (Helldivers 1) ergaenzt.
 * **Tray-Icon von Mikrofon auf Gamepad umgestellt** (`gaming_assistant/icons.py`, 12.09.2026,
   Nutzerwunsch) - passender zum Gaming-Thema. Programmatisch aus PIL-Formen gezeichnet (kein
   Bild geladen): kastenfoermiger Sockel, D-Pad-Kreuz links, zwei Aktionsknoepfe rechts.
+* **Trainingsdaten-Aufzeichnung per Tray abschaltbar** (13.09.2026, Nutzerwunsch, Hinblick auf
+  Veroeffentlichung: nicht jeder GitHub-Nutzer soll gezwungen sein, seine gesprochenen Befehle
+  mitschreiben zu lassen). Neuer Config-Wert `cfg["training_log"]["aktiv"]` (Default `true`, kein
+  Verhaltenswechsel fuer Bestandsnutzer), checkbarer Menuepunkt in `tray.py`, Pruefung in
+  `__main__.py::verarbeiten()` vor dem `training_log.eintrag_anhaengen()`-Aufruf.
+* **Profilnamen sind nicht mehr im Code hart hinterlegt** (13.09.2026, Nutzerfrage nach dem
+  Umbenennen der beiden Helldivers-Profile). `__main__.py` faellt beim Start automatisch auf das
+  erste per `profile.liste_profile()` gefundene Profil zurueck, falls der in `config.json`
+  gespeicherte Name zu keiner Datei mehr passt (Warnung statt Absturz) - `config.py`s
+  `DEFAULTS["profil"]["aktiv"]` bleibt nur noch ein Vorschlag fuer den Erststart, keine harte
+  Abhaengigkeit mehr. Grund fuer die Umbenennung selbst: `Helldivers1_Stratagems.yaml` ->
+  `Helldivers1.yaml`, `Helldivers2_Stratagems.yaml` -> `Helldivers2.yaml` (kuerzer, konsistent
+  mit `EliteDangerous.yaml`).
 * **`schlagwort` ist jetzt optional** (11.09.2026, Nutzergespraech): ein Tag braucht mindestens
   eines von `schlagwort`/`beschreibung`, `profile.py::laden()` bricht sonst mit klarer
   Fehlermeldung ab. Hintergrund: `schlagwort` und `beschreibung` haben unabhaengige Aufgaben -
@@ -143,8 +178,12 @@ v1.2: zweites Spielprofil (Helldivers 1) ergaenzt.
   Sprache messen, nie mit Stille oder Rauschen** - Windows-TTS (`System.Speech.Synthesis`,
   Stimme "Microsoft Hedda Desktop", 16kHz-Mono-WAV) hat sich dafuer als schneller Ersatz fuer
   eine echte Aufnahme bewaehrt.
-* **Naechste moegliche Schritte (nicht angefangen):** weitere Spielprofile nach demselben YAML-
-  Schema ergaenzen; eine zweistufige Trainingsdaten-Aufbereitung (Extraktor-Durchlaeufe auf den
+* **Naechste moegliche Schritte:** offene Punkte am Elite-Dangerous-Profil (drei fehlende Tasten
+  fuer `Schildzellenbank`/`ECM`/`Dueppel` selbst im Spiel belegen und eintragen, `kontextlaenge`
+  einmal real nachmessen statt Schaetzwert, Test im echten Spiel - Nutzer besitzt es im Gegensatz
+  zu Helldivers 1); abwarten, ob sich ueber den Reddit-Post Interesse und/oder Wuensche fuer
+  weitere Spielprofile ergeben (siehe "Veroeffentlichung vorbereitet" oben), dann ggf. Repo auf
+  oeffentlich stellen; eine zweistufige Trainingsdaten-Aufbereitung (Extraktor-Durchlaeufe auf den
   `training_log.py`-Rohdaten - Durchlauf 1 prueft Plausibilitaet Rohtext/erkannter Tag,
   Durchlauf 2 korrigiert nur die aussortierten Faelle) fuer kuenftiges Fine-Tuning.
 * **Ueberlegung (12.09.2026, noch nicht umgesetzt): LoRA-Adapter statt volles Fine-Tuning pro
@@ -315,6 +354,49 @@ dokumentiert, siehe ggf. dortiges Projekt-Gedaechtnis.)
   Modell-Downloads (LLM ~5 GB, Whisper ~0,5 GB) - dafuer neu `setup.ps1`, das
   `setup_venv.ps1`/`download_llm.ps1`/`fetch_models.ps1` nacheinander aufruft (keine
   Logik-Duplizierung, die drei Skripte bleiben einzeln nutzbar).
+
+## Veroeffentlichung vorbereitet (13.09.2026)
+
+**Status: GitHub-Repo existiert und ist vollstaendig gepusht, aber bewusst noch privat.**
+Repo `derpreusse85-cloud/KI-Gaming-Assistent` (leer angelegt, kein README/.gitignore/Lizenz beim
+Erstellen, um Konflikte mit den bereits lokal fertigen Dateien zu vermeiden). Lokaler Branch
+`main` per `git push -u origin main` hochgeladen, dazu alle vier Versions-Tags (`git push origin
+--tags`) und passende GitHub-Releases zu allen vier Tags (Notizen aus `CHANGELOG.md`, per
+`gh release create` angelegt). Authentifizierung: Personal Access Token (classic, Scope
+`public_repo`, 90 Tage, laeuft ~12.12.2026 ab) fuer `git push` ueber den Windows Git Credential
+Manager gespeichert; `gh`-CLI (per `winget install --id GitHub.cli` installiert) separat per
+Browser-Login authentifiziert - beide Anmeldungen sind unabhaengig voneinander und wurden vom
+Nutzer selbst in seinem eigenen Terminal durchgefuehrt, nicht durch die KI-Sitzung (Sicherheits-
+prinzip: Zugangsdaten nie im Chat teilen). Repo-Sichtbarkeit aktuell **privat** - Nutzer hat einen
+Reddit-Post zum Sammeln neuer Spielideen erstellt (wartet noch auf Mod-Freigabe) und will das
+Repo erst oeffentlich stellen, wenn sich echtes Nutzerinteresse zeigt. **Nutzer-Hintergrund:**
+dies ist seine allererste GitHub-Veroeffentlichung ueberhaupt - GitHub-Konzepte (Tokens, `gh`,
+Fork/Pull-Request-Modell, Releases vs. Tags, Packages/Contributors-Widgets) wurden in der Session
+jeweils von Grund auf erklaert, nicht vorausgesetzt.
+
+**`LICENSE` (GPL-3.0):** offizieller Volltext von `gnu.org/licenses/gpl-3.0.txt`, mit eigener
+Copyright-Zeile ("Gaming-Sprachassistent / Copyright (C) 2026 DerPreusse") vorangestellt. **Fund
+und Korrektur (13.09.2026):** der urspruenglich komplett uebernommene Text enthielt am Ende noch
+den offiziellen GPL-Anhang "How to Apply These Terms to Your New Programs" mit woertlichen
+Platzhaltern (`<year>`, `<name of author>`) - das ist normaler Bestandteil des offiziellen
+GPL-Texts (Anleitung fuer Entwickler, kein Fehler), haette hier aber wie eine nicht ausgefuellte
+Lizenz gewirkt. Datei auf den reinen Lizenztext bis "END OF TERMS AND CONDITIONS" gekuerzt, der
+Anhang entfernt.
+
+**`CHANGELOG.md`** neu (Keep-a-Changelog-Stil, v1.0-v1.3), Inhalte aus den vorhandenen
+Git-Tag-Nachrichten und diesem Dokument destilliert, in der README verlinkt.
+
+**README-Ergaenzungen fuer die Veroeffentlichung:** Hinweis dass Code/System-Prompt fest auf
+Gemma 4 E4B ausgelegt sind (kein reiner Config-Tausch bei anderem Modell moeglich, siehe
+"Modellwahl" oben); Abschnitt zum Erweitern bestehender Profile um neue Kommandos
+(Namenskollisionen pruefen, `kontextlaenge` im Blick behalten); Abschnitt "Lizenz und
+Drittanbieter-Komponenten" (eigener Code GPL-3.0, `vendor/`-Binaries MIT, Gemma-Gewichte
+Apache-2.0); persoenlicher Disclaimer des Autors (Nicht-Entwickler, kompletter Code KI-generiert,
+Bitte um Sachlichkeit) als Zitat-Block direkt nach der Einleitung, wortwoertlich vom Nutzer
+vorgegeben.
+
+**`.gitignore`:** `Elite Dangerous (erster entwurf).txt` (roher Arbeitsentwurf, analog zu
+`Beispiele.txt`) ergaenzt - beide sind persoenliches Referenzmaterial, nicht Teil des Repos.
 
 ## Uebertragbare Lektionen aus dem Vorgaengerprojekt
 
