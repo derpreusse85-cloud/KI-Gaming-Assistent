@@ -15,6 +15,9 @@ Das vollstaendige Konzept samt aller Design-Entscheidungen und der Testreihe ste
 > bitte ich darum, sachlich zu bleiben, da trotz KI-generierten Codes jede Menge Hirnschmalz
 > reingeflossen ist.
 
+Das Tool ist in erster Linie als Komfort-Werkzeug gedacht, nicht speziell fuer den kompetitiven
+Bereich optimiert. Ob es sich trotzdem dafuer eignet, muss jeder fuer sich selbst entscheiden.
+
 **Code und System-Prompt sind aktuell fest auf Gemma 4 E4B ausgelegt**, nicht auf ein LLM
 im Allgemeinen. Das betrifft u. a. das `--reasoning off`-Flag beim Start von `llama-server`
 (schaltet den bei diesem Modell/Chat-Template automatisch aktiven Denkmodus ab, siehe
