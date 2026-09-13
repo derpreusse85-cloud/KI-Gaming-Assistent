@@ -37,8 +37,7 @@ from gaming_assistant.profile import Profil
 
 # Handverlesene Zusatzfaelle je Profil (Aeusserung, erwartete Tag-Liste in
 # Nennreihenfolge) - ergaenzen die automatisch aus jedem "beispiel"-Feld
-# abgeleiteten Grundfaelle. Bewusst OHNE die Energie/Engage-Testfaelle beim
-# Elite-Dangerous-Profil - diese Datei ist Teil des oeffentlichen Repos.
+# abgeleiteten Grundfaelle.
 ZUSATZFAELLE: dict[str, list[tuple[str, list[str]]]] = {
     "EliteDangerous": [
         ("Pump die Energie in die Waffen", ["WaffenMAX"]),

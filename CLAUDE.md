@@ -23,7 +23,14 @@ ergaenzt, Trainingsdaten-Aufzeichnung per Tray abschaltbar, GitHub-Veroeffentlic
 (siehe eigener Abschnitt "Veroeffentlichung vorbereitet" weiter unten). v1.4: Feuergruppen-
 Direktwahl fuer Elite Dangerous per `Status.json`-Auslesen (neues Modul `ed_status.py`), zwei
 weitere Elite-Dangerous-Kommandos (`Aufhaengungen`, `Moduswechsel`), Debug-Log per Tray-Haken
-umschaltbar inkl. Log-Datei (siehe "Stand der Arbeit" unten fuer Details).
+umschaltbar inkl. Log-Datei (siehe "Stand der Arbeit" unten fuer Details). **Nach v1.4, noch ohne
+eigenen Versionssprung (14.09.2026):** Feuergruppen-Tasten "n"/"b" zusaetzlich per Profil
+ueberschreibbar gemacht; `LICENSE` nochmal korrigiert (GitHub hatte die Lizenz zunaechst nicht
+automatisch erkannt, siehe "Veroeffentlichung vorbereitet"); Latenz erneut nachgemessen und
+diesmal auch in die README uebernommen (vorher nur hier); erste feste Testinfrastruktur unter
+`tests/` angelegt (Klassifikations-Regressionstest fuer alle Profile automatisch aus den
+`beispiel`-Feldern, interaktives Testwerkzeug ohne feste Faelle, Latenz-Messskript fuer die
+eigene Hardware) - siehe eigener Absatz weiter unten. Alles bereits gepusht.
 
 * **Modulstruktur** (Paket `gaming_assistant/`, ein einziger Prozess, als Vorlage aus
   `F:\Projekte\KI Diktier Tool` uebernommen, aber ohne WebSocket/Token-Auth/Server-Client-Split):
@@ -244,9 +251,8 @@ umschaltbar inkl. Log-Datei (siehe "Stand der Arbeit" unten fuer Details).
   verallgemeinert: **jedes** Tag jedes Profils wird automatisch mit seinem eigenen `beispiel`-Feld
   getestet (muss zu sich selbst klassifizieren) - keine Notwendigkeit, fuer jedes Profil von Hand
   Testfaelle zu schreiben. Zusaetzlich ein `ZUSATZFAELLE`-Dict fuer handverlesene Paraphrasen/
-  Mehrfachbefehle je Profil (bisher nur fuer Elite Dangerous befuellt, bewusst OHNE die Energie/
-  Engage-Testfaelle - die Datei ist Teil des oeffentlichen Repos). Reine Textklassifikation ohne
-  Whisper/Mikrofon, startet `llama-server` selbst; Aufruf ohne Argumente testet alle Profile in
+  Mehrfachbefehle je Profil (bisher nur fuer Elite Dangerous befuellt). Reine Textklassifikation
+  ohne Whisper/Mikrofon, startet `llama-server` selbst; Aufruf ohne Argumente testet alle Profile in
   `profiles/`, mit Profilnamen als Argumente nur die genannten. Kein pytest o.ae. eingefuehrt,
   einfaches eigenstaendiges Skript passend zur bisherigen Projekt-Schlichtheit (kein
   Test-Framework als neue Abhaengigkeit). Bei der Verallgemeinerung gegen alle drei Profile
@@ -461,7 +467,7 @@ dokumentiert, siehe ggf. dortiges Projekt-Gedaechtnis.)
 privat.** Repo `derpreusse85-cloud/KI-Gaming-Assistent` (leer angelegt, kein README/.gitignore/
 Lizenz beim Erstellen, um Konflikte mit den bereits lokal fertigen Dateien zu vermeiden). Lokaler
 Branch `main` per `git push -u origin main` hochgeladen (inzwischen mehrfach per einfachem
-`git push` aktualisiert, zuletzt bis Commit `56c8a86`), dazu alle fuenf Versions-Tags v1.0-v1.4
+`git push` aktualisiert, zuletzt bis Commit `c451569`), dazu alle fuenf Versions-Tags v1.0-v1.4
 (`git push origin --tags` bzw. einzeln `git push origin v1.4`) und passende GitHub-Releases zu
 allen fuenf Tags (Notizen aus `CHANGELOG.md`, per `gh release create` angelegt - `gh` blieb ueber
 die Session hinweg angemeldet, spaetere Releases liefen direkt aus der KI-Sitzung, nicht mehr nur
@@ -484,7 +490,13 @@ den offiziellen GPL-Anhang "How to Apply These Terms to Your New Programs" mit w
 Platzhaltern (`<year>`, `<name of author>`) - das ist normaler Bestandteil des offiziellen
 GPL-Texts (Anleitung fuer Entwickler, kein Fehler), haette hier aber wie eine nicht ausgefuellte
 Lizenz gewirkt. Datei auf den reinen Lizenztext bis "END OF TERMS AND CONDITIONS" gekuerzt, der
-Anhang entfernt.
+Anhang entfernt. **Zweiter Fund (14.09.2026):** GitHub hatte die Lizenz trotzdem nicht automatisch
+erkannt (`gh api repos/.../...  --jq '.license'` zeigte `spdx_id: NOASSERTION`) - vermutlich weil
+die eigene Copyright-Kopfzeile vor dem GPL-Text die Erkennungsgenauigkeit von GitHubs
+Licensee-Abgleich unter die noetige Schwelle gedrueckt hat. Kopfzeile komplett entfernt (Datei
+beginnt jetzt direkt mit dem offiziellen Titel), Copyright-Angabe stattdessen in die README
+verschoben (Abschnitt "Lizenz und Drittanbieter-Komponenten"). Danach per `gh api` bestaetigt:
+`spdx_id: GPL-3.0`, korrekt erkannt.
 
 **`CHANGELOG.md`** neu (Keep-a-Changelog-Stil, v1.0-v1.3), Inhalte aus den vorhandenen
 Git-Tag-Nachrichten und diesem Dokument destilliert, in der README verlinkt.
