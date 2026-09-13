@@ -79,13 +79,6 @@ umschaltbar inkl. Log-Datei (siehe "Stand der Arbeit" unten fuer Details).
   Feuergruppen-Tags sind mittlerweile **im echten Spiel bestaetigt**
   (siehe naechster Absatz); die uebrigen 13 Kommandos noch nicht - Nutzer besitzt Elite Dangerous
   aber selbst und kann das im Gegensatz zu Helldivers 1 grundsaetzlich noch verifizieren.
-  **Geprueft und verworfen:** zusaetzliche Ausloesewoerter "Energie"/"Engage" fuer den FSD-Tag
-  (Star-Trek-Anspielung, Nutzerwunsch) - "Energie" kollidiert reproduzierbar mit
-  `EnergieRuecksetzten` (Modell ordnet "Energie" allein immer diesem Tag zu, auch bei expliziter
-  Wortbindung inkl. "Energie" als Schlagwort fuer FSD), "Engage" allein waere kollisionsfrei
-  gewesen, aber Nutzer wollte laut eigener Aussage "beides oder keins" statt einer
-  "halbgebackenen" Loesung mit nur einem der beiden Woerter - `Frameshiftdrive` blieb deshalb
-  unveraendert bei der reinen FSD-Beschreibung ohne Zusatzwoerter.
   **Erkanntes Muster (13.09.2026, Nutzerbeobachtung): englische Begriffe in Klammern in der
   `beschreibung` verbessern die Erkennung englischer Paraphrasen, ohne die deutsche Erkennung zu
   gefaehrden.** Aufgefallen beim `Aufhaengungen`-Tag: die Beschreibung nennt "(Hardpoints/Waffen)",

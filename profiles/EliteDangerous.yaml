@@ -33,6 +33,10 @@ Frameshiftdrive:
   beschreibung: "nur wenn der Frame-Shift-Drive (FSD) aktiviert werden soll"
   beispiel: "FSD aktivieren"
   taste: ["j"]
+Energie:
+  beschreibung: 'nur wenn der komplette Befehl ausschliesslich und einzig aus einem der Woerter "Energie" oder "Engage" besteht, ohne jedes weitere Wort'
+  beispiel: "Energie!"
+  taste: ["j"]
 Ladeluke:
   beschreibung: "nur wenn die Ladeluke (Cargo Hatch) geoeffnet oder geschlossen werden soll"
   beispiel: "Ladeluke oeffnen"
