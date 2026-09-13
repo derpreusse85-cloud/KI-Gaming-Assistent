@@ -6,8 +6,8 @@ Helldivers 2 automatisch den passenden Stratagem-Code aus. Kein Modding des Spie
 keine festen Kommandophrasen wie bei klassischen Voice-Command-Tools.
 
 Das vollstaendige Konzept samt aller Design-Entscheidungen und der Testreihe steht in
-`Gaming_assistent.md`; der aktuelle Entwicklungsstand in `CLAUDE.md`. Dieses README ist die
-kurze Gebrauchsanleitung fuer den taeglichen Betrieb.
+`Gaming_assistent.md`; der aktuelle Entwicklungsstand in `CLAUDE.md`; die Versionshistorie in
+`CHANGELOG.md`. Dieses README ist die kurze Gebrauchsanleitung fuer den taeglichen Betrieb.
 
 > Kleiner Disclaimer: Ich bin kein Entwickler, sondern einfach nur ein Typ, der eine Idee hatte
 > und schauen wollte, ob sie funktioniert. Da ich kaum Programmierkenntnisse habe, wurde der
