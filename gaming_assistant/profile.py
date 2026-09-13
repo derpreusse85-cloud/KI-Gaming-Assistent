@@ -43,7 +43,10 @@ Liste ein `feuergruppe_ziel` (Ziel-Index einer Feuergruppe) angeben - die
 noetige Tastensequenz wird dann erst zur Laufzeit anhand des in `status_datei`
 gelesenen Ist-Zustands berechnet, statt fest in der YAML zu stehen. Hat
 mindestens ein Tag `feuergruppe_ziel` gesetzt, muss `status_datei` im Profil
-vorhanden sein, sonst bricht `laden()` mit klarer Fehlermeldung ab.
+vorhanden sein, sonst bricht `laden()` mit klarer Fehlermeldung ab. Optionale
+Top-Level-Felder `feuergruppe_vorwaerts_taste`/`feuergruppe_rueckwaerts_taste`
+(Vorgabe "n"/"b", siehe ed_status.py) erlauben es, diese beiden Tasten zu
+ueberschreiben, falls sie bei jemandem mit einer anderen Belegung kollidieren.
 
 Python-Hinweis: "@dataclass" unten ist eine bequeme Kurzschreibweise fuer eine
 Klasse, die nur Daten haelt - Python erzeugt __init__ usw. automatisch aus den
@@ -56,6 +59,8 @@ from dataclasses import dataclass, field
 from pathlib import Path
 
 import yaml
+
+from gaming_assistant import ed_status
 
 
 @dataclass
@@ -90,6 +95,9 @@ class Profil:
     initial_prompt_schlagwoerter: list[str] = field(default_factory=list)
     # None = kein Tag im Profil braucht eine Status-Datei (siehe ed_status.py).
     status_datei: Path | None = None
+    # Ueberschreibbare Feuergruppen-Tasten, siehe ed_status.py.
+    feuergruppe_vorwaerts_taste: str = ed_status.TASTE_VORWAERTS_STANDARD
+    feuergruppe_rueckwaerts_taste: str = ed_status.TASTE_RUECKWAERTS_STANDARD
 
     def bekannte_tags(self) -> set[str]:
         """Menge aller gueltigen Tag-Namen - fuer den Parser (parser.py)."""
@@ -119,6 +127,12 @@ def laden(pfad: Path) -> Profil:
     initial_prompt_schlagwoerter = [str(w) for w in rohdaten.pop("initial_prompt_schlagwoerter", [])]
     status_datei_roh = rohdaten.pop("status_datei", None)
     status_datei = Path(status_datei_roh) if status_datei_roh else None
+    feuergruppe_vorwaerts_taste = str(
+        rohdaten.pop("feuergruppe_vorwaerts_taste", ed_status.TASTE_VORWAERTS_STANDARD)
+    )
+    feuergruppe_rueckwaerts_taste = str(
+        rohdaten.pop("feuergruppe_rueckwaerts_taste", ed_status.TASTE_RUECKWAERTS_STANDARD)
+    )
 
     tags: dict[str, TagEintrag] = {}
     for tag_name, eintrag in rohdaten.items():
@@ -156,6 +170,8 @@ def laden(pfad: Path) -> Profil:
         tags=tags,
         initial_prompt_schlagwoerter=initial_prompt_schlagwoerter,
         status_datei=status_datei,
+        feuergruppe_vorwaerts_taste=feuergruppe_vorwaerts_taste,
+        feuergruppe_rueckwaerts_taste=feuergruppe_rueckwaerts_taste,
     )
 
 

@@ -146,7 +146,10 @@ def main() -> None:
                 # nicht bekannt" (Spiel laeuft nicht, Status.json fehlt/kaputt)
                 # - dann bewusst KEIN Tastendruck statt zu raten.
                 berechnete_taste = ed_status.feuergruppen_tasten(
-                    profil_obj.status_datei, eintrag.feuergruppe_ziel
+                    profil_obj.status_datei,
+                    eintrag.feuergruppe_ziel,
+                    profil_obj.feuergruppe_vorwaerts_taste,
+                    profil_obj.feuergruppe_rueckwaerts_taste,
                 )
                 if berechnete_taste is None:
                     log.warning(

@@ -9,18 +9,26 @@ kontextlaenge: 4096
 # gelesen (siehe ed_status.py), fuers Berechnen der Feuergruppen-Tasten unten.
 status_datei: 'C:\Users\<DeinBenutzername>\Saved Games\Frontier Developments\Elite Dangerous\Status.json'
 
+# Tasten fuer den Feuergruppen-Wechsel (siehe unten) - bei Bedarf anpassen,
+# falls sie mit einer anderen Belegung kollidieren. "n" ist die Standard-
+# Spielbelegung fuer "naechste Feuergruppe"; fuer "vorherige Feuergruppe" gibt
+# es keine Standardbelegung, "b" muss dafuer in den Elite-Dangerous-Optionen
+# manuell eingestellt werden.
+feuergruppe_vorwaerts_taste: "n"
+feuergruppe_rueckwaerts_taste: "b"
+
 WaffenMAX:
   beschreibung: "nur wenn die gesamte Energie zu den Waffen (WEP-Pips) geleitet werden soll"
   beispiel: "Alle Energie zu den Waffen"
-  taste: ["down", "right", "right", "right", "right", "right"]
+  taste: ["down", "right", "right"]
 SchildeMAX:
   beschreibung: "nur wenn die gesamte Energie zu den Schilden (SYS-Pips) geleitet werden soll"
   beispiel: "Alle Energie zu den Schilden"
-  taste: ["down", "left", "left", "left", "left", "left"]
+  taste: ["down", "left", "left"]
 AntriebMAX:
   beschreibung: "nur wenn die gesamte Energie zu den Antrieben (ENG-Pips) geleitet werden soll"
   beispiel: "Alle Energie zu den Antrieben"
-  taste: ["down", "up", "up", "up", "up", "up"]
+  taste: ["down", "up", "up"]
 EnergieRücksetzten:
   beschreibung: "nur wenn die Energie (Pips) wieder gleichmaessig auf alle Systeme verteilt werden soll"
   beispiel: "Energie zuruecksetzen"
@@ -79,12 +87,13 @@ Dueppel:
   beschreibung: "nur wenn Dueppel (Chaff) ausgeworfen werden sollen"
   beispiel: "Dueppel aktivieren"
   taste: []
-# Feuergruppen A-H: Elite Dangerous hat nur eine Zyklus-Taste ("naechste
-# Feuergruppe", Standard "n"), keine Direktwahl - die Tastensequenz wird
-# deshalb zur Laufzeit aus status_datei berechnet (siehe ed_status.py) statt
-# fest hier zu stehen. Fuer "vorherige Feuergruppe" gibt es keine
-# Standardbelegung - dafuer muss in den Elite-Dangerous-Optionen manuell die
-# Taste "b" eingestellt werden (kollisionsfrei getestet).
+# Feuergruppen A-H: Elite Dangerous kennt nur eine Zyklus-Taste, keine
+# Direktwahl - die Tastensequenz wird deshalb zur Laufzeit aus status_datei
+# berechnet (siehe ed_status.py), nicht fest hier eingetragen. Die
+# tatsaechlich verwendeten Tasten stehen oben (feuergruppe_vorwaerts_taste/
+# feuergruppe_rueckwaerts_taste) - "b" muss in den Elite-Dangerous-Optionen
+# manuell fuer "vorherige Feuergruppe" eingestellt werden (kollisionsfrei
+# getestet).
 FeuergruppeA:
   beschreibung: "nur wenn auf Feuergruppe A gewechselt werden soll"
   beispiel: "Wechsle zu Feuergruppe A"

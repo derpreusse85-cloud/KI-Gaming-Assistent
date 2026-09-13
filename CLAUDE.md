@@ -112,7 +112,11 @@ umschaltbar inkl. Log-Datei (siehe "Stand der Arbeit" unten fuer Details).
   kurzzeitig der echte lokale Pfad des Nutzers, vor dem Commit durch den Platzhalter ersetzt).
   Vorwaerts-Taste "N" ist Spiel-Standardbelegung, Rueckwaerts-Taste "B" hat keine
   Standardbelegung und muss vom Nutzer selbst in den Elite-Dangerous-Optionen eingestellt werden
-  (kollisionsfrei getestet). Maximal 8 Feuergruppen (A-H) angenommen, ohne die tatsaechlich vom
+  (kollisionsfrei getestet). Beide Tasten sind seit 13.09.2026 zusaetzlich per Profil
+  ueberschreibbar (`feuergruppe_vorwaerts_taste`/`feuergruppe_rueckwaerts_taste`, Vorgabe "n"/"b"
+  aus `ed_status.py::TASTE_VORWAERTS_STANDARD`/`TASTE_RUECKWAERTS_STANDARD`) - Nutzerwunsch, falls
+  die Tasten bei jemandem doch kollidieren. Maximal 8 Feuergruppen (A-H) angenommen, ohne die
+  tatsaechlich vom
   Nutzer konfigurierte Anzahl zu kennen - liegt laut Nutzeraussage in dessen eigener
   Verantwortung, eine sinnvoll belegte Gruppe zu nennen. Isoliert gegen die echte, laufende
   `Status.json` verifiziert (`FireGroup:0` als Ausgangspunkt, alle acht Ziel-Berechnungen

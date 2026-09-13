@@ -26,11 +26,14 @@ from pathlib import Path
 
 log = logging.getLogger("ed_status")
 
-# Standard-Spielbelegung fuer "naechste Feuergruppe". Fuer "vorherige Feuergruppe"
-# gibt es keine Standardbelegung - der Nutzer muss "b" selbst in den
-# Elite-Dangerous-Optionen dafuer eintragen (siehe Kommentar in der Profil-YAML).
-_TASTE_VORWAERTS = "n"
-_TASTE_RUECKWAERTS = "b"
+# Vorgabewerte, falls im Profil nicht anders angegeben (siehe profile.py):
+# "n" ist die Standard-Spielbelegung fuer "naechste Feuergruppe". Fuer
+# "vorherige Feuergruppe" gibt es keine Standardbelegung - der Nutzer muss "b"
+# selbst in den Elite-Dangerous-Optionen dafuer eintragen (siehe Kommentar in
+# der Profil-YAML). Beide Tasten sind im Profil ueberschreibbar, falls sie bei
+# jemandem mit einer anderen Belegung kollidieren.
+TASTE_VORWAERTS_STANDARD = "n"
+TASTE_RUECKWAERTS_STANDARD = "b"
 
 # Elite Dangerous erlaubt maximal 8 Feuergruppen (A-H, Index 0-7). Ob der Nutzer
 # tatsaechlich alle 8 mit Waffen belegt hat, liegt in seiner eigenen Verantwortung.
@@ -64,7 +67,12 @@ def _status_lesen(status_pfad: Path) -> dict | None:
     return None
 
 
-def feuergruppen_tasten(status_pfad: Path, ziel_index: int) -> list[str] | None:
+def feuergruppen_tasten(
+    status_pfad: Path,
+    ziel_index: int,
+    taste_vorwaerts: str = TASTE_VORWAERTS_STANDARD,
+    taste_rueckwaerts: str = TASTE_RUECKWAERTS_STANDARD,
+) -> list[str] | None:
     """Berechnet die Tastensequenz, um von der aktuellen zur Ziel-Feuergruppe zu wechseln.
 
     Liefert None, wenn der aktuelle Spielzustand nicht bekannt ist (Datei fehlt,
@@ -89,9 +97,9 @@ def feuergruppen_tasten(status_pfad: Path, ziel_index: int) -> list[str] | None:
     rueckwaerts = (aktueller_index - ziel_index) % _ANZAHL_GRUPPEN
 
     if vorwaerts <= rueckwaerts:
-        sequenz = [_TASTE_VORWAERTS] * vorwaerts
+        sequenz = [taste_vorwaerts] * vorwaerts
     else:
-        sequenz = [_TASTE_RUECKWAERTS] * rueckwaerts
+        sequenz = [taste_rueckwaerts] * rueckwaerts
     log.debug(
         "Feuergruppe: aktuell=%d, ziel=%d -> Sequenz %s",
         aktueller_index, ziel_index, sequenz,

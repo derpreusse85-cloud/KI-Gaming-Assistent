@@ -170,8 +170,10 @@ ORBITALSCHLAG:
   schreibt (`status_datei` zeigt auf diese Datei — bei Elite Dangerous die `Status.json` im
   eigenen "Saved Games"-Ordner, Pfad je nach Windows-Benutzername unterschiedlich, deshalb pro
   Profil einzutragen). **Einzige Ausnahme im gesamten Projekt, die auf eine Datei ausserhalb des
-  Programmordners zugreift** — nur lesend, nie schreibend. Details: `Gaming_assistent.md`,
-  Abschnitt "Aktionslisten-Format".
+  Programmordners zugreift** — nur lesend, nie schreibend. Die dabei tatsaechlich gedrueckten
+  Tasten (Vorgabe "n"/"b") lassen sich zusaetzlich per `feuergruppe_vorwaerts_taste`/
+  `feuergruppe_rueckwaerts_taste` ueberschreiben, falls sie mit einer anderen Belegung
+  kollidieren. Details: `Gaming_assistent.md`, Abschnitt "Aktionslisten-Format".
 
 Details und Hintergrund zu jedem Feld: `Gaming_assistent.md`, Abschnitt "Aktionslisten-Format".
 
