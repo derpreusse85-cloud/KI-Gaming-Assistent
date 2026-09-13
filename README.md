@@ -70,7 +70,7 @@ Ein Mikrofon wird ausserdem gebraucht.
 
 ### Empfohlene Anforderungen
 
-* **Dedizierte GPU mit 16 GB+ VRAM** (getestet mit einer RX 7900 XTX, 24 GB) — mehr Reserve
+* **Dedizierte GPU mit 16 GB VRAM** (getestet mit einer RX 7900 XTX, 24 GB) — mehr Reserve
   bedeutet, dass der llama.cpp-Prozess waehrend des Spielens seltener aus dem VRAM verdraengt
   wird (siehe `CLAUDE.md`, Abschnitt "Latenz gemessen" zu den Folgen einer Verdraengung).
 * **32 GB RAM.**
@@ -206,6 +206,7 @@ wird gar nichts mehr mitgeschrieben.
 ## Lizenz und Drittanbieter-Komponenten
 
 Der eigene Code dieses Projekts steht unter der **GPL-3.0** (siehe `LICENSE`).
+Copyright (C) 2026 DerPreusse.
 
 Im Repo mitgelieferte Drittanbieter-Binaries stehen unter ihrer jeweils eigenen Lizenz, davon
 unberuehrt (MIT ist mit GPL-3.0 vereinbar, es handelt sich um separate Werke):
