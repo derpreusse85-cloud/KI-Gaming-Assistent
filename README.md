@@ -9,6 +9,23 @@ Das vollstaendige Konzept samt aller Design-Entscheidungen und der Testreihe ste
 `Gaming_assistent.md`; der aktuelle Entwicklungsstand in `CLAUDE.md`. Dieses README ist die
 kurze Gebrauchsanleitung fuer den taeglichen Betrieb.
 
+> Kleiner Disclaimer: Ich bin kein Entwickler, sondern einfach nur ein Typ, der eine Idee hatte
+> und schauen wollte, ob sie funktioniert. Da ich kaum Programmierkenntnisse habe, wurde der
+> komplette Code mit KI geschrieben. Ich kann verstehen, wenn manchen das missfaellt, allerdings
+> bitte ich darum, sachlich zu bleiben, da trotz KI-generierten Codes jede Menge Hirnschmalz
+> reingeflossen ist.
+
+**Code und System-Prompt sind aktuell fest auf Gemma 4 E4B ausgelegt**, nicht auf ein LLM
+im Allgemeinen. Das betrifft u. a. das `--reasoning off`-Flag beim Start von `llama-server`
+(schaltet den bei diesem Modell/Chat-Template automatisch aktiven Denkmodus ab, siehe
+`CLAUDE.md`, Abschnitt "LM Studio abgeloest"), `temperature: 0.0` fuer deterministische
+Klassifikation sowie der Aufbau und Wortlaut des System-Prompts selbst (`prompt.py`), der gegen
+genau dieses Modell getestet wurde. Ein anderes Modell einzusetzen ist nicht als reiner
+Config-Tausch gedacht - es muesste erst gegen die eigene Testreihe (siehe
+`Gaming_assistent.md`, Abschnitt "Testreihe") neu verifiziert werden, ob Denkmodus,
+Instruction-Following bei Mehrfachbefehlen und Formattreue beim `&&TAG&&`-Marker weiterhin
+zuverlaessig funktionieren.
+
 ## Einrichtung (einmalig nach dem Klonen)
 
 **Kein separates LLM-Programm noetig** — der Assistent startet ein eigenes llama.cpp
@@ -40,8 +57,8 @@ Ein Mikrofon wird ausserdem gebraucht.
 * **Windows 10/11 (64-Bit)** — `pynput`/`pystray`/`whisper-server.exe`/`llama-server.exe` sind
   Windows-spezifisch, keine plattformuebergreifende Unterstuetzung vorgesehen.
 * **GPU mit Vulkan-Unterstuetzung**, mindestens **8 GB VRAM insgesamt**. Gemessen auf diesem
-  Rechner: Whisper-Modell ~0,57 GB, llama-server (Gemma 4 E4B, Q4_K_M, Kontext 8192, ein Slot)
-  ~3,3 GB — zusammen ~3,9 GB fuers Tool allein, der Rest ist Platz fuers Spiel selbst
+  Rechner (12.09.2026): Whisper-Modell ~0,92 GB, llama-server (Gemma 4 E4B, Q4_K_M, Kontext 8192,
+  ein Slot) ~3,34 GB — zusammen ~4,26 GB fuers Tool allein, der Rest ist Platz fuers Spiel selbst
   (Helldivers 2 & Co. brauchen ebenfalls mehrere GB VRAM). Ohne GPU laeuft Whisper
   zwar auch auf der CPU, ist dann aber laut einer frueheren Messreihe fuer
   Push-to-Talk-Latenz zu langsam (z. B. `medium` 8,17 s statt <0,2 s je Aeusserung) — GPU ist
@@ -80,10 +97,12 @@ Unbekannte oder mehrdeutige Aeusserungen loesen bewusst nichts aus (kein Ratever
 * **Profil** — aktives Spielprofil wechseln (Liste aller YAML-Dateien in `profiles/`).
 * **Push-to-talk festlegen ...** — neue PTT-Taste (Tastatur oder Maustaste 4/5/Mitte) durch
   einmaliges Druecken festlegen.
+* **Trainingsdaten aufzeichnen** — an-/abschaltbarer Haken, siehe Abschnitt "Trainingsdaten"
+  unten.
 * **Beenden**
 
-Die Einstellungen (aktives Profil, PTT-Taste) werden automatisch in `config.json` gespeichert
-und beim naechsten Start wiederhergestellt.
+Die Einstellungen (aktives Profil, PTT-Taste, Trainingsdaten-Aufzeichnung) werden automatisch in
+`config.json` gespeichert und beim naechsten Start wiederhergestellt.
 
 ## Ein neues Spielprofil anlegen
 
@@ -133,8 +152,47 @@ ORBITALSCHLAG:
 
 Details und Hintergrund zu jedem Feld: `Gaming_assistent.md`, Abschnitt "Aktionslisten-Format".
 
+## Ein bestehendes Profil um Kommandos erweitern
+
+Kommen z. B. bei Helldivers 2 neue Stratageme dazu, reicht es, einen weiteren Tag-Block im
+selben Format wie die vorhandenen an die Profil-YAML anzuhaengen (siehe oben) - kein Code muss
+angefasst werden. Zwei Dinge trotzdem im Blick behalten:
+
+* **Namenskollisionen pruefen.** Ein neues Kommando mit aehnlichem Namen/Wortstamm wie ein
+  bestehender Tag kann die Klassifikation durcheinanderbringen (siehe die dokumentierten
+  Konfliktcluster am Anfang von `Helldivers2.yaml`). Am besten kurz mit ein paar
+  Testformulierungen gegen den echten llama-server pruefen, bevor die Aenderung endgueltig ist.
+* **`kontextlaenge` im Auge behalten.** Jeder zusaetzliche Tag macht den generierten
+  System-Prompt etwas laenger. Bei einzelnen neuen Kommandos passt das meist locker in die
+  vorhandene Marge, bei vielen auf einmal ggf. neu messen und `kontextlaenge` anpassen - sonst
+  wird der Prompt beim Laden abgeschnitten.
+
+Die YAML wird nicht waehrend des laufenden Betriebs neu eingelesen - nach dem Speichern das
+Programm neu starten oder im Tray-Menue das Profil einmal neu auswaehlen, damit der
+System-Prompt neu gebaut wird (und `llama-server` bei geaenderter `kontextlaenge` automatisch
+neu startet).
+
 ## Trainingsdaten
 
 Jeder Sprachbefehl wird ungefiltert nach `training_data/raw/<Datum>.jsonl` protokolliert (Rohtext
 + erkannte Tags) — Grundlage fuer eine spaetere Fine-Tuning-Aufbereitung, siehe
-`Gaming_assistent.md`, Abschnitt "Trainingsdaten-Sammlung".
+`Gaming_assistent.md`, Abschnitt "Trainingsdaten-Sammlung". Ueber den Haken **"Trainingsdaten
+aufzeichnen"** im Tray-Menue laesst sich das jederzeit komplett abschalten (Standard: an) - dann
+wird gar nichts mehr mitgeschrieben.
+
+## Lizenz und Drittanbieter-Komponenten
+
+Der eigene Code dieses Projekts steht unter der **GPL-3.0** (siehe `LICENSE`).
+
+Im Repo mitgelieferte Drittanbieter-Binaries stehen unter ihrer jeweils eigenen Lizenz, davon
+unberuehrt (MIT ist mit GPL-3.0 vereinbar, es handelt sich um separate Werke):
+
+* **`vendor/llama.cpp/`** — vorgefertigte Binaries aus dem offiziellen
+  [llama.cpp](https://github.com/ggml-org/llama.cpp)-Release (MIT-Lizenz).
+* **`vendor/whisper.cpp/`** — vorgefertigte Binaries aus dem offiziellen
+  [whisper.cpp](https://github.com/ggml-org/whisper.cpp)-Projekt (MIT-Lizenz).
+
+Nicht im Repo enthalten, aber per Skript nachgeladen: das **Gemma-4-E4B**-Modell
+(`gemma-4-E4B-it-GGUF/`, Quelle `unsloth/gemma-4-E4B-it-GGUF` auf Hugging Face) steht unter der
+**Apache-2.0**-Lizenz, das Whisper-Modell (`models/`) unter der Lizenz des jeweiligen
+whisper.cpp-Modell-Downloads.

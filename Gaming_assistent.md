@@ -174,7 +174,7 @@ Spielraum in der Formulierung unproblematisch ist.
   ermittelt (gemessene Prompt-Tokens plus Marge für `max_tokens` und künftig ergänzte Tags) und
   als `kontextlaenge`-Feld im Profil hinterlegt — einfacher als eine Tokenizer-Anfrage zur
   Laufzeit, und konsistent mit dem bestehenden Diktier-Tool-Muster. Für das Helldivers-2-Profil:
-  `kontextlaenge: 8192` (siehe `Helldivers2_Stratagems.yaml`).
+  `kontextlaenge: 8192` (siehe `Helldivers2.yaml`).
 
 ## Parser-Sicherheit (übertragbar aus `server/llm.py`)
 
@@ -433,7 +433,7 @@ sollten, sind durch die Testreihe beantwortet.
 
 * **Testreihe durchgeführt (08.–09.09.2026, Details in `CLAUDE.md`):** vom 8-Tag-Testset (24/25)
   über 13 echte Waffen-Stratageme (21/25) bis zur vollständigen 77-Tag-Helldivers-2-Liste
-  (105/107, 98,1 %) — siehe `Helldivers2_Stratagems.yaml` für das vollständige Profil.
+  (105/107, 98,1 %) — siehe `Helldivers2.yaml` für das vollständige Profil.
   **Damit ist die ursprüngliche Stresstest-Frage beantwortet:** die flache Prompt-Struktur
   (alle Tags in einer Liste) bricht auch bei realistischem Umfang nicht ein — 100 % auf allen
   77 Positivfällen und allen 10 gezielt getesteten Namens-Konfliktclustern (u. a. die
@@ -467,5 +467,5 @@ Kostenlos-Kontingent) — die Modellgewichte bleiben komplett außerhalb des Rep
 Skript nachgeladen; die kleinen Server-Programme selbst liegen dagegen direkt im Repo. Details:
 `CLAUDE.md`, Abschnitt "LM Studio abgeloest".
 
-**Zweites Spielprofil ergänzt (12.09.2026): Helldivers 1** (`profiles/Helldivers1_Stratagems.yaml`,
+**Zweites Spielprofil ergänzt (12.09.2026): Helldivers 1** (`profiles/Helldivers1.yaml`,
 55 Stratageme) — noch nicht im echten Spiel getestet, Nutzer besitzt Helldivers 1 nicht.

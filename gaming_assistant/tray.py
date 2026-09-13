@@ -34,6 +34,8 @@ class Tray:
         on_beenden: Callable[[], None],
         ptt_label: str,
         on_ptt_aendern: Callable[[], None],
+        training_log_aktiv_fn: Callable[[], bool],
+        on_training_log_umschalten: Callable[[], None],
     ) -> None:
         self.status_fn = status_fn
         self.profil_liste_fn = profil_liste_fn
@@ -42,6 +44,8 @@ class Tray:
         self.on_beenden = on_beenden
         self.ptt_label = ptt_label
         self.on_ptt_aendern = on_ptt_aendern
+        self.training_log_aktiv_fn = training_log_aktiv_fn
+        self.on_training_log_umschalten = on_training_log_umschalten
         self._zustand = "startet"
         self.icon = pystray.Icon(
             "gaming_assistant",
@@ -57,9 +61,18 @@ class Tray:
             pystray.MenuItem("Status/Log anzeigen", self._log_anzeigen, default=True),
             pystray.MenuItem("Profil", self._profil_menu()),
             pystray.MenuItem("Push-to-talk festlegen ...", self._ptt_aendern),
+            pystray.MenuItem(
+                "Trainingsdaten aufzeichnen",
+                self._training_log_umschalten,
+                checked=lambda _item: self.training_log_aktiv_fn(),
+            ),
             pystray.Menu.SEPARATOR,
             pystray.MenuItem("Beenden", self._beenden),
         )
+
+    def _training_log_umschalten(self, *_args) -> None:
+        self.on_training_log_umschalten()
+        self._menu_aktualisieren()
 
     def ptt_label_setzen(self, label: str) -> None:
         """Nach dem Festlegen eines neuen Ausloesers aufrufen - aktualisiert

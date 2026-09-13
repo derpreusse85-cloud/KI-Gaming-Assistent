@@ -39,12 +39,14 @@ v1.2: zweites Spielprofil (Helldivers 1) ergaenzt.
   Kombination. Optionales Profil-Feld `halte_taste` (bei Helldivers 2: `"ctrl"`) haelt waehrend
   der ganzen Sequenz eine Zusatztaste gedrueckt — noetig, weil Helldivers-2-Stratagem-Codes
   exakt so funktionieren.
-* **`profiles/Helldivers2_Stratagems.yaml`** ist das erste, im echten Spiel bestaetigte Profil.
+* **`profiles/Helldivers2.yaml`** (bis 13.09.2026 `Helldivers2_Stratagems.yaml`, umbenannt) ist
+  das erste, im echten Spiel bestaetigte Profil.
   Tasten sind als Pfeiltasten (`up`/`down`/`left`/`right`, nicht mehr WASD) hinterlegt, weil der
   Nutzer die Spielbelegung entsprechend umgestellt hat. Zwei Abtippfehler wurden im Zuge des
   Testens gefunden und korrigiert (`Panzerabwehrstellung`, `Automatische_Kanone`) — die
   `taste`-Werte gelten weiterhin als vorlaeufig aenderbar, nicht als endgueltig fixiert.
-* **`profiles/Helldivers1_Stratagems.yaml`** ist das zweite Profil (12.09.2026), 55 Stratageme.
+* **`profiles/Helldivers1.yaml`** (bis 13.09.2026 `Helldivers1_Stratagems.yaml`, umbenannt) ist
+  das zweite Profil (12.09.2026), 55 Stratageme.
   Codes aus einer Wiki-Quelle abgetippt (die urspruenglich verlinkte Fandom-Seite war per
   Cloudflare blockiert, `helldivers.wiki.gg` ging stattdessen), **NICHT im echten Spiel
   getestet** - Nutzer besitzt Helldivers 1 nicht, steht so auch im Dateikopf. `taste`-Werte
@@ -224,11 +226,22 @@ Studio: ~2,5s) - beides eine spuerbare Verbesserung, kein Regressions-Risiko. `f
 (`"stop"`/`"length"`) stimmen mit der OpenAI-Konvention ueberein, auf die sich `parser.py`
 verlaesst - per Test bestaetigt.
 
-**VRAM-Bedarf neu gemessen:** llama-server (Gemma 4 E4B, Q4_K_M, Kontext 8192, ein Slot) ~3,3 GB
-(gemessen per Windows-GPU-Performance-Counter, Differenz mit/ohne laufenden Prozess) - deutlich
-weniger als die fruehere LM-Studio-Messung von ~6,33 GB bei gleicher Kontextlaenge (vermutlich
-groesserer Overhead durch LM Studios eigene Verwaltung/anderes Quant-Handling; nicht weiter
-untersucht, da fuer dieses Projekt nicht relevant).
+**VRAM-Bedarf neu gemessen (12.09.2026, per Windows-GPU-Performance-Counter, "Dedicated Usage"
+pro Prozess statt Vorher/Nachher-Differenz):** llama-server (Gemma 4 E4B, Q4_K_M, Kontext 8192,
+ein Slot) ~3,34 GB, whisper-server (large-v3-turbo-german-q5) ~0,92 GB, zusammen **~4,26 GB** -
+beide Werte etwas hoeher als die vorherige Messreihe (llama-server ~3,3 GB, Whisper ~0,57 GB,
+zusammen ~3,9 GB), aber weiterhin deutlich unter der fruehesten LM-Studio-Messung von ~6,33 GB
+(Nutzer erinnert sich an eine noch frühere Messung von knapp 8 GB) bei gleicher Kontextlaenge.
+**Wahrscheinlichste Erklaerung fuer den grossen Ruecksprung nach der LM-Studio-Abloesung:**
+LM Studios interne llama.cpp-basierte Engine lief vermutlich mit mehreren parallelen Slots ohne
+Moeglichkeit, das ueber die GUI auf 1 zu begrenzen - genau der Effekt, der beim eigenen
+`llama-server`-Setup per curl-Test gefunden und durch das feste `-np 1`-Flag behoben wurde (siehe
+oben, "VRAM-Bedarf des KV-Cache vervierfacht"): mehr Slots bedeuten einen mehrfachen KV-Cache
+bei gleicher Kontextlaenge. Nebenfaktoren, die einen kleineren Teil der Luecke erklaeren koennten:
+LM Studio laedt bei multimodalen GGUF-Modellen oft automatisch die `mmproj`-Datei mit (~0,95 GB)
+auch wenn nur Text gebraucht wird, plus moeglicher Verwaltungs-Overhead durch LM Studios eigenes
+Modell-Loading/-Caching. Nicht abschliessend verifiziert (LM Studio wurde bereits abgeloest, ein
+Nachtest waere nur noch von akademischem Interesse) - siehe Session vom 12.09.2026.
 
 **Verwendete llama.cpp-Version:** gepinnter Release-Tag `b10909` (`llama-b10909-bin-win-vulkan-x64.zip`),
 per `scripts/fetch_llama.ps1` nach `vendor/llama.cpp/` geladen - bewusst gepinnt statt "latest",

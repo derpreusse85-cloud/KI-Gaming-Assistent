@@ -1,0 +1,64 @@
+# Nur 7 Kommandos, klar unterscheidbar - deshalb freie 'beschreibung' statt
+# Wortbindung (anders als bei den Helldivers-Profilen mit vielen aehnlich
+# klingenden Stratagem-Namen).
+
+kontextlaenge: 4096
+
+WaffenMAX:
+  beschreibung: "nur wenn die gesamte Energie zu den Waffen geleitet werden soll"
+  beispiel: "Alle Energie zu den Waffen"
+  taste: ["down", "right", "right", "right", "right", "right"]
+SchildeMAX:
+  beschreibung: "nur wenn die gesamte Energie zu den Schilden geleitet werden soll"
+  beispiel: "Alle Energie zu den Schilden"
+  taste: ["down", "left", "left", "left", "left", "left"]
+AntriebMAX:
+  beschreibung: "nur wenn die gesamte Energie zu den Antrieben geleitet werden soll"
+  beispiel: "Alle Energie zu den Antrieben"
+  taste: ["down", "up", "up", "up", "up", "up"]
+EnergieRücksetzten:
+  beschreibung: "nur wenn die Energie wieder gleichmaessig auf alle Systeme verteilt werden soll"
+  beispiel: "Energie zuruecksetzen"
+  taste: ["down"]
+Fahrgestell:
+  beschreibung: "nur wenn das Fahrgestell ein- oder ausgefahren werden soll"
+  beispiel: "Fahrgestell ausfahren"
+  taste: ["l"]
+Frameshiftdrive:
+  beschreibung: "nur wenn der Frame-Shift-Drive (FSD) aktiviert werden soll"
+  beispiel: "FSD aktivieren"
+  taste: ["j"]
+Ladeluke:
+  beschreibung: "nur wenn die Ladeluke geoeffnet oder geschlossen werden soll"
+  beispiel: "Ladeluke oeffnen"
+  taste: ["home"]
+Stop:
+  beschreibung: "nur wenn der Antrieb komplett gestoppt werden soll (Vollstopp)"
+  beispiel: "Antrieb stoppen"
+  taste: ["x"]
+Boost:
+  beschreibung: "nur wenn der Antriebsboost (Nachbrenner) aktiviert werden soll"
+  beispiel: "Boost aktivieren"
+  taste: ["tab"]
+Heatsink:
+  beschreibung: "nur wenn ein Heatsink ausgeworfen werden soll"
+  beispiel: "Heatsink auswerfen"
+  taste: ["v"]
+Schildzellenbank:
+  # Hat im Spiel standardmaessig keine Taste - muss von jedem Nutzer selbst
+  # im Spiel belegt und hier eingetragen werden.
+  beschreibung: "nur wenn die Schildzellenbank aktiviert werden soll"
+  beispiel: "Schildzellenbank aktivieren"
+  taste: []
+ECM:
+  # Hat im Spiel standardmaessig keine Taste - muss von jedem Nutzer selbst
+  # im Spiel belegt und hier eingetragen werden.
+  beschreibung: "nur wenn elektronische Gegenmassnahmen (ECM) aktiviert werden sollen"
+  beispiel: "ECM aktivieren"
+  taste: []
+Dueppel:
+  # Hat im Spiel standardmaessig keine Taste - muss von jedem Nutzer selbst
+  # im Spiel belegt und hier eingetragen werden.
+  beschreibung: "nur wenn Dueppel (Chaff) ausgeworfen werden sollen"
+  beispiel: "Dueppel aktivieren"
+  taste: []

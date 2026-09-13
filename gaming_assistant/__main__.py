@@ -81,7 +81,25 @@ def main() -> None:
         config.save(cfg)
         log.info("Profil aktiv: %s (%d Tags, Kontext %d)", name, len(profil_obj.tags), profil_obj.kontextlaenge)
 
-    profil_laden(cfg["profil"]["aktiv"])
+    # Faellt automatisch auf ein tatsaechlich vorhandenes Profil zurueck, falls
+    # der in config.json gespeicherte Name zu keiner Datei mehr passt (z.B.
+    # nach einer Umbenennung/Loeschung) - so muss ausser dieser Fallback-Logik
+    # nirgends im Code ein konkreter Profilname hinterlegt sein, nur der
+    # Ordner selbst wird gebraucht (profile.liste_profile() scannt profiles/).
+    verfuegbare_profile = profile.liste_profile(profil_verzeichnis)
+    aktives_profil = cfg["profil"]["aktiv"]
+    if aktives_profil not in verfuegbare_profile:
+        if not verfuegbare_profile:
+            raise RuntimeError(
+                f"Kein Spielprofil gefunden in {profil_verzeichnis} - mindestens eine "
+                "YAML-Datei wird benoetigt."
+            )
+        log.warning(
+            "Konfiguriertes Profil %r nicht gefunden (umbenannt/geloescht?) - "
+            "verwende stattdessen %r.", aktives_profil, verfuegbare_profile[0],
+        )
+        aktives_profil = verfuegbare_profile[0]
+    profil_laden(aktives_profil)
 
     # -- Whisper-Subprozess + STT-Engine -------------------------------------
     whisper_server = whisper_proc.WhisperServer(cfg)
@@ -132,8 +150,10 @@ def main() -> None:
 
         # Ungefiltertes Live-Logging fuer die spaetere Trainingsdaten-Aufbereitung
         # (siehe Gaming_assistent.md) - passiert unabhaengig davon, ob ein Tag
-        # erkannt wurde oder nicht.
-        training_log.eintrag_anhaengen(training_verzeichnis, profil_obj.name, roh_text, tags)
+        # erkannt wurde oder nicht, ausser der Nutzer hat es ueber das
+        # Tray-Menue abgeschaltet.
+        if cfg["training_log"]["aktiv"]:
+            training_log.eintrag_anhaengen(training_verzeichnis, profil_obj.name, roh_text, tags)
 
     # Waehrend einer laufenden Aufnahme darf der PTT-Aenderungsdialog nicht
     # geoeffnet werden - sonst faengt der Listener den naechsten Tastendruck
@@ -169,6 +189,11 @@ def main() -> None:
             return
         ptt_dialog.zeigen(ptt_listener, cfg["ptt"], bei_ptt_gewaehlt)
 
+    def training_log_umschalten() -> None:
+        cfg["training_log"]["aktiv"] = not cfg["training_log"]["aktiv"]
+        config.save(cfg)
+        log.info("Trainingsdaten-Aufzeichnung ueber Tray %s", "aktiviert" if cfg["training_log"]["aktiv"] else "deaktiviert")
+
     def beenden() -> None:
         log.info("Gaming-Assistent wird beendet ...")
         ptt_listener.stop()
@@ -185,6 +210,8 @@ def main() -> None:
         on_beenden=beenden,
         ptt_label=ptt.beschreiben(cfg["ptt"]),
         on_ptt_aendern=ptt_dialog_oeffnen,
+        training_log_aktiv_fn=lambda: cfg["training_log"]["aktiv"],
+        on_training_log_umschalten=training_log_umschalten,
     )
     laufzeit["tray"] = tray_obj
     tray_obj.zustand_setzen("bereit")

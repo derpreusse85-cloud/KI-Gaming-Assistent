@@ -42,7 +42,7 @@ DEFAULTS: dict[str, Any] = {
         # Verzeichnis mit den Spiel-YAMLs, relativ zur Projekt-Wurzel.
         "verzeichnis": "profiles",
         # Dateiname (ohne .yaml) des beim Start aktiven Profils.
-        "aktiv": "Helldivers2_Stratagems",
+        "aktiv": "Helldivers2",
     },
     # Push-to-talk-Ausloeser. type "keyboard" -> key (z.B. "f9", einzelnes
     # Zeichen), type "mouse" -> button (left/middle/right/x1/x2).
@@ -79,7 +79,10 @@ DEFAULTS: dict[str, Any] = {
         "timeout_s": 30,
     },
     "log_level": "INFO",
-    "training_log": {"verzeichnis": "training_data/raw"},
+    # "aktiv": false schaltet das Mitschreiben der Trainingsdaten komplett ab
+    # (siehe Tray-Menue) - Default true, damit sich am bisherigen Verhalten
+    # nichts aendert, wer nicht will.
+    "training_log": {"verzeichnis": "training_data/raw", "aktiv": True},
 }
 
 

@@ -23,6 +23,7 @@ gemma-4-E4B-it-GGUF/*.gguf
 # Referenzmaterial (Screenshots/Notizen beim Profil-Erstellen genutzt), nicht
 # fuers Ausfuehren des Programms noetig.
 Beispiele.txt
+Elite Dangerous (erster entwurf).txt
 *.png
 
 # Persoenliche projektuebergreifende Referenzdoku, nicht Teil dieses Repos.
