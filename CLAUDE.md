@@ -420,12 +420,15 @@ dokumentiert, siehe ggf. dortiges Projekt-Gedaechtnis.)
 
 ## Veroeffentlichung vorbereitet (13.09.2026)
 
-**Status: GitHub-Repo existiert und ist vollstaendig gepusht, aber bewusst noch privat.**
-Repo `derpreusse85-cloud/KI-Gaming-Assistent` (leer angelegt, kein README/.gitignore/Lizenz beim
-Erstellen, um Konflikte mit den bereits lokal fertigen Dateien zu vermeiden). Lokaler Branch
-`main` per `git push -u origin main` hochgeladen, dazu alle vier Versions-Tags (`git push origin
---tags`) und passende GitHub-Releases zu allen vier Tags (Notizen aus `CHANGELOG.md`, per
-`gh release create` angelegt). Authentifizierung: Personal Access Token (classic, Scope
+**Status: GitHub-Repo existiert und ist vollstaendig gepusht (Stand v1.4), aber bewusst noch
+privat.** Repo `derpreusse85-cloud/KI-Gaming-Assistent` (leer angelegt, kein README/.gitignore/
+Lizenz beim Erstellen, um Konflikte mit den bereits lokal fertigen Dateien zu vermeiden). Lokaler
+Branch `main` per `git push -u origin main` hochgeladen (inzwischen mehrfach per einfachem
+`git push` aktualisiert, zuletzt bis Commit `56c8a86`), dazu alle fuenf Versions-Tags v1.0-v1.4
+(`git push origin --tags` bzw. einzeln `git push origin v1.4`) und passende GitHub-Releases zu
+allen fuenf Tags (Notizen aus `CHANGELOG.md`, per `gh release create` angelegt - `gh` blieb ueber
+die Session hinweg angemeldet, spaetere Releases liefen direkt aus der KI-Sitzung, nicht mehr nur
+vom Nutzer selbst). Authentifizierung: Personal Access Token (classic, Scope
 `public_repo`, 90 Tage, laeuft ~12.12.2026 ab) fuer `git push` ueber den Windows Git Credential
 Manager gespeichert; `gh`-CLI (per `winget install --id GitHub.cli` installiert) separat per
 Browser-Login authentifiziert - beide Anmeldungen sind unabhaengig voneinander und wurden vom
@@ -460,6 +463,14 @@ vorgegeben.
 
 **`.gitignore`:** `Elite Dangerous (erster entwurf).txt` (roher Arbeitsentwurf, analog zu
 `Beispiele.txt`) ergaenzt - beide sind persoenliches Referenzmaterial, nicht Teil des Repos.
+Ausserdem (13.09.2026) `profiles/EliteDangerous_Lokal.yaml` ausgeschlossen: persoenliche Kopie
+von `EliteDangerous.yaml` mit dem echten `status_datei`-Pfad des Nutzers statt des im oeffentlichen
+Profil hinterlegten Platzhalters `<DeinBenutzername>` - noetig, damit das Feuergruppen-Feature
+(siehe "Stand der Arbeit" oben) trotz Platzhalter im Repo lokal weiter funktioniert. Nutzers
+lokale `config.json` (selbst nicht versioniert) hat `profil.aktiv` aktuell auf
+`"EliteDangerous_Lokal"` gesetzt - **Hinweis fuer eine kuenftige Session:** das war eigenmaechtig
+von der KI gesetzt worden, Nutzer haette lieber selbst im Tray-Menue ausgewaehlt (Feedback dazu
+liegt auch im Auto-Memory-System) - falls das nochmal auffaellt, nicht erneut automatisch aendern.
 
 ## Uebertragbare Lektionen aus dem Vorgaengerprojekt
 
