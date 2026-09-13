@@ -268,6 +268,14 @@ ORBITALSCHLAG:
   spielspezifisches Feintuning, das sich nicht sinnvoll auf ein anderes Spiel übertragen lässt.
 * **Taste als Liste** (`["shift", "n"]`), nicht als zusammengesetzter String (`"shift+n"`) —
   eindeutig beim Parsen, kein Trennzeichen-Problem bei Sondertasten.
+* **Ausnahme: zur Laufzeit berechnete Tastensequenz statt fester `taste`-Liste.** Bewusst
+  Elite-Dangerous-spezifischer Sonderfall (13.09.2026), keine allgemeine neue Abstraktion: ein Tag
+  kann statt `taste` ein `feuergruppe_ziel` (Ziel-Index) angeben, wenn das Spiel eine Aktion nur
+  über eine Zyklus-Taste ohne Direktwahl anbietet (hier: Feuergruppen-Wechsel). Die tatsächliche
+  Tastenfolge wird dann erst beim Ausführen aus dem echten, vom Spiel selbst geschriebenen
+  Zustand berechnet (`ed_status.py`, liest `Status.json`) statt geraten zu werden — passend zum
+  Grundprinzip „im Zweifel nichts tun statt zu raten" (siehe Parser-Sicherheit): ist der Zustand
+  gerade nicht bekannt, wird kein Tastendruck ausgelöst.
 * **Ein Profil pro Spiel**, nicht eine globale Liste, um Tastenkombinations-Kollisionen
   zwischen verschiedenen Spielen zu vermeiden.
 * **Manuelle Profilauswahl über das Tray-Menü**, analog zu `profiles` und dem Menü „Modus" im

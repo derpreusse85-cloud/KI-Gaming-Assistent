@@ -1,27 +1,32 @@
-# Nur 7 Kommandos, klar unterscheidbar - deshalb freie 'beschreibung' statt
+# Nur wenige, klar unterscheidbare Kommandos - deshalb freie 'beschreibung' statt
 # Wortbindung (anders als bei den Helldivers-Profilen mit vielen aehnlich
 # klingenden Stratagem-Namen).
 
 kontextlaenge: 4096
 
+# Pfad zur von Elite Dangerous selbst laufend aktualisierten Status.json - bei
+# jedem Nutzer durch den eigenen Windows-Benutzernamen ersetzen. Wird nur
+# gelesen (siehe ed_status.py), fuers Berechnen der Feuergruppen-Tasten unten.
+status_datei: 'C:\Users\<DeinBenutzername>\Saved Games\Frontier Developments\Elite Dangerous\Status.json'
+
 WaffenMAX:
-  beschreibung: "nur wenn die gesamte Energie zu den Waffen geleitet werden soll"
+  beschreibung: "nur wenn die gesamte Energie zu den Waffen (WEP-Pips) geleitet werden soll"
   beispiel: "Alle Energie zu den Waffen"
   taste: ["down", "right", "right", "right", "right", "right"]
 SchildeMAX:
-  beschreibung: "nur wenn die gesamte Energie zu den Schilden geleitet werden soll"
+  beschreibung: "nur wenn die gesamte Energie zu den Schilden (SYS-Pips) geleitet werden soll"
   beispiel: "Alle Energie zu den Schilden"
   taste: ["down", "left", "left", "left", "left", "left"]
 AntriebMAX:
-  beschreibung: "nur wenn die gesamte Energie zu den Antrieben geleitet werden soll"
+  beschreibung: "nur wenn die gesamte Energie zu den Antrieben (ENG-Pips) geleitet werden soll"
   beispiel: "Alle Energie zu den Antrieben"
   taste: ["down", "up", "up", "up", "up", "up"]
 EnergieRücksetzten:
-  beschreibung: "nur wenn die Energie wieder gleichmaessig auf alle Systeme verteilt werden soll"
+  beschreibung: "nur wenn die Energie (Pips) wieder gleichmaessig auf alle Systeme verteilt werden soll"
   beispiel: "Energie zuruecksetzen"
   taste: ["down"]
 Fahrgestell:
-  beschreibung: "nur wenn das Fahrgestell ein- oder ausgefahren werden soll"
+  beschreibung: "nur wenn das Fahrgestell (Landing Gear) ein- oder ausgefahren werden soll"
   beispiel: "Fahrgestell ausfahren"
   taste: ["l"]
 Frameshiftdrive:
@@ -29,11 +34,11 @@ Frameshiftdrive:
   beispiel: "FSD aktivieren"
   taste: ["j"]
 Ladeluke:
-  beschreibung: "nur wenn die Ladeluke geoeffnet oder geschlossen werden soll"
+  beschreibung: "nur wenn die Ladeluke (Cargo Hatch) geoeffnet oder geschlossen werden soll"
   beispiel: "Ladeluke oeffnen"
   taste: ["home"]
 Stop:
-  beschreibung: "nur wenn der Antrieb komplett gestoppt werden soll (Vollstopp)"
+  beschreibung: "nur wenn der Antrieb komplett gestoppt werden soll (Vollstopp/All Stop)"
   beispiel: "Antrieb stoppen"
   taste: ["x"]
 Boost:
@@ -44,10 +49,18 @@ Heatsink:
   beschreibung: "nur wenn ein Heatsink ausgeworfen werden soll"
   beispiel: "Heatsink auswerfen"
   taste: ["v"]
+Aufhaengungen:
+  beschreibung: "nur wenn die Aufhaengungen (Hardpoints/Waffen) aus- oder eingefahren werden sollen"
+  beispiel: "Aufhaengungen ausfahren"
+  taste: ["u"]
+Moduswechsel:
+  beschreibung: "nur wenn zwischen Kampfmodus (Combat Mode) und Analyse-Modus (Analysis Mode) gewechselt werden soll"
+  beispiel: "Wechsle in den Analyse-Modus"
+  taste: ["m"]
 Schildzellenbank:
   # Hat im Spiel standardmaessig keine Taste - muss von jedem Nutzer selbst
   # im Spiel belegt und hier eingetragen werden.
-  beschreibung: "nur wenn die Schildzellenbank aktiviert werden soll"
+  beschreibung: "nur wenn die Schildzellenbank (Shield Cell Bank) aktiviert werden soll"
   beispiel: "Schildzellenbank aktivieren"
   taste: []
 ECM:
@@ -61,4 +74,50 @@ Dueppel:
   # im Spiel belegt und hier eingetragen werden.
   beschreibung: "nur wenn Dueppel (Chaff) ausgeworfen werden sollen"
   beispiel: "Dueppel aktivieren"
+  taste: []
+# Feuergruppen A-H: Elite Dangerous hat nur eine Zyklus-Taste ("naechste
+# Feuergruppe", Standard "n"), keine Direktwahl - die Tastensequenz wird
+# deshalb zur Laufzeit aus status_datei berechnet (siehe ed_status.py) statt
+# fest hier zu stehen. Fuer "vorherige Feuergruppe" gibt es keine
+# Standardbelegung - dafuer muss in den Elite-Dangerous-Optionen manuell die
+# Taste "b" eingestellt werden (kollisionsfrei getestet).
+FeuergruppeA:
+  beschreibung: "nur wenn auf Feuergruppe A gewechselt werden soll"
+  beispiel: "Wechsle zu Feuergruppe A"
+  feuergruppe_ziel: 0
+  taste: []
+FeuergruppeB:
+  beschreibung: "nur wenn auf Feuergruppe B gewechselt werden soll"
+  beispiel: "Wechsle zu Feuergruppe B"
+  feuergruppe_ziel: 1
+  taste: []
+FeuergruppeC:
+  beschreibung: "nur wenn auf Feuergruppe C gewechselt werden soll"
+  beispiel: "Wechsle zu Feuergruppe C"
+  feuergruppe_ziel: 2
+  taste: []
+FeuergruppeD:
+  beschreibung: "nur wenn auf Feuergruppe D gewechselt werden soll"
+  beispiel: "Wechsle zu Feuergruppe D"
+  feuergruppe_ziel: 3
+  taste: []
+FeuergruppeE:
+  beschreibung: "nur wenn auf Feuergruppe E gewechselt werden soll"
+  beispiel: "Wechsle zu Feuergruppe E"
+  feuergruppe_ziel: 4
+  taste: []
+FeuergruppeF:
+  beschreibung: "nur wenn auf Feuergruppe F gewechselt werden soll"
+  beispiel: "Wechsle zu Feuergruppe F"
+  feuergruppe_ziel: 5
+  taste: []
+FeuergruppeG:
+  beschreibung: "nur wenn auf Feuergruppe G gewechselt werden soll"
+  beispiel: "Wechsle zu Feuergruppe G"
+  feuergruppe_ziel: 6
+  taste: []
+FeuergruppeH:
+  beschreibung: "nur wenn auf Feuergruppe H gewechselt werden soll"
+  beispiel: "Wechsle zu Feuergruppe H"
+  feuergruppe_ziel: 7
   taste: []

@@ -13,14 +13,17 @@ keine direkten Dateiverweise mehr darauf (12.09.2026 auch dort bereinigt).
 
 ## Stand der Arbeit (fuer den Wiedereinstieg in einer neuen Session)
 
-**Version 1.0 fertig und im echten Spiel bestaetigt (09.09.2026), seither auf v1.3 (13.09.2026,
+**Version 1.0 fertig und im echten Spiel bestaetigt (09.09.2026), seither auf v1.4 (13.09.2026,
 Git-Tags vorhanden).** Push-to-Talk -> Whisper -> LLM-Klassifikation -> Tastensequenz
 funktioniert Ende-zu-Ende gegen das laufende Helldivers 2: richtig erkannte Tags loesen korrekt
 die passende Stratagem-Tastenfolge aus, nicht im Profil enthaltene Kommandos loesen (wie
 vorgesehen) keine Aktion aus. v1.1: LM Studio abgeloest (siehe eigener Abschnitt weiter unten).
 v1.2: zweites Spielprofil (Helldivers 1) ergaenzt. v1.3: drittes Spielprofil (Elite Dangerous)
 ergaenzt, Trainingsdaten-Aufzeichnung per Tray abschaltbar, GitHub-Veroeffentlichung vorbereitet
-(siehe eigener Abschnitt "Veroeffentlichung vorbereitet" weiter unten).
+(siehe eigener Abschnitt "Veroeffentlichung vorbereitet" weiter unten). v1.4: Feuergruppen-
+Direktwahl fuer Elite Dangerous per `Status.json`-Auslesen (neues Modul `ed_status.py`), zwei
+weitere Elite-Dangerous-Kommandos (`Aufhaengungen`, `Moduswechsel`), Debug-Log per Tray-Haken
+umschaltbar inkl. Log-Datei (siehe "Stand der Arbeit" unten fuer Details).
 
 * **Modulstruktur** (Paket `gaming_assistant/`, ein einziger Prozess, als Vorlage aus
   `F:\Projekte\KI Diktier Tool` uebernommen, aber ohne WebSocket/Token-Auth/Server-Client-Split):
@@ -33,9 +36,11 @@ ergaenzt, Trainingsdaten-Aufzeichnung per Tray abschaltbar, GitHub-Veroeffentlic
   `ptt_dialog.py` + `audio.py` (Push-to-Talk inkl.
   Tray-Dialog zum Aendern der PTT-Taste zur Laufzeit, Mikrofon-Aufnahme), `tray.py` + `icons.py`
   + `logbuf.py` (Tray-Icon mit Profil- und PTT-Auswahl-Menue, Log-Fenster), `training_log.py`
-  (ungefiltertes JSONL-Live-Logging fuer spaeteres Fine-Tuning), `__main__.py` (verdrahtet
-  alles). Start ueber `Gaming-Assistent.vbs` (lautlos, `.venv\Scripts\pythonw.exe -m
-  gaming_assistant`) oder `python -m gaming_assistant` mit Konsole.
+  (ungefiltertes JSONL-Live-Logging fuer spaeteres Fine-Tuning), `ed_status.py` (liest die von
+  Elite Dangerous selbst geschriebene `Status.json`, nur fuer die Feuergruppen-Tags dieses einen
+  Profils gebraucht, siehe unten), `__main__.py` (verdrahtet alles). Start ueber
+  `Gaming-Assistent.vbs` (lautlos, `.venv\Scripts\pythonw.exe -m gaming_assistant`) oder
+  `python -m gaming_assistant` mit Konsole.
 * **Design-Entscheidung `halte_taste`:** die `taste`-Listen im Profil sind IMMER eine
   Tipp-Sequenz (nacheinander druecken/loslassen), niemals eine gleichzeitig gehaltene
   Kombination. Optionales Profil-Feld `halte_taste` (bei Helldivers 2: `"ctrl"`) haelt waehrend
@@ -57,19 +62,23 @@ ergaenzt, Trainingsdaten-Aufzeichnung per Tray abschaltbar, GitHub-Veroeffentlic
   gegen das echte llama-server-Setup stichprobenartig getestet (inkl. zweier anfangs gefundener,
   dann behobener Namenskonflikte: Maschinengewehr-Familie MG-94/MGX-42, Tiefflieger-Angriff-
   Familie).
-* **`profiles/EliteDangerous.yaml`** ist das dritte Profil (13.09.2026), 13 Kommandos
+* **`profiles/EliteDangerous.yaml`** ist das dritte Profil (13.09.2026), 23 Kommandos
   (Energieverteilung Waffen/Schilde/Antrieb, Fahrgestell, FSD, Ladeluke, Stop, Boost, Heatsink,
-  Schildzellenbank, ECM, Dueppel/Chaff). Anders als die Helldivers-Profile durchgaengig freie
-  `beschreibung` statt Wortbindung (nur 13 klar unterscheidbare Kommandos, keine grosse
-  Konfliktgefahr wie bei 55-77 Stratagemen). Gegen den echten llama-server getestet: 31/31 korrekt
-  (13 Profil-Beispiele + 8 freie Paraphrasen wie "Spring in den Hyperraum" fuer FSD, ohne dass
-  eines der genannten Woerter vorkommt + Mehrfachbefehle in beiden Reihenfolgen + 2 NONE-Faelle).
-  **Drei Kommandos (`Schildzellenbank`, `ECM`, `Dueppel`) haben im Spiel standardmaessig keine
-  Taste** - `taste: []` mit erklaerendem Kommentar, muss von jedem Nutzer selbst im Spiel belegt
-  werden, kein vorlaeufiger/fehlender Wert wie bei den anderen Profilen. `kontextlaenge: 4096` ist
-  ein grober Startwert, nicht einzeln nachgemessen (bei nur 13 Tags/2.132 Zeichen System-Prompt
-  aber mit deutlicher Marge). **NICHT im echten Spiel getestet**, Nutzer besitzt Elite Dangerous
-  aber selbst und kann es im Gegensatz zu Helldivers 1 grundsaetzlich noch verifizieren.
+  Aufhaengungen/Hardpoints, Moduswechsel Kampf/Analyse, Schildzellenbank, ECM, Dueppel/Chaff, plus
+  acht Feuergruppen-Tags siehe unten). Anders als die Helldivers-Profile durchgaengig freie
+  `beschreibung` statt Wortbindung (klar unterscheidbare Kommandos, keine grosse Konfliktgefahr
+  wie bei 55-77 Stratagemen). Gegen den echten llama-server getestet: 31/31 (erste 13 Tags) +
+  26/26 (nach Ergaenzung der acht Feuergruppen-Tags, inkl. Regressionstest der ersten 13 sowie
+  Mehrfachbefehl mit gemischtem Tag) + 20/20 (nach Ergaenzung von `Aufhaengungen`/`Moduswechsel`,
+  voller Regressionstest ueber alle 23 Tags) + 27/27 (nach Ergaenzung engl. Begriffe in Klammern,
+  siehe naechster Punkt) korrekt. **Drei Kommandos (`Schildzellenbank`, `ECM`,
+  `Dueppel`) haben im Spiel standardmaessig keine Taste** - `taste: []` mit erklaerendem
+  Kommentar, muss von jedem Nutzer selbst im Spiel belegt werden, kein vorlaeufiger/fehlender
+  Wert wie bei den anderen Profilen. `kontextlaenge: 4096` ist ein grober Startwert, nicht einzeln
+  nachgemessen (bei 23 Tags/3.350 Zeichen System-Prompt aber weiterhin mit Marge). Die acht
+  Feuergruppen-Tags sind mittlerweile **im echten Spiel bestaetigt**
+  (siehe naechster Absatz); die uebrigen 13 Kommandos noch nicht - Nutzer besitzt Elite Dangerous
+  aber selbst und kann das im Gegensatz zu Helldivers 1 grundsaetzlich noch verifizieren.
   **Geprueft und verworfen:** zusaetzliche Ausloesewoerter "Energie"/"Engage" fuer den FSD-Tag
   (Star-Trek-Anspielung, Nutzerwunsch) - "Energie" kollidiert reproduzierbar mit
   `EnergieRuecksetzten` (Modell ordnet "Energie" allein immer diesem Tag zu, auch bei expliziter
@@ -77,13 +86,59 @@ ergaenzt, Trainingsdaten-Aufzeichnung per Tray abschaltbar, GitHub-Veroeffentlic
   gewesen, aber Nutzer wollte laut eigener Aussage "beides oder keins" statt einer
   "halbgebackenen" Loesung mit nur einem der beiden Woerter - `Frameshiftdrive` blieb deshalb
   unveraendert bei der reinen FSD-Beschreibung ohne Zusatzwoerter.
-  **Ebenfalls verworfen:** Direktwahl einzelner Feuergruppen (Elite Dangerous kennt dafuer nur
-  eine einzige Zyklus-Taste "N", keine Tastenzuweisung pro Gruppe). Ein diskutierter Ansatz -
-  interner Zaehler im Parser, der bei einem Zielgruppen-Tag die noetige Anzahl "N"-Druecke
-  berechnet - wuerde voraussetzen, dass das Tool den echten Spielzustand kennt; da es dafuer
-  keinen Rueckmelde-Kanal gibt, koennte der Zaehler unbemerkt vom tatsaechlichen Spielzustand
-  abdriften und einen selbstbewusst FALSCHEN Tastendruck ausloesen - widerspricht dem
-  Grundprinzip "im Zweifel nichts tun statt zu raten" (Parser-Sicherheit). Nicht umgesetzt.
+  **Erkanntes Muster (13.09.2026, Nutzerbeobachtung): englische Begriffe in Klammern in der
+  `beschreibung` verbessern die Erkennung englischer Paraphrasen, ohne die deutsche Erkennung zu
+  gefaehrden.** Aufgefallen beim `Aufhaengungen`-Tag: die Beschreibung nennt "(Hardpoints/Waffen)",
+  und "Fahr die Hardpoints aus" (kein deutsches Wort daraus) wurde trotzdem korrekt erkannt.
+  Systematisch auf die uebrigen Tags uebertragen und mit gezielten englischen Paraphrasen plus
+  vollem Regressionstest verifiziert (27/27): `WaffenMAX`/`SchildeMAX`/`AntriebMAX` -> "(WEP-Pips)"/
+  "(SYS-Pips)"/"(ENG-Pips)" (Community-Kurzform fuer die drei Energiekanaele), `Fahrgestell` ->
+  "(Landing Gear)", `Ladeluke` -> "(Cargo Hatch)", `Stop` -> "(Vollstopp/All Stop)",
+  `Schildzellenbank` -> "(Shield Cell Bank)", `Moduswechsel` -> "(Combat Mode)"/"(Analysis Mode)".
+  Anders als bei der Wortbindung (`schlagwort`) bei Helldivers 2 ist das hier reiner Zusatz zur
+  freien `beschreibung`, kein Ersatz - erweitert nur, was das Modell als plausible Umschreibung
+  akzeptiert. `Dueppel` ("(Chaff)") und `Frameshiftdrive` ("(FSD)") hatten dieses Muster schon
+  vorher unabhaengig davon.
+* **Feuergruppen-Direktwahl umgesetzt (13.09.2026)** - eine urspruenglich in derselben Session
+  verworfene Idee (Direktwahl per intern mitgefuehrtem Zaehler, siehe vorheriger Absatz in
+  fruehreren CLAUDE.md-Versionen der Git-Historie: Risiko eines unbemerkten Abdriftens vom echten
+  Spielzustand, da kein Rueckmelde-Kanal existiert). **Doch ein Rueckmelde-Kanal existiert**:
+  Elite Dangerous schreibt selbst laufend eine `Status.json` mit dem echten Ist-Zustand, u.a.
+  `"FireGroup"` (0-indiziert). Neues Modul `gaming_assistant/ed_status.py::feuergruppen_tasten()`
+  liest diese Datei bei JEDEM Tastendruck frisch (kein Caching), berechnet die Differenz zum
+  Ziel-Index modulo 8 in beide Richtungen und waehlt den kuerzeren Weg - liefert `None`, wenn das
+  Feld fehlt (Spiel laeuft nicht/kein Schiff aktiv) oder die Datei nicht lesbar ist (mit 2-3
+  kurzen Wiederholungsversuchen bei `JSONDecodeError`, da die Datei laufend komplett neu
+  geschrieben wird); `__main__.py::verarbeiten()` loest dann bewusst KEINEN Tastendruck aus statt
+  zu raten - Grundprinzip bleibt gewahrt. Acht neue Tags `FeuergruppeA`..`FeuergruppeH`
+  (`feuergruppe_ziel: 0..7`), `taste: []` (Sequenz wird zur Laufzeit berechnet statt fest in der
+  YAML zu stehen). Neues profilweites YAML-Feld `status_datei` (Pfad zur `Status.json`) - **bei
+  jedem Nutzer potenziell anders** (anderer Windows-Benutzername, verschobener Speicherort), daher
+  NICHT im Code hart hinterlegt, sondern in der YAML mit Platzhalter
+  `<DeinBenutzername>` und erklaerendem Kommentar (waehrend der Umsetzung/des Testens stand dort
+  kurzzeitig der echte lokale Pfad des Nutzers, vor dem Commit durch den Platzhalter ersetzt).
+  Vorwaerts-Taste "N" ist Spiel-Standardbelegung, Rueckwaerts-Taste "B" hat keine
+  Standardbelegung und muss vom Nutzer selbst in den Elite-Dangerous-Optionen eingestellt werden
+  (kollisionsfrei getestet). Maximal 8 Feuergruppen (A-H) angenommen, ohne die tatsaechlich vom
+  Nutzer konfigurierte Anzahl zu kennen - liegt laut Nutzeraussage in dessen eigener
+  Verantwortung, eine sinnvoll belegte Gruppe zu nennen. Isoliert gegen die echte, laufende
+  `Status.json` verifiziert (`FireGroup:0` als Ausgangspunkt, alle acht Ziel-Berechnungen
+  stimmten) UND **im echten Spiel per Sprachbefehl bestaetigt** (A->C->H->A durchgespielt,
+  jeweils korrekte Zielgruppe erreicht). Dieses eine Feature ist die einzige Ausnahme im ganzen
+  Projekt, die auf eine Datei ausserhalb des Projektordners zugreift (nur lesend).
+  **Nebenbefund beim Live-Test:** ein zunaechst wie ein Bug wirkendes Verhalten (Elite Dangerous
+  oeffnete beim Sprachbefehl scheinbar zufaellig das Pause-Menue) lag NICHT am Gaming-Assistant-
+  Code, sondern daran, dass parallel das unabhaengige Diktiertool-Projekt lief und zufaellig
+  dieselbe Push-to-Talk-Taste konfiguriert hatte - beide Tools loesten dadurch gleichzeitig aus.
+  Nach Aenderung der Diktiertool-PTT-Taste verschwand das Verhalten. Fuer die Fehlersuche wurde
+  dabei zusaetzliches Debug-Tooling eingebaut, das unabhaengig vom eigentlichen Bug nuetzlich
+  bleibt: `ed_status.py` loggt jetzt auf Debug-Ebene aktuelle/Ziel-Feuergruppe und berechnete
+  Sequenz, `keypress.py` loggt jeden einzelnen Tastendruck/-loslassen einzeln, Log-Zeitstempel
+  haben jetzt Millisekunden (`logbuf.py`), ein neuer Tray-Haken **"Debug-Log aktiv"** schaltet den
+  Log-Level zur Laufzeit ohne Neustart um (`logbuf.set_level()`), und das Log wird zusaetzlich zum
+  Ringpuffer/Tray-Fenster fortlaufend nach `logs/gaming_assistant.log` geschrieben (pro
+  Programmstart neu, nicht endlos wachsend) - praktisch, wenn man waehrend des Spielens nicht
+  staendig zum Log-Fenster wechseln will/kann.
 * **Kommentar-Konvention fuer Profil-YAMLs (12.09.2026, Nutzerwunsch):** so minimal wie moeglich.
   Kein Kopfkommentar mit Formaterklaerung (steht zentral in `Gaming_assistent.md`, Abschnitt
   "Aktionslisten-Format"), keine Datums-/Aenderungshistorie in der Datei selbst (gehoert in die
@@ -187,8 +242,9 @@ ergaenzt, Trainingsdaten-Aufzeichnung per Tray abschaltbar, GitHub-Veroeffentlic
   eine echte Aufnahme bewaehrt.
 * **Naechste moegliche Schritte:** offene Punkte am Elite-Dangerous-Profil (drei fehlende Tasten
   fuer `Schildzellenbank`/`ECM`/`Dueppel` selbst im Spiel belegen und eintragen, `kontextlaenge`
-  einmal real nachmessen statt Schaetzwert, Test im echten Spiel - Nutzer besitzt es im Gegensatz
-  zu Helldivers 1); abwarten, ob sich ueber den Reddit-Post Interesse und/oder Wuensche fuer
+  einmal real nachmessen statt Schaetzwert, Test der uebrigen 15 Kommandos im echten Spiel - die
+  acht Feuergruppen-Tags sind bereits live bestaetigt, siehe oben); abwarten, ob sich ueber den
+  Reddit-Post Interesse und/oder Wuensche fuer
   weitere Spielprofile ergeben (siehe "Veroeffentlichung vorbereitet" oben), dann ggf. Repo auf
   oeffentlich stellen; eine zweistufige Trainingsdaten-Aufbereitung (Extraktor-Durchlaeufe auf den
   `training_log.py`-Rohdaten - Durchlauf 1 prueft Plausibilitaet Rohtext/erkannter Tag,

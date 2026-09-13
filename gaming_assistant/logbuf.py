@@ -17,8 +17,11 @@ import threading
 from collections import deque
 from typing import Callable
 
-_FORMAT = "%(asctime)s  %(levelname)-7s %(name)-14s %(message)s"
+from gaming_assistant import config
+
+_FORMAT = "%(asctime)s.%(msecs)03d  %(levelname)-7s %(name)-14s %(message)s"
 _DATEFMT = "%H:%M:%S"
+_LOG_DATEI = config.ROOT / "logs" / "gaming_assistant.log"
 
 
 class RingHandler(logging.Handler):
@@ -68,11 +71,26 @@ def setup(level: str = "INFO", ring_groesse: int = 500) -> RingHandler:
         konsole.setFormatter(formatter)
         root.addHandler(konsole)
 
+    # Log-Datei zusaetzlich zum Ringpuffer/Konsole - praktisch fuer die
+    # Fehlersuche, wenn man z.B. waehrend eines laufenden Spiels nicht staendig
+    # zum Log-Fenster wechseln will/kann (siehe Debug-Log-Haken im Tray-Menue).
+    # "w" statt "a": jede Programmsitzung faengt mit einer leeren Datei an,
+    # damit sie nicht unbegrenzt waechst.
+    _LOG_DATEI.parent.mkdir(parents=True, exist_ok=True)
+    datei_handler = logging.FileHandler(_LOG_DATEI, mode="w", encoding="utf-8")
+    datei_handler.setFormatter(formatter)
+    root.addHandler(datei_handler)
+
     return _ring
 
 
 def get_ring() -> RingHandler:
     return _ring if _ring is not None else setup()
+
+
+def set_level(level: str) -> None:
+    """Aendert den Log-Level zur Laufzeit, ohne Neustart (z.B. per Tray-Haken)."""
+    logging.getLogger().setLevel(getattr(logging, str(level).upper(), logging.INFO))
 
 
 _fenster_offen = threading.Event()

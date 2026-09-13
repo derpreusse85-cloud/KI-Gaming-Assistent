@@ -36,6 +36,15 @@ die das deutsch trainierte Modell ohnehin zuverlaessig erkennt. Fehlt das
 Feld, greift automatisch die alte Vorgabe (alle Schlagwoerter) - siehe
 prompt.initial_prompt_bauen().
 
+Optionales Top-Level-Feld `status_datei` (13.09.2026, nur fuers Elite-Dangerous-
+Profil gebraucht): Pfad zu einer vom Spiel selbst laufend geschriebenen
+Status-Datei (siehe ed_status.py). Ein Tag kann statt einer festen `taste`-
+Liste ein `feuergruppe_ziel` (Ziel-Index einer Feuergruppe) angeben - die
+noetige Tastensequenz wird dann erst zur Laufzeit anhand des in `status_datei`
+gelesenen Ist-Zustands berechnet, statt fest in der YAML zu stehen. Hat
+mindestens ein Tag `feuergruppe_ziel` gesetzt, muss `status_datei` im Profil
+vorhanden sein, sonst bricht `laden()` mit klarer Fehlermeldung ab.
+
 Python-Hinweis: "@dataclass" unten ist eine bequeme Kurzschreibweise fuer eine
 Klasse, die nur Daten haelt - Python erzeugt __init__ usw. automatisch aus den
 Feldern.
@@ -65,6 +74,10 @@ class TagEintrag:
     # Helldivers 2). Kommt normalerweise vom Profil, kann aber pro Tag
     # ueberschrieben werden.
     halte_taste: str | None = None
+    # Falls gesetzt: dieser Tag hat keine feste taste-Liste, sondern die
+    # Tastensequenz wird zur Laufzeit aus Profil.status_datei berechnet
+    # (siehe ed_status.py). Ziel-Index einer Feuergruppe (0=A, 1=B, ...).
+    feuergruppe_ziel: int | None = None
 
 
 @dataclass
@@ -75,6 +88,8 @@ class Profil:
     # Leere Liste = kein kuratierter initial_prompt hinterlegt, prompt.py
     # faellt dann auf "alle Schlagwoerter" zurueck.
     initial_prompt_schlagwoerter: list[str] = field(default_factory=list)
+    # None = kein Tag im Profil braucht eine Status-Datei (siehe ed_status.py).
+    status_datei: Path | None = None
 
     def bekannte_tags(self) -> set[str]:
         """Menge aller gueltigen Tag-Namen - fuer den Parser (parser.py)."""
@@ -102,6 +117,8 @@ def laden(pfad: Path) -> Profil:
     # der selbst keine eigene halte_taste angibt.
     profil_halte_taste = rohdaten.pop("halte_taste", None)
     initial_prompt_schlagwoerter = [str(w) for w in rohdaten.pop("initial_prompt_schlagwoerter", [])]
+    status_datei_roh = rohdaten.pop("status_datei", None)
+    status_datei = Path(status_datei_roh) if status_datei_roh else None
 
     tags: dict[str, TagEintrag] = {}
     for tag_name, eintrag in rohdaten.items():
@@ -117,12 +134,20 @@ def laden(pfad: Path) -> Profil:
                 "'beschreibung' angegeben - mindestens eines von beiden wird gebraucht "
                 "(schlagwort fuers initial_prompt, beschreibung fuer den System-Prompt)."
             )
+        feuergruppe_ziel = eintrag.get("feuergruppe_ziel")
+        if feuergruppe_ziel is not None and status_datei is None:
+            raise ValueError(
+                f"Profil {pfad.name!r}, Tag {tag_name!r}: 'feuergruppe_ziel' gesetzt, aber "
+                "kein 'status_datei'-Feld im Profil hinterlegt - wird gebraucht, um den "
+                "aktuellen Spielzustand auszulesen."
+            )
         tags[tag_name] = TagEintrag(
             schlagwort=schlagwort,
             beispiel=str(eintrag["beispiel"]),
             taste=[str(t) for t in eintrag["taste"]],
             beschreibung=beschreibung,
             halte_taste=eintrag.get("halte_taste", profil_halte_taste),
+            feuergruppe_ziel=feuergruppe_ziel,
         )
 
     return Profil(
@@ -130,6 +155,7 @@ def laden(pfad: Path) -> Profil:
         kontextlaenge=kontextlaenge,
         tags=tags,
         initial_prompt_schlagwoerter=initial_prompt_schlagwoerter,
+        status_datei=status_datei,
     )
 
 

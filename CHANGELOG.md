@@ -4,6 +4,30 @@ Alle nennenswerten Aenderungen dieses Projekts werden hier zusammengefasst. Ausf
 Hintergruende und Design-Entscheidungen stehen in `CLAUDE.md`; das vollstaendige Konzept in
 `Gaming_assistent.md`.
 
+## [1.4] - 2026-09-13
+
+### Hinzugefuegt
+
+- **Feuergruppen-Direktwahl fuer Elite Dangerous** (`gaming_assistant/ed_status.py`, neu): das
+  Spiel kennt nur eine einzige Zyklus-Taste fuer Feuergruppen, keine Direktwahl. Neues Modul
+  liest die vom Spiel selbst laufend geschriebene `Status.json` (Feld `FireGroup`) und berechnet
+  bei jedem Befehl live die noetige Tastensequenz zur Zielgruppe (kuerzerer Weg vorwaerts/
+  rueckwaerts) - kein Raten ueber den Spielzustand mehr noetig. Acht neue Tags `FeuergruppeA`-
+  `FeuergruppeH`. Neues Profil-YAML-Feld `status_datei` (Pfad zur `Status.json`, individuell pro
+  Nutzer). Im echten Spiel bestaetigt.
+- Zwei weitere Elite-Dangerous-Kommandos: `Aufhaengungen` (Hardpoints aus-/einfahren) und
+  `Moduswechsel` (Kampf-/Analyse-Modus).
+- Tray-Haken **"Debug-Log aktiv"**: schaltet ausfuehrlichere Log-Ausgaben zur Laufzeit um (ohne
+  Neustart), inkl. einer fortlaufenden Log-Datei (`logs/gaming_assistant.log`) fuer die
+  Fehlersuche waehrend des Spielens.
+
+### Geaendert
+
+- Elite-Dangerous-Tag-Beschreibungen um gebraeuchliche englische Begriffe in Klammern ergaenzt
+  (z. B. "(Landing Gear)", "(WEP-Pips)", "(Shield Cell Bank)") - verbessert die Erkennung
+  englischer Paraphrasen, ohne die deutsche Erkennung zu beeintraechtigen (27/27 im Test).
+- Log-Zeitstempel haben jetzt Millisekunden-Genauigkeit.
+
 ## [1.3] - 2026-09-13
 
 ### Hinzugefuegt

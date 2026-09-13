@@ -36,6 +36,8 @@ class Tray:
         on_ptt_aendern: Callable[[], None],
         training_log_aktiv_fn: Callable[[], bool],
         on_training_log_umschalten: Callable[[], None],
+        debug_aktiv_fn: Callable[[], bool],
+        on_debug_umschalten: Callable[[], None],
     ) -> None:
         self.status_fn = status_fn
         self.profil_liste_fn = profil_liste_fn
@@ -46,6 +48,8 @@ class Tray:
         self.on_ptt_aendern = on_ptt_aendern
         self.training_log_aktiv_fn = training_log_aktiv_fn
         self.on_training_log_umschalten = on_training_log_umschalten
+        self.debug_aktiv_fn = debug_aktiv_fn
+        self.on_debug_umschalten = on_debug_umschalten
         self._zustand = "startet"
         self.icon = pystray.Icon(
             "gaming_assistant",
@@ -66,12 +70,21 @@ class Tray:
                 self._training_log_umschalten,
                 checked=lambda _item: self.training_log_aktiv_fn(),
             ),
+            pystray.MenuItem(
+                "Debug-Log aktiv",
+                self._debug_umschalten,
+                checked=lambda _item: self.debug_aktiv_fn(),
+            ),
             pystray.Menu.SEPARATOR,
             pystray.MenuItem("Beenden", self._beenden),
         )
 
     def _training_log_umschalten(self, *_args) -> None:
         self.on_training_log_umschalten()
+        self._menu_aktualisieren()
+
+    def _debug_umschalten(self, *_args) -> None:
+        self.on_debug_umschalten()
         self._menu_aktualisieren()
 
     def ptt_label_setzen(self, label: str) -> None:

@@ -76,8 +76,10 @@ def ausloesen(taste_sequenz: list[str], halte_taste: str | None = None) -> None:
         for name in taste_sequenz:
             taste = _zu_taste(name)
             _controller.press(taste)
+            log.debug("Taste gedrueckt: %r", name)
             time.sleep(_PAUSE_S)
             _controller.release(taste)
+            log.debug("Taste losgelassen: %r", name)
             time.sleep(_PAUSE_S)
     finally:
         # "finally" stellt sicher, dass die Halte-Taste auch dann losgelassen

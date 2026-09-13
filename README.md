@@ -99,6 +99,9 @@ Unbekannte oder mehrdeutige Aeusserungen loesen bewusst nichts aus (kein Ratever
   einmaliges Druecken festlegen.
 * **Trainingsdaten aufzeichnen** — an-/abschaltbarer Haken, siehe Abschnitt "Trainingsdaten"
   unten.
+* **Debug-Log aktiv** — an-/abschaltbarer Haken, schaltet ausfuehrlichere Log-Ausgaben ein
+  (u. a. jeder einzelne Tastendruck, Details zur Feuergruppen-Berechnung bei Elite Dangerous) -
+  wirkt sofort, ohne Neustart, sichtbar unter "Status/Log anzeigen".
 * **Beenden**
 
 Die Einstellungen (aktives Profil, PTT-Taste, Trainingsdaten-Aufzeichnung) werden automatisch in
@@ -149,6 +152,16 @@ ORBITALSCHLAG:
 * **`initial_prompt_schlagwoerter`** (optional): kuratierte Liste einzelner Fremdwoerter/
   Akronyme/Eigennamen fuers Whisper-Vokabular. Bei echter Sprache ohne messbaren Latenz-Effekt
   (siehe `CLAUDE.md`), aber unschaedlich; kann auch ganz weggelassen werden.
+* **`status_datei`** + **`feuergruppe_ziel`** (optional, bisher nur im Elite-Dangerous-Profil
+  genutzt): fuer Spielaktionen, die nur ueber eine Zyklus-Taste ohne Direktwahl erreichbar sind
+  (z. B. Elite Dangerous' Feuergruppen-Wechsel). Statt einer festen `taste`-Liste bekommt so ein
+  Tag ein `feuergruppe_ziel` (Ziel-Index); die tatsaechliche Tastenfolge wird dann bei jedem
+  Aufruf frisch aus dem echten Spielzustand berechnet, den das Spiel selbst laufend in eine Datei
+  schreibt (`status_datei` zeigt auf diese Datei — bei Elite Dangerous die `Status.json` im
+  eigenen "Saved Games"-Ordner, Pfad je nach Windows-Benutzername unterschiedlich, deshalb pro
+  Profil einzutragen). **Einzige Ausnahme im gesamten Projekt, die auf eine Datei ausserhalb des
+  Programmordners zugreift** — nur lesend, nie schreibend. Details: `Gaming_assistent.md`,
+  Abschnitt "Aktionslisten-Format".
 
 Details und Hintergrund zu jedem Feld: `Gaming_assistent.md`, Abschnitt "Aktionslisten-Format".
 

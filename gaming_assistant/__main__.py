@@ -26,6 +26,7 @@ import time
 from gaming_assistant import (
     audio,
     config,
+    ed_status,
     keypress,
     llama_proc,
     llm,
@@ -139,7 +140,23 @@ def main() -> None:
 
         for tag_name in tags:
             eintrag = profil_obj.tags[tag_name]
-            keypress.ausloesen(eintrag.taste, eintrag.halte_taste)
+            if eintrag.feuergruppe_ziel is not None:
+                # Keine feste Tastenliste - wird aus dem aktuellen Spielzustand
+                # berechnet (siehe ed_status.py). None heisst "Zustand gerade
+                # nicht bekannt" (Spiel laeuft nicht, Status.json fehlt/kaputt)
+                # - dann bewusst KEIN Tastendruck statt zu raten.
+                berechnete_taste = ed_status.feuergruppen_tasten(
+                    profil_obj.status_datei, eintrag.feuergruppe_ziel
+                )
+                if berechnete_taste is None:
+                    log.warning(
+                        "Feuergruppe %r nicht ausgeloest - aktueller Spielzustand unbekannt",
+                        tag_name,
+                    )
+                    continue
+                keypress.ausloesen(berechnete_taste, eintrag.halte_taste)
+            else:
+                keypress.ausloesen(eintrag.taste, eintrag.halte_taste)
         nach_tasten = time.monotonic()
 
         log.info(
@@ -194,6 +211,12 @@ def main() -> None:
         config.save(cfg)
         log.info("Trainingsdaten-Aufzeichnung ueber Tray %s", "aktiviert" if cfg["training_log"]["aktiv"] else "deaktiviert")
 
+    def debug_umschalten() -> None:
+        cfg["log_level"] = "INFO" if cfg.get("log_level") == "DEBUG" else "DEBUG"
+        config.save(cfg)
+        logbuf.set_level(cfg["log_level"])
+        log.info("Log-Level ueber Tray auf %s gesetzt", cfg["log_level"])
+
     def beenden() -> None:
         log.info("Gaming-Assistent wird beendet ...")
         ptt_listener.stop()
@@ -212,6 +235,8 @@ def main() -> None:
         on_ptt_aendern=ptt_dialog_oeffnen,
         training_log_aktiv_fn=lambda: cfg["training_log"]["aktiv"],
         on_training_log_umschalten=training_log_umschalten,
+        debug_aktiv_fn=lambda: cfg.get("log_level") == "DEBUG",
+        on_debug_umschalten=debug_umschalten,
     )
     laufzeit["tray"] = tray_obj
     tray_obj.zustand_setzen("bereit")
