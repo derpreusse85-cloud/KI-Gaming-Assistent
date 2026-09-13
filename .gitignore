@@ -30,3 +30,8 @@ Elite Dangerous (erster entwurf).txt
 llamaCCP.md
 Diktiertool.md
 Gemma4.md
+
+# Persoenliche Profil-Kopie mit dem echten lokalen Status.json-Pfad statt
+# Platzhalter (siehe profiles/EliteDangerous.yaml) - nicht fuers oeffentliche
+# Repo gedacht.
+profiles/EliteDangerous_Lokal.yaml
