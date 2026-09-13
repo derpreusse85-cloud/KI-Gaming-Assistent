@@ -77,6 +77,13 @@ ergaenzt, Trainingsdaten-Aufzeichnung per Tray abschaltbar, GitHub-Veroeffentlic
   gewesen, aber Nutzer wollte laut eigener Aussage "beides oder keins" statt einer
   "halbgebackenen" Loesung mit nur einem der beiden Woerter - `Frameshiftdrive` blieb deshalb
   unveraendert bei der reinen FSD-Beschreibung ohne Zusatzwoerter.
+  **Ebenfalls verworfen:** Direktwahl einzelner Feuergruppen (Elite Dangerous kennt dafuer nur
+  eine einzige Zyklus-Taste "N", keine Tastenzuweisung pro Gruppe). Ein diskutierter Ansatz -
+  interner Zaehler im Parser, der bei einem Zielgruppen-Tag die noetige Anzahl "N"-Druecke
+  berechnet - wuerde voraussetzen, dass das Tool den echten Spielzustand kennt; da es dafuer
+  keinen Rueckmelde-Kanal gibt, koennte der Zaehler unbemerkt vom tatsaechlichen Spielzustand
+  abdriften und einen selbstbewusst FALSCHEN Tastendruck ausloesen - widerspricht dem
+  Grundprinzip "im Zweifel nichts tun statt zu raten" (Parser-Sicherheit). Nicht umgesetzt.
 * **Kommentar-Konvention fuer Profil-YAMLs (12.09.2026, Nutzerwunsch):** so minimal wie moeglich.
   Kein Kopfkommentar mit Formaterklaerung (steht zentral in `Gaming_assistent.md`, Abschnitt
   "Aktionslisten-Format"), keine Datums-/Aenderungshistorie in der Datei selbst (gehoert in die
