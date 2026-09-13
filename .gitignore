@@ -4,6 +4,7 @@ __pycache__/
 *.pyc
 config.json
 .claude/
+.vscode/
 # vendor/: die fertigen Server-Binaries (llama-server.exe, whisper-server.exe +
 # DLLs) sind klein genug fuers normale Git und liegen deshalb direkt im Repo -
 # nur der ggf. von build_whisper.ps1 geklonte Quellcode/Build-Zwischenstand

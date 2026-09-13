@@ -30,7 +30,16 @@ automatisch erkannt, siehe "Veroeffentlichung vorbereitet"); Latenz erneut nachg
 diesmal auch in die README uebernommen (vorher nur hier); erste feste Testinfrastruktur unter
 `tests/` angelegt (Klassifikations-Regressionstest fuer alle Profile automatisch aus den
 `beispiel`-Feldern, interaktives Testwerkzeug ohne feste Faelle, Latenz-Messskript fuer die
-eigene Hardware) - siehe eigener Absatz weiter unten. Alles bereits gepusht.
+eigene Hardware) - siehe eigener Absatz weiter unten. Ausserdem `prompt.py` um eine echte
+Wiederholungs-Regel ergaenzt (Nutzerfund ueber `tests/profil_interaktiv_testen.py`: "Ladeluke
+dreimal oeffnen" kollabierte zu einem einzigen Tag statt dreimal auszugeben) - betrifft alle
+Profile gleichzeitig, gegen die komplette Testsuite regressionsgetestet (201/201, ein einzelner
+transienter Verbindungsfehler beim ersten Durchlauf per Wiederholung als Fluke bestaetigt). Vom
+Nutzer live bestaetigt, inkl. eines komplexeren, nicht explizit im Prompt vorgesehenen Falls:
+"Oeffne die Frachtluke, dann das Landegestell, und wiederhole alles drei mal" ergab korrekt die
+verschachtelte Sequenz Ladeluke-Fahrgestell-Ladeluke-Fahrgestell-Ladeluke-Fahrgestell (nicht
+etwa Ladeluke x3 gefolgt von Fahrgestell x3) - eine Generalisierungsleistung des Modells, keine
+explizit vorgegebene Regel. Alles bereits gepusht.
 
 * **Modulstruktur** (Paket `gaming_assistant/`, ein einziger Prozess, als Vorlage aus
   `F:\Projekte\KI Diktier Tool` uebernommen, aber ohne WebSocket/Token-Auth/Server-Client-Split):
@@ -467,7 +476,9 @@ dokumentiert, siehe ggf. dortiges Projekt-Gedaechtnis.)
 privat.** Repo `derpreusse85-cloud/KI-Gaming-Assistent` (leer angelegt, kein README/.gitignore/
 Lizenz beim Erstellen, um Konflikte mit den bereits lokal fertigen Dateien zu vermeiden). Lokaler
 Branch `main` per `git push -u origin main` hochgeladen (inzwischen mehrfach per einfachem
-`git push` aktualisiert, zuletzt bis Commit `c451569`), dazu alle fuenf Versions-Tags v1.0-v1.4
+`git push` aktualisiert - Repo-Stand ist durchgehend synchron mit dem lokalen Stand gehalten
+worden, kein pinning auf einen bestimmten Commit-Hash hier gepflegt), dazu alle fuenf
+Versions-Tags v1.0-v1.4
 (`git push origin --tags` bzw. einzeln `git push origin v1.4`) und passende GitHub-Releases zu
 allen fuenf Tags (Notizen aus `CHANGELOG.md`, per `gh release create` angelegt - `gh` blieb ueber
 die Session hinweg angemeldet, spaetere Releases liefen direkt aus der KI-Sitzung, nicht mehr nur

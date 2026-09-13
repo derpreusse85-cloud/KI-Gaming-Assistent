@@ -112,6 +112,15 @@ Wichtige Prompt-Anforderungen:
 Möglich, z. B. "Landegestell ausfahren und um Landeerlaubnis bitten" →
 `&&LANDEGESTELL&& &&LANDEERLAUBNIS&&`.
 
+* **Echte Wiederholung derselben Aktion (14.09.2026, Nutzerwunsch):** wird eine Anzahl genannt
+  ("dreimal", "3x") oder die Aktion woertlich mehrfach wiederholt, gibt das Modell den
+  passenden Tag genau so oft hintereinander aus, z. B. "mach A dreimal" → `&&AKTION_A&&
+  &&AKTION_A&& &&AKTION_A&&` — der Parser und `keypress.py` verarbeiten das bereits genauso wie
+  einen Mehrfachbefehl mit unterschiedlichen Tags (mehrere Eintraege in Folge), es war also nur
+  eine zusaetzliche Prompt-Regel noetig, kein Code musste geaendert werden. Getestet: kein
+  Effekt auf reine Toggle-Befehle, die ohnehin nicht sinnvoll wiederholbar sind (z. B. eine
+  Ladeluke "dreimal" oeffnen kollabierte vorher versehentlich zu einem einzigen Tag, obwohl das
+  Modell fuer echte Wiederholungen bei anderen Aktionen korrekt vervielfachen sollte).
 * Prompt gibt Tags in Nennreihenfolge aus.
 * Parser verarbeitet eine Liste von Tags statt eines einzelnen Treffers, führt sie in der
   ausgegebenen Reihenfolge aus.

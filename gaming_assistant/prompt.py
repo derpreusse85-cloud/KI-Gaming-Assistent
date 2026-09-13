@@ -29,8 +29,9 @@ def system_prompt_bauen(profil: Profil) -> str:
 
     Aufbau (siehe Gaming_assistent.md, "LLM-Ausgabeformat"): kurzer Fliesstext
     statt Regelliste, ein Few-Shot-Beispiel pro Tag, ein einziges generisches
-    Beispiel fuer Mehrfachbefehle (mit Platzhalter-Tags statt echten Namen) und
-    eine explizite Regel fuer den Fall "kein Tag trifft zu".
+    Beispiel fuer Mehrfachbefehle (mit Platzhalter-Tags statt echten Namen), eine
+    Regel fuer mehrfach verlangte Wiederholungen derselben Aktion (z.B. "dreimal")
+    und eine explizite Regel fuer den Fall "kein Tag trifft zu".
     """
     zeilen: list[str] = [
         "Du ordnest gesprochene Anweisungen aus einem Spiel jeweils einem oder "
@@ -61,6 +62,12 @@ def system_prompt_bauen(profil: Profil) -> str:
         "Nennt eine Aeusserung mehrere Aktionen, gib alle passenden Tags durch je "
         "ein Leerzeichen getrennt aus, in der genannten Reihenfolge, zum Beispiel: "
         '"mach zuerst A und dann B" -> &&AKTION_A&& &&AKTION_B&&.'
+    )
+    zeilen.append(
+        "Wird eine Aktion mehrfach verlangt (z.B. durch eine genannte Anzahl wie "
+        '"dreimal"/"3x" oder durch woertliche Wiederholung der Aktion), gib den '
+        "passenden Tag genau so oft hintereinander aus, zum Beispiel: "
+        '"mach A dreimal" -> &&AKTION_A&& &&AKTION_A&& &&AKTION_A&&.'
     )
     zeilen.append(
         f"Passt keine Aeusserung eindeutig zu einem der oben genannten Tags, "
