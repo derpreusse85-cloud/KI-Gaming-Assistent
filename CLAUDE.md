@@ -319,7 +319,13 @@ Kontextlaenge 8192):** Wiederholungs-Latenz (Prompt-Cache greift) **~0,09-0,11s*
 Studio: ~0,14s), Cold-Start-Latenz (erster Aufruf direkt nach Programmstart) **~1,5s** (vorher LM
 Studio: ~2,5s) - beides eine spuerbare Verbesserung, kein Regressions-Risiko. `finish_reason`-Werte
 (`"stop"`/`"length"`) stimmen mit der OpenAI-Konvention ueberein, auf die sich `parser.py`
-verlaesst - per Test bestaetigt.
+verlaesst - per Test bestaetigt. **Erneut nachgemessen (13.09.2026, Nutzervermutung "duerfte
+nochmal besser geworden sein" bestaetigt sich):** mit TTS-synthetisierter echter Sprache ("Ruf
+das MG 43", Windows-TTS wie gewohnt) STT ~0,18s (Minimum ueber 5 Durchlaeufe), LLM-Wiederholung
+**~0,065s** (Minimum ueber 10 Durchlaeufe - nochmal spuerbar schneller als die vorherige
+~0,09-0,11s-Messung), Cold-Start ~1,45s. End-zu-Ende (STT + LLM-Wiederholung) **~0,24s** statt
+vorher ~0,3s. In README.md, Abschnitt "Bedienung" mit diesen aktuellen Werten uebernommen (vorher
+gar nicht in der README gestanden, nur hier in CLAUDE.md - dabei aufgefallen).
 
 **VRAM-Bedarf neu gemessen (12.09.2026, per Windows-GPU-Performance-Counter, "Dedicated Usage"
 pro Prozess statt Vorher/Nachher-Differenz):** llama-server (Gemma 4 E4B, Q4_K_M, Kontext 8192,

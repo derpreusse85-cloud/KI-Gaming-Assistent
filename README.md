@@ -93,6 +93,13 @@ Push-to-Talk-Taste halten, Befehl sprechen, loslassen. Erkennt das LLM eindeutig
 aktiven Profil hinterlegten Kommandos, wird die zugehoerige Tastenfolge sofort ausgeloest.
 Unbekannte oder mehrdeutige Aeusserungen loesen bewusst nichts aus (kein Rateversuch).
 
+**Latenz** (gemessen mit der empfohlenen Hardware, siehe oben, 13.09.2026 gegen die aktuelle
+llama-server-basierte Pipeline neu verifiziert): ein normaler Befehl braucht End-zu-Ende
+(Spracherkennung + Klassifikation) **~0,24s** (Spracherkennung ~0,18s, Klassifikation ~0,065s
+dank Prompt-Caching). Nur der allererste Befehl nach Programmstart oder einem Profilwechsel
+dauert laenger (**~1,45s**, einmaliges Verarbeiten des langen System-Prompts) - danach bleibt es
+durchgehend schnell.
+
 **Tray-Menue:**
 
 * **Status/Log anzeigen** — Fenster mit den letzten Logzeilen, inkl. der Latenz je Befehl
