@@ -17,6 +17,13 @@ status_datei: 'C:\Users\<DeinBenutzername>\Saved Games\Frontier Developments\Eli
 feuergruppe_vorwaerts_taste: "n"
 feuergruppe_rueckwaerts_taste: "b"
 
+# Die Direktwahl (FeuergruppeA-H unten) geht von genau 8 eingerichteten
+# Feuergruppen aus. Elite Dangerous zykelt mit der Taste aber nur durch die
+# tatsaechlich eingerichteten Gruppen - sind es weniger als 8, wird die
+# berechnete Tastenfolge falsch (landet auf der falschen Gruppe). Im Schiff
+# deshalb immer alle 8 Feuergruppen einrichten, auch wenn nicht alle
+# tatsaechlich genutzt werden.
+
 WaffenMAX:
   beschreibung: "nur wenn die gesamte Energie zu den Waffen (WEP-Pips) geleitet werden soll"
   beispiel: "Alle Energie zu den Waffen"

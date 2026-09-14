@@ -177,7 +177,12 @@ ORBITALSCHLAG:
   Programmordners zugreift** — nur lesend, nie schreibend. Die dabei tatsaechlich gedrueckten
   Tasten (Vorgabe "n"/"b") lassen sich zusaetzlich per `feuergruppe_vorwaerts_taste`/
   `feuergruppe_rueckwaerts_taste` ueberschreiben, falls sie mit einer anderen Belegung
-  kollidieren. Details: `Gaming_assistent.md`, Abschnitt "Aktionslisten-Format".
+  kollidieren. **Wichtige Einschraenkung:** die Berechnung geht von genau 8 eingerichteten
+  Feuergruppen aus - sind im Schiff weniger als 8 tatsaechlich eingerichtet, zykelt Elite
+  Dangerous selbst nur durch die vorhandenen Gruppen, wodurch die berechnete Tastenfolge falsch
+  wird (landet auf der falschen Gruppe). Im Schiff deshalb immer alle 8 Feuergruppen einrichten,
+  auch wenn nicht alle genutzt werden. Details: `Gaming_assistent.md`, Abschnitt
+  "Aktionslisten-Format".
 
 Details und Hintergrund zu jedem Feld: `Gaming_assistent.md`, Abschnitt "Aktionslisten-Format".
 

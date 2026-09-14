@@ -178,6 +178,25 @@ dem Fix im echten Betrieb bestaetigt: kein Fehlauftreten mehr direkt nach dem Fe
   Ringpuffer/Tray-Fenster fortlaufend nach `logs/gaming_assistant.log` geschrieben (pro
   Programmstart neu, nicht endlos wachsend) - praktisch, wenn man waehrend des Spielens nicht
   staendig zum Log-Fenster wechseln will/kann.
+  **Nutzerfund 14.09.2026: die Annahme "immer 8 Feuergruppen" kann zu falschen Zielgruppen
+  fuehren.** Sind im Schiff tatsaechlich weniger als 8 Feuergruppen eingerichtet, zykelt Elite
+  Dangerous selbst nur durch die vorhandenen Gruppen (z.B. bei 7 eingerichteten springt die
+  Rueckwaerts-Taste von A direkt zu G, ohne Zwischenstopp bei einem nicht existierenden H) -
+  unser modulo-8-basierter "kuerzerer Weg" rechnet dann mit einem zu langen Zyklus und waehlt zu
+  viele/zu wenige Tastendruecke, landet also auf der falschen Gruppe. **Geprueft und verworfen:**
+  ein neues Profil-Feld `feuergruppe_anzahl` zum manuellen Ueberschreiben (Nutzer-Einwand: die
+  tatsaechliche Anzahl aendert sich von Schiff zu Schiff, eine feste YAML-Einstellung ist deshalb
+  unpraktisch - Aenderung wieder rueckgaengig gemacht, `ed_status.py`/`profile.py` unveraendert).
+  **Recherchiert und bestaetigt kein Auslesekanal vorhanden:** weder `Status.json` (nur das
+  aktuelle `FireGroup`, keine Gesamtzahl) noch das Loadout-Journal-Event (listet zwar jedes Modul
+  mit einer `Priority`, das ist aber die Energieverteilungs-Prioritaet fuers Powerplant-Management,
+  keine Feuergruppen-Zuordnung) verraten die eingerichtete Anzahl - direkt an der echten
+  `Status.json`/Journal-Datei des Nutzers verifiziert. Feuergruppen sind offenbar eine reine
+  Cockpit-UI-Einstellung ohne Persistenz in einer auslesbaren Datei. **Stattdessen nur
+  dokumentiert** (kein Code geaendert): Hinweis in `profiles/EliteDangerous.yaml` (direkt bei den
+  `feuergruppe_*_taste`-Feldern) und in der README (Abschnitt zum Aktionslisten-Format), dass die
+  Direktwahl nur zuverlaessig funktioniert, wenn im Schiff alle 8 Feuergruppen eingerichtet sind -
+  auch wenn nicht alle tatsaechlich genutzt werden.
 * **Kommentar-Konvention fuer Profil-YAMLs (12.09.2026, Nutzerwunsch):** so minimal wie moeglich.
   Kein Kopfkommentar mit Formaterklaerung (steht zentral in `Gaming_assistent.md`, Abschnitt
   "Aktionslisten-Format"), keine Datums-/Aenderungshistorie in der Datei selbst (gehoert in die
