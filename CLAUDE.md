@@ -39,7 +39,32 @@ Nutzer live bestaetigt, inkl. eines komplexeren, nicht explizit im Prompt vorges
 "Oeffne die Frachtluke, dann das Landegestell, und wiederhole alles drei mal" ergab korrekt die
 verschachtelte Sequenz Ladeluke-Fahrgestell-Ladeluke-Fahrgestell-Ladeluke-Fahrgestell (nicht
 etwa Ladeluke x3 gefolgt von Fahrgestell x3) - eine Generalisierungsleistung des Modells, keine
-explizit vorgegebene Regel. Alles bereits gepusht.
+explizit vorgegebene Regel. Alles bis hierher bereits gepusht.
+
+**Ebenfalls 14.09.2026:** Push-to-Talk um Controller-/HOTAS-Knoepfe als dritte Ausloeser-Art
+erweitert (neues Modul `gamepad.py`, siehe Modulstruktur unten) - Nutzerwunsch, da PTT vorher nur
+Tastatur/Maus konnte. **Wichtiger Fund dabei:** die naheliegende Bibliothek `pygame` laesst sich
+auf der hier verwendeten Python-3.14-Umgebung NICHT installieren (Build-Fehler: pygames Windows-
+Build-Skript importiert ein in neueren `setuptools`-Versionen entferntes Modul, kein fertiges
+Wheel fuer `cp314`) - dieselbe Kategorie Problem wie schon bei `llama-cpp-python` (siehe "LM
+Studio abgeloest" unten), offenbar eine generelle Huerde bei diesem sehr neuen Python auf Windows.
+Stattdessen `pywinusb` gewaehlt (reines ctypes-Wrapping um Windows' eigene `hid.dll`, keine
+Kompilierung, keine Treiber-Installation noetig - Controller/HOTAS sind normale HID-Geraete).
+**Im echten Betrieb mit einem echten Controller (8BitDo Ultimate 2C) bestaetigt:** Geraete-/
+Interface-Erkennung (ein physischer Controller meldet sich oft als mehrere HID-Interfaces - das
+richtige wird ueber die HID-"Button"-Page 0x09 in den Input-Report-Usages gefunden), Festlegen
+eines Knopfes ueber den Tray-Dialog sowie ein voller Ende-zu-Ende-Durchlauf (Knopf halten, "Rufe
+autocennen" sprechen, loslassen -> trotz verunglueckter Whisper-Transkription korrekt als
+`Automatische_Kanone` erkannt und ausgeloest, Latenz 2,26s inkl. LLM-Cold-Start). **Dabei ein Bug
+gefunden und behoben:** der allererste HID-Report direkt nach dem Start eines neuen
+`GamepadListener` (z.B. unmittelbar nachdem der Knopf im Tray-Dialog gedrueckt wurde, um ihn als
+Ausloeser festzulegen) konnte faelschlich als Tastendruck gewertet werden, wenn der Knopf in genau
+diesem Moment noch physisch gehalten war - fuehrte zu einer sehr kurzen Geister-Aufnahme direkt
+nach dem Festlegen (im Log als `400 Bad Request` von whisper-server sichtbar, harmlos aber
+unsauber). Fix: der allererste Report nach dem Start legt nur den Ausgangszustand fest, ohne ein
+Ereignis auszuloesen; `on_release` feuert nur, wenn der Listener selbst zuvor `on_press` ausgeloest
+hat (verhindert ein verwaistes on_release, falls der Ausgangszustand bereits "gedrueckt" war). Nach
+dem Fix im echten Betrieb bestaetigt: kein Fehlauftreten mehr direkt nach dem Festlegen.
 
 * **Modulstruktur** (Paket `gaming_assistant/`, ein einziger Prozess, als Vorlage aus
   `F:\Projekte\KI Diktier Tool` uebernommen, aber ohne WebSocket/Token-Auth/Server-Client-Split):
@@ -49,8 +74,9 @@ explizit vorgegebene Regel. Alles bereits gepusht.
   pynput), `whisper_proc.py` + `stt.py` (whisper-server-Subprozess + Einzel-Transkription, kein
   rollierendes Fenster), `llama_proc.py` + `llm.py` (llama-server-Subprozess, startet bei
   Kontextlaengen-Aenderung automatisch neu, + Klassifikations-Request), `ptt.py` +
-  `ptt_dialog.py` + `audio.py` (Push-to-Talk inkl.
-  Tray-Dialog zum Aendern der PTT-Taste zur Laufzeit, Mikrofon-Aufnahme), `tray.py` + `icons.py`
+  `ptt_dialog.py` + `audio.py` + `gamepad.py` (Push-to-Talk inkl.
+  Tray-Dialog zum Aendern des Ausloesers zur Laufzeit, Mikrofon-Aufnahme, Controller-/HOTAS-Knoepfe
+  per HID), `tray.py` + `icons.py`
   + `logbuf.py` (Tray-Icon mit Profil- und PTT-Auswahl-Menue, Log-Fenster), `training_log.py`
   (ungefiltertes JSONL-Live-Logging fuer spaeteres Fine-Tuning), `ed_status.py` (liest die von
   Elite Dangerous selbst geschriebene `Status.json`, nur fuer die Feuergruppen-Tags dieses einen

@@ -53,7 +53,10 @@ Plattform/Architektur gebraucht wird): `scripts\fetch_llama.ps1` laedt `llama-se
 `scripts\build_whisper.ps1` kompiliert `whisper-server.exe` selbst (braucht dafuer Git, CMake,
 VS Build Tools, Vulkan SDK).
 
-Ein Mikrofon wird ausserdem gebraucht.
+Ein Mikrofon wird ausserdem gebraucht. Der Assistent nutzt immer das in Windows als
+Standardaufnahmegeraet eingestellte Mikrofon (keine eigene Geraeteauswahl im Tool) - bei mehreren
+angeschlossenen Mikrofonen also vorher unter Windows-Einstellungen -> System -> Sound ->
+Eingabe festlegen, welches genutzt werden soll.
 
 ### Mindestanforderungen
 
@@ -106,8 +109,8 @@ durchgehend schnell. Auf anderer Hardware koennen diese Werte abweichen - mit
 * **Status/Log anzeigen** — Fenster mit den letzten Logzeilen, inkl. der Latenz je Befehl
   (`Latenz: STT ...s, LLM ...s, ...`).
 * **Profil** — aktives Spielprofil wechseln (Liste aller YAML-Dateien in `profiles/`).
-* **Push-to-talk festlegen ...** — neue PTT-Taste (Tastatur oder Maustaste 4/5/Mitte) durch
-  einmaliges Druecken festlegen.
+* **Push-to-talk festlegen ...** — neuen PTT-Ausloeser (Tastatur, Maustaste 4/5/Mitte oder ein
+  Knopf an einem angeschlossenen Controller/HOTAS) durch einmaliges Druecken festlegen.
 * **Trainingsdaten aufzeichnen** — an-/abschaltbarer Haken, siehe Abschnitt "Trainingsdaten"
   unten.
 * **Debug-Log aktiv** — an-/abschaltbarer Haken, schaltet ausfuehrlichere Log-Ausgaben ein

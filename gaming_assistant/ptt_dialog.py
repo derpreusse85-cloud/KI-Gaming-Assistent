@@ -77,8 +77,8 @@ def _dialog(ptt_listener: PTTListener, aktuell: dict, bei_auswahl: Callable[[dic
 
     tk.Label(
         root,
-        text="Tastatur oder Maustaste 4 / 5 / Mitte.\n"
-             "Die linke Maustaste ist ausgenommen.",
+        text="Tastatur, Maustaste 4 / 5 / Mitte oder ein Knopf an einem\n"
+             "angeschlossenen Controller/HOTAS. Die linke Maustaste ist ausgenommen.",
         fg="#777", font=("Segoe UI", 8), justify="center",
     ).pack()
 

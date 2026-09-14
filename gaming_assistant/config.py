@@ -45,7 +45,9 @@ DEFAULTS: dict[str, Any] = {
         "aktiv": "Helldivers2",
     },
     # Push-to-talk-Ausloeser. type "keyboard" -> key (z.B. "f9", einzelnes
-    # Zeichen), type "mouse" -> button (left/middle/right/x1/x2).
+    # Zeichen), type "mouse" -> button (left/middle/right/x1/x2), type
+    # "gamepad" -> vendor_id/product_id/button (Controller-/HOTAS-Knopf,
+    # siehe gamepad.py).
     "ptt": {"type": "keyboard", "key": "f9"},
     # None = Systemstandard-Mikrofon.
     "mic_device_index": None,
