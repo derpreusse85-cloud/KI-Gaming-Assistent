@@ -1,0 +1,34 @@
+# Nur wenige, klar unterscheidbare Kommandos - deshalb freie 'beschreibung' statt
+# Wortbindung (analog zum Elite-Dangerous-Profil).
+
+kontextlaenge: 4096
+
+Trank:
+  beschreibung: "nur wenn Heilung oder ein Trank (Potion) verwendet werden soll"
+  beispiel: "Ich brauche einen Trank"
+  taste: ["q"]
+Karte:
+  beschreibung: "nur wenn die Karte (Map) geoeffnet werden soll"
+  beispiel: "Oeffne die Karte"
+  taste: ["m"]
+Reittier:
+  beschreibung: "nur wenn das Reittier oder Pferd (Mount) gerufen werden soll"
+  beispiel: "Ruf mein Reittier"
+  taste: ["z"]
+Skillbaum:
+  beschreibung: "nur wenn der Skillbaum (Skilltree) geoeffnet werden soll"
+  beispiel: "Oeffne den Skillbaum"
+  taste: ["p"]
+Paragon:
+  beschreibung: "nur wenn das Paragonbrett oder der Paragonbaum (Paragon Board) geoeffnet werden soll"
+  beispiel: "Oeffne das Paragonbrett"
+  taste: ["a"]
+Stadtteleport:
+  beschreibung: "nur wenn ein Teleport zurueck in die Stadt oder nach Hause (Town Portal) gewuenscht wird"
+  beispiel: "Teleportier mich in die Stadt"
+  taste: ["t"]
+Dungeonexit:
+  beschreibung: "nur wenn der Wunsch geaeussert wird, den Dungeon zu verlassen"
+  beispiel: "Ich will raus aus dem Dungeon"
+  # Im Spiel noch keine Taste zugewiesen - vom Nutzer selbst zu belegen.
+  taste: []

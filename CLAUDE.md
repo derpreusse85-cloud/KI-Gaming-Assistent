@@ -243,6 +243,22 @@ steht noch aus - siehe "Naechste moegliche Schritte".
   `feuergruppe_*_taste`-Feldern) und in der README (Abschnitt zum Aktionslisten-Format), dass die
   Direktwahl nur zuverlaessig funktioniert, wenn im Schiff alle 8 Feuergruppen eingerichtet sind -
   auch wenn nicht alle tatsaechlich genutzt werden.
+* **`profiles/Diablo4.yaml`** ist das vierte Profil (15.09.2026), 7 Kommandos (Trank, Karte,
+  Reittier, Skillbaum, Paragon, Stadtteleport, Dungeonexit). Aus einem rohen Nutzer-Entwurf
+  (`Diablo4 (erster Entwurf).txt`, lokal, nicht im Repo - siehe `.gitignore`) uebernommen, analog
+  zu Elite Dangerous mit freier `beschreibung` statt Wortbindung (wenige, klar unterscheidbare
+  Kommandos) und englischen Begriffen in Klammern (Potion, Map, Mount, Skilltree, Paragon Board,
+  Town Portal) fuer bessere Paraphrasen-Erkennung. `Dungeonexit` hat noch keine Taste im Spiel
+  zugewiesen (`taste: []`, muss der Nutzer selbst ergaenzen) - genau wie bei den drei tastenlosen
+  Elite-Dangerous-Kommandos. `kontextlaenge: 4096` ist ein grober Startwert wie bei Elite
+  Dangerous, nicht einzeln nachgemessen. Gegen den echten llama-server getestet: 9/9 (alle Tags
+  aus ihrem eigenen `beispiel`-Feld) + 10/10 (Paraphrasen/englische Begriffe, u.a. "Heiltrank",
+  "Skilltree", "Pferd", "Paragon Board", "Ab nach Hause.") - alle 19 Zusatzfaelle dauerhaft in
+  `tests/test_profil_klassifikation.py::ZUSATZFAELLE["Diablo4"]` uebernommen. Voller
+  Regressionstest ueber alle Profile danach: 219/219 (bzw. mit dem "Ab nach Hause"-Nachtrag
+  220/220) korrekt, keine Regression durch das neue Profil. **Noch NICHT im echten Spiel
+  getestet** - `taste`-Werte stammen vom Nutzer selbst (kein Wiki-Abtippen wie bei Helldivers 1),
+  gelten aber wie ueberall in diesem Projekt als vorlaeufig, bis im Spiel bestaetigt.
 * **Kommentar-Konvention fuer Profil-YAMLs (12.09.2026, Nutzerwunsch):** so minimal wie moeglich.
   Kein Kopfkommentar mit Formaterklaerung (steht zentral in `Gaming_assistent.md`, Abschnitt
   "Aktionslisten-Format"), keine Datums-/Aenderungshistorie in der Datei selbst (gehoert in die
@@ -527,6 +543,49 @@ Persoenlichkeit."* (Nebenbefund: Wingman AIs "Wingmen"-Konzept aehnelt eher dem 
 Nero-Projekt des Nutzers als diesem Gaming-Tool — fuer Nero selbst nicht in diesem Repo
 dokumentiert, siehe ggf. dortiges Projekt-Gedaechtnis.)
 
+**Konkurrenz-Nachtrag (15.09.2026, per Websuche im Zuge einer Reddit-Kommentar-Antwort):
+WhisperAttack ist der bisher naechstliegende gefundene Konkurrent, naeher dran als Wingman AI.**
+[WhisperAttack](https://github.com/nikoelt/WhisperAttack) nutzt (wie dieses Projekt) Whisper
+GPU-beschleunigt und schickt den transkribierten Text an
+[VoiceAttack](https://voiceattack.com/) weiter (v.a. fuer DCS World/Flugsimulatoren). **Wichtiger
+Unterschied:** WhisperAttack ist nur die STT-Bruecke, die eigentliche Befehlserkennung macht
+VoiceAttack selbst ueber **Wildcard-/Muster-Grammatiken** (`*attack*`,
+`[Greetings;Hello]computer[how are you;]` - laut offizieller VoiceAttack-Doku), nicht ueber
+LLM-Klassifikation/semantisches Verstehen wie hier - Formulierungsvarianten muessen in der
+Grammatik weiterhin manuell vorgesehen werden. Zusaetzlich ist VoiceAttack selbst **kostenpflichtige,
+closed-source Software**, die man zusaetzlich besitzen/betreiben muss - WhisperAttack ist nur ein
+Aufsatz darauf. Passende Formulierung: *"WhisperAttack bringt Whisper in VoiceAttacks
+musterbasierte Befehlserkennung ein und braucht dafuer die kostenpflichtige VoiceAttack-Software
+als Basis. Dieses Tool ist komplett eigenstaendig, kostenlos, und versteht freie Paraphrasen per
+LLM-Klassifikation statt vordefinierter Wildcard-Muster."* Noch nicht in README/CLAUDE.md
+"Konkurrenz-Recherche" fest uebernommen (Nutzer hat nach Doku-Uebernahme gefragt, aber noch keine
+endgueltige Zusage gegeben, ob/wo genau) - bei Bedarf in einer kuenftigen Session nachfragen bzw.
+selbst ergaenzen.
+
+**Im selben Gespraech geklaert: AutoHotkey/VoiceAttack-Makros lassen sich schon HEUTE ohne
+Code-Aenderung ueber dieses Tool per Sprache ausloesen** - einfach das AHK-Skript/VoiceAttack-
+Kommando an einen sonst ungenutzten Hotkey binden (z.B. F13) und genau diese Taste als `taste` in
+einen Tag eintragen; das Tool "drueckt" die Taste beim erkannten Sprachbefehl, AHK/VoiceAttack
+reagiert darauf wie auf einen echten Tastendruck. Kein neuer Code noetig, da beide Tools selbst
+per Tastatur-Hook lauschen (dasselbe Funktionsprinzip wie unser eigener `pynput`-Listener in
+`ptt.py`). Bereits in der README dokumentiert (Abschnitt "Komplexere Aktionen per AutoHotkey",
+committet in v1.5). Interessante Positionierung dadurch: nicht als Konkurrenz zu AHK/VoiceAttack
+zu sehen, sondern als Ergaenzung - AHK/VoiceAttack liefern beliebig komplexe Automatisierung
+(baut dieses Tool bewusst nicht nach), dieses Tool liefert freie gesprochene Sprache (kann AHK
+von Haus aus nicht). Noch nicht in README/CLAUDE.md als explizite Positionierungsaussage
+festgehalten (nur die Bedienungsanleitung dazu, nicht die "warum das keine Konkurrenz ist"-
+Erzaehlung) - falls gewuenscht, in einer kuenftigen Session ergaenzen.
+
+**Randnotiz aus demselben Gespraech, siehe Auto-Memory `projekt_virtueller_controller_output`:**
+Idee "Tool simuliert per Sprachbefehl einen virtuellen Controller-/HOTAS-Knopfdruck" (Ausgabe,
+nicht nur Lesen wie aktuell) als moegliche kuenftige Erweiterung festgehalten - **nicht
+umgesetzt, nicht entschieden**, braucht ViGEmBus-Treiber + `vgamepad`-Bibliothek, komplett neue
+Baustelle. Dabei auch geklaert: normale USB-Makrotastaturen (fast alle) sind davon NICHT
+betroffen, da sie sich als ganz normale Tastatur anmelden (Hersteller-Entscheidung fuer
+Kompatibilitaet) - nur echte Controller/HOTAS sowie proprietaere Geraete wie Stream Deck waeren
+relevant, und Stream Deck liesse sich ohnehin schon ueber dessen eigene "sende Tastenkombination"-
+Funktion genau wie AHK anbinden, ganz ohne diese Erweiterung.
+
 * **Entscheidung revidiert (12.09.2026): kein Git LFS, Modell bleibt ausserhalb des Repos.**
   Git LFS war eingerichtet und getestet (`git lfs track`), aber verworfen: die Hauptdatei
   `gemma-4-E4B-it-Q4_K_M.gguf` liegt bei ~4,97 GiB, knapp unter GitHubs 5-GiB-Limit pro
@@ -581,12 +640,19 @@ vom Nutzer selbst). Authentifizierung: Personal Access Token (classic, Scope
 Manager gespeichert; `gh`-CLI (per `winget install --id GitHub.cli` installiert) separat per
 Browser-Login authentifiziert - beide Anmeldungen sind unabhaengig voneinander und wurden vom
 Nutzer selbst in seinem eigenen Terminal durchgefuehrt, nicht durch die KI-Sitzung (Sicherheits-
-prinzip: Zugangsdaten nie im Chat teilen). Repo-Sichtbarkeit aktuell **privat** - Nutzer hat einen
-Reddit-Post zum Sammeln neuer Spielideen erstellt (wartet noch auf Mod-Freigabe) und will das
-Repo erst oeffentlich stellen, wenn sich echtes Nutzerinteresse zeigt. **Nutzer-Hintergrund:**
-dies ist seine allererste GitHub-Veroeffentlichung ueberhaupt - GitHub-Konzepte (Tokens, `gh`,
+prinzip: Zugangsdaten nie im Chat teilen). Repo-Sichtbarkeit aktuell **privat** - will das Repo
+erst oeffentlich stellen, wenn sich echtes Nutzerinteresse zeigt. **Nutzer-Hintergrund:** dies ist
+seine allererste GitHub-Veroeffentlichung ueberhaupt - GitHub-Konzepte (Tokens, `gh`,
 Fork/Pull-Request-Modell, Releases vs. Tags, Packages/Contributors-Widgets) wurden in der Session
 jeweils von Grund auf erklaert, nicht vorausgesetzt.
+
+**Reddit-Stand (15.09.2026, siehe auch Auto-Memory `projekt_reddit_ankuendigung`):** der
+urspruenglich erwaehnte, auf Mod-Freigabe wartende Post war in einem anderen Subreddit und wurde
+vom Nutzer inzwischen selbst geloescht. Der tatsaechlich aktive Post ist in **r/PCGamingDE**
+("PC Gaming Deutschland", brauchte keine Mod-Freigabe) - hat inzwischen echte Kommentare bekommen,
+u.a. eine Frage nach Anime-/Pokemon-Kampfspielen (Antwort: Tool kann nicht in fremden Spielcode
+eingreifen, nur Tastendruck-Simulation) und eine Frage "Ist AutoHotkey zulaessig?" (bezog sich auf
+die Anti-Cheat-Frage) - daraus entstand ein laengeres Gespraech (siehe naechster Absatz).
 
 **`LICENSE` (GPL-3.0):** offizieller Volltext von `gnu.org/licenses/gpl-3.0.txt`, mit eigener
 Copyright-Zeile ("Gaming-Sprachassistent / Copyright (C) 2026 DerPreusse") vorangestellt. **Fund

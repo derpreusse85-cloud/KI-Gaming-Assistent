@@ -54,6 +54,18 @@ ZUSATZFAELLE: dict[str, list[tuple[str, list[str]]]] = {
         ("Fahrgestell ausfahren und Ladeluke oeffnen", ["Fahrgestell", "Ladeluke"]),
         ("Ladeluke oeffnen und Fahrgestell ausfahren", ["Ladeluke", "Fahrgestell"]),
     ],
+    "Diablo4": [
+        ("Ich brauche einen Heiltrank", ["Trank"]),
+        ("Gib mir die Map", ["Karte"]),
+        ("Ruf mein Pferd", ["Reittier"]),
+        ("Zeig mir den Skilltree", ["Skillbaum"]),
+        ("Bring mich zurueck nach Hause", ["Stadtteleport"]),
+        ("Ab nach Hause.", ["Stadtteleport"]),
+        ("Oeffne das Paragon Board", ["Paragon"]),
+        ("Raus hier aus dem Dungeon", ["Dungeonexit"]),
+        ("Ich moechte mein Mount rufen", ["Reittier"]),
+        ("Nutze eine Potion", ["Trank"]),
+    ],
 }
 
 # Gilt fuer jedes Profil zusaetzlich: Saetze ohne jeden Bezug zu einem Tag
