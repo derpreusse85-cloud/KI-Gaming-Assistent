@@ -4,6 +4,36 @@ Alle nennenswerten Aenderungen dieses Projekts werden hier zusammengefasst. Ausf
 Hintergruende und Design-Entscheidungen stehen in `CLAUDE.md`; das vollstaendige Konzept in
 `Gaming_assistent.md`.
 
+## [1.5] - 2026-09-15
+
+### Hinzugefuegt
+
+- **Push-to-Talk laesst sich jetzt auch ueber einen Controller-/HOTAS-Knopf ausloesen**
+  (`gaming_assistant/gamepad.py`, neu) - zusaetzlich zu Tastatur und Maus. Liest Controller/HOTAS
+  ueber Windows' eigene HID-Schnittstelle aus, keine zusaetzliche Treiber-Installation noetig.
+  Im Tray-Dialog "Push-to-talk festlegen ..." laesst sich ein Knopf wie bisher Tastatur/Maus per
+  einmaligem Druecken festlegen. Im echten Betrieb mit einem echten Controller bestaetigt.
+- Erste feste Testinfrastruktur unter `tests/`: automatischer Klassifikations-Regressionstest
+  fuer alle Profile (leitet Testfaelle automatisch aus den vorhandenen `beispiel`-Feldern ab,
+  keine manuelle Pflege noetig), ein interaktives Testwerkzeug ohne feste Faelle zum Ausprobieren
+  neuer/geaenderter Profile, sowie ein Latenz-Messskript fuer die eigene Hardware.
+- Echte Wiederholungs-Regel im System-Prompt: "X dreimal machen" loest jetzt tatsaechlich
+  mehrfach aus, statt zu einem einzigen Tag zu kollabieren.
+
+### Geaendert
+
+- **Halte-Tasten stehen jetzt direkt in der `taste`-Liste** (Eintraege wie `"ctrl_down"`/
+  `"ctrl_up"`, Vorbild AutoHotkeys `{Ctrl down}`/`{Ctrl up}`-Schreibweise) statt in einem
+  separaten `halte_taste`-Profilfeld - funktioniert generisch fuer jede Taste, nicht nur Strg,
+  auch mehrere gleichzeitig gehalten moeglich. Betrifft beide Helldivers-Profile (automatisiert
+  migriert, im echten Spiel bestaetigt).
+- Feuergruppen-Tasten fuer Elite Dangerous (`n`/`b`) zusaetzlich per Profil ueberschreibbar.
+- Bekannte Einschraenkung der Feuergruppen-Direktwahl dokumentiert: funktioniert nur zuverlaessig,
+  wenn im Schiff alle 8 Feuergruppen eingerichtet sind.
+- `LICENSE`-Erkennung durch GitHub korrigiert (eigene Copyright-Kopfzeile vor dem GPL-Text
+  verhinderte die automatische Lizenz-Erkennung, jetzt entfernt).
+- Latenzwerte erneut gemessen und in der README aktualisiert.
+
 ## [1.4] - 2026-09-13
 
 ### Hinzugefuegt
