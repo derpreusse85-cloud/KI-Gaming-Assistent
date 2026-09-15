@@ -88,6 +88,11 @@ Eingabe festlegen, welches genutzt werden soll.
 Doppelklick auf **`Gaming-Assistent.vbs`** — startet lautlos im Hintergrund, bedienbar ueber
 das Icon im System-Tray.
 
+**Fuer eine Desktop-Verknuepfung** (VBS-Dateien haben sonst ein generisches, wenig ansprechendes
+Standard-Icon): Verknuepfung von `Gaming-Assistent.vbs` erstellen, dann per Rechtsklick ->
+Eigenschaften -> "Anderes Symbol ..." die mitgelieferte `Gaming-Assistent.ico` auswaehlen (selbes
+Gamepad-Motiv wie das Tray-Icon).
+
 Alternativ mit sichtbarer Konsole (z. B. zum Mitlesen des Logs):
 
 ```powershell
