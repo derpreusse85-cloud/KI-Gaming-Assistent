@@ -228,15 +228,14 @@ angefasst werden. Zwei Dinge trotzdem im Blick behalten:
     plus optionale handverlesene Zusatzfaelle je Profil. Aufruf ohne Argument testet alle
     Profile, mit Profilnamen als Argument nur die genannten:
     `.venv\Scripts\python.exe tests\test_profil_klassifikation.py [Profilname ...]`.
-  
-  Beide brauchen einen laufenden llama-server (wird vom Skript selbst gestartet), aber kein
-  Mikrofon.
+  * `tests/latenz_messen.py` — misst die Latenz (Spracherkennung + Klassifikation) auf der
+    eigenen Hardware nach, da die in diesem README genannten Werte auf einem bestimmten
+    Testrechner gemessen wurden und auf anderer Hardware abweichen koennen. Erzeugt sich sein
+    Testaudio selbst per Windows-Sprachsynthese (keine Aufnahme noetig) und misst gegen das
+    aktuell aktive Profil. Aufruf: `.venv\Scripts\python.exe tests\latenz_messen.py`.
 
-Ausserdem gibt es `tests/latenz_messen.py`, um die Latenz (Spracherkennung + Klassifikation) auf
-der eigenen Hardware nachzumessen — praktisch, da die in diesem README genannten Werte auf einem
-bestimmten Testrechner gemessen wurden und auf anderer Hardware abweichen koennen. Erzeugt sich
-sein Testaudio selbst per Windows-Sprachsynthese (keine Aufnahme noetig) und misst gegen das
-aktuell aktive Profil. Aufruf: `.venv\Scripts\python.exe tests\latenz_messen.py`.
+  Alle drei brauchen einen laufenden llama-server (wird vom jeweiligen Skript selbst gestartet),
+  aber kein Mikrofon.
 * **`kontextlaenge` im Auge behalten.** Jeder zusaetzliche Tag macht den generierten
   System-Prompt etwas laenger. Bei einzelnen neuen Kommandos passt das meist locker in die
   vorhandene Marge, bei vielen auf einmal ggf. neu messen und `kontextlaenge` anpassen - sonst

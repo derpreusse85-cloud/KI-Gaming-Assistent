@@ -5,13 +5,37 @@ feste Aktion klassifiziert und als Tastenkombination ausgeloest. Konzept siehe
 `Gaming_assistent.md`. Nicht nur fuer Helldivers 2 gedacht — dessen Profil ist nur das erste von
 mehreren geplanten Spielprofilen.
 
-**Hinweis:** `Diktiertool.md` (Kopie der `CLAUDE.md` des unabhaengigen Diktier-Tool-Projekts) und
-`Gemma4.md` (rohe Recherche-Notizen) liegen nur lokal vor, nicht im Git-Repo (seit 12.09.2026,
-siehe `.gitignore`). Die daraus fuer dieses Projekt relevanten Erkenntnisse stehen bereits
-zusammengefasst an ihrer jeweiligen Stelle in diesem Dokument sowie in `Gaming_assistent.md` -
-keine direkten Dateiverweise mehr darauf (12.09.2026 auch dort bereinigt).
+Frueheres Referenzmaterial aus einem verwandten Projekt sowie rohe Recherche-Notizen sind nicht
+Teil dieses Repos (nur lokal vorgehalten, siehe `.gitignore`) - alle daraus fuer dieses Projekt
+relevanten Erkenntnisse stehen bereits an entsprechender Stelle in diesem Dokument sowie in
+`Gaming_assistent.md` zusammengefasst, es fehlt nichts.
 
-## Stand der Arbeit (fuer den Wiedereinstieg in einer neuen Session)
+`Gaming_assistent.md` ist das massgebliche, vollstaendige Konzept — bei Widersprueche zwischen
+dieser Zusammenfassung hier und `Gaming_assistent.md` gilt **immer** `Gaming_assistent.md`. Alle
+Designentscheidungen stehen dort im Abschnitt "Bereits entschieden", das vollstaendige
+Testergebnis im Abschnitt "Testreihe (abgeschlossen)" — **keine offenen Konzeptfragen mehr**,
+siehe dort fuer die Begruendung.
+
+## Kurzueberblick
+
+Fuer alle, die nur schnell den aktuellen Stand brauchen, bevor sie tiefer einsteigen:
+
+* **Version v1.5** (15.09.2026, Git-Tags + GitHub-Releases, siehe `CHANGELOG.md`). Grundpipeline
+  (Push-to-Talk -> Whisper -> LLM-Klassifikation -> Tastensequenz) seit v1.0 im echten Spiel
+  bestaetigt.
+* **Vier Spielprofile:** Helldivers 2 (im echten Spiel bestaetigt, auch mit der neuen
+  Halte-Tasten-Syntax), Helldivers 1 (noch nicht im echten Spiel getestet, Nutzer besitzt es
+  nicht), Elite Dangerous (Feuergruppen-Tags live bestaetigt, 13 weitere Kommandos noch nicht),
+  Diablo 4 (neu, noch nicht im echten Spiel getestet).
+* **Push-to-Talk** geht ueber Tastatur, Maus oder seit v1.5 auch Controller-/HOTAS-Knoepfe.
+  Halte-Tasten (z.B. Strg bei Helldivers-Stratagems) stehen seit v1.5 direkt inline in der
+  `taste`-Liste (`"ctrl_down"`/`"ctrl_up"`), kein separates Profilfeld mehr.
+* **Repo ist oeffentlich** seit 15.09.2026 (siehe Abschnitt "Veroeffentlichung").
+* **Offene Punkte:** siehe Abschnitt "Naechste moegliche Schritte" ganz unten (u.a. Halte-Tasten-
+  Migration und Diablo-4-Profil noch im echten Spiel nachtesten, drei Elite-Dangerous-Kommandos
+  ohne Taste).
+
+## Aktueller Versionsstand
 
 **Version 1.0 fertig und im echten Spiel bestaetigt (09.09.2026), seither auf v1.5 (15.09.2026,
 Git-Tags + GitHub-Releases vorhanden, siehe `CHANGELOG.md`).** Push-to-Talk -> Whisper -> LLM-Klassifikation -> Tastensequenz
@@ -20,17 +44,17 @@ die passende Stratagem-Tastenfolge aus, nicht im Profil enthaltene Kommandos loe
 vorgesehen) keine Aktion aus. v1.1: LM Studio abgeloest (siehe eigener Abschnitt weiter unten).
 v1.2: zweites Spielprofil (Helldivers 1) ergaenzt. v1.3: drittes Spielprofil (Elite Dangerous)
 ergaenzt, Trainingsdaten-Aufzeichnung per Tray abschaltbar, GitHub-Veroeffentlichung vorbereitet
-(siehe eigener Abschnitt "Veroeffentlichung vorbereitet" weiter unten). v1.4: Feuergruppen-
+(siehe eigener Abschnitt "Veroeffentlichung" weiter unten). v1.4: Feuergruppen-
 Direktwahl fuer Elite Dangerous per `Status.json`-Auslesen (neues Modul `ed_status.py`), zwei
 weitere Elite-Dangerous-Kommandos (`Aufhaengungen`, `Moduswechsel`), Debug-Log per Tray-Haken
-umschaltbar inkl. Log-Datei (siehe "Stand der Arbeit" unten fuer Details). **v1.5 (15.09.2026):**
+umschaltbar inkl. Log-Datei (siehe Abschnitt "Spielprofile" fuer Details). **v1.5 (15.09.2026):**
 Feuergruppen-Tasten "n"/"b" zusaetzlich per Profil ueberschreibbar gemacht; `LICENSE` nochmal
 korrigiert (GitHub hatte die Lizenz zunaechst nicht automatisch erkannt, siehe
-"Veroeffentlichung vorbereitet"); Latenz erneut nachgemessen und diesmal auch in die README
+"Veroeffentlichung"); Latenz erneut nachgemessen und diesmal auch in die README
 uebernommen (vorher nur hier); erste feste Testinfrastruktur unter `tests/` angelegt
 (Klassifikations-Regressionstest fuer alle Profile automatisch aus den `beispiel`-Feldern,
 interaktives Testwerkzeug ohne feste Faelle, Latenz-Messskript fuer die eigene Hardware) - siehe
-eigener Absatz weiter unten. Ausserdem `prompt.py` um eine echte Wiederholungs-Regel ergaenzt
+Abschnitt "Testinfrastruktur". Ausserdem `prompt.py` um eine echte Wiederholungs-Regel ergaenzt
 (Nutzerfund ueber `tests/profil_interaktiv_testen.py`: "Ladeluke dreimal oeffnen" kollabierte zu
 einem einzigen Tag statt dreimal auszugeben) - betrifft alle Profile gleichzeitig, gegen die
 komplette Testsuite regressionsgetestet (201/201, ein einzelner transienter Verbindungsfehler
@@ -40,13 +64,46 @@ Landegestell, und wiederhole alles drei mal" ergab korrekt die verschachtelte Se
 Ladeluke-Fahrgestell-Ladeluke-Fahrgestell-Ladeluke-Fahrgestell (nicht etwa Ladeluke x3 gefolgt
 von Fahrgestell x3) - eine Generalisierungsleistung des Modells, keine explizit vorgegebene
 Regel. Ausserdem in v1.5: Push-to-Talk um Controller-/HOTAS-Knoepfe erweitert (`gamepad.py`,
-siehe eigener Absatz weiter unten) und Halte-Tasten stehen jetzt inline in der `taste`-Liste
-statt in einem separaten `halte_taste`-Feld (siehe eigener Absatz weiter unten). Alles bereits
-gepusht und als GitHub-Release veroeffentlicht.
+siehe Abschnitt "Push-to-Talk: Ausloeser & Halte-Tasten") und Halte-Tasten stehen jetzt inline in
+der `taste`-Liste statt in einem separaten `halte_taste`-Feld (siehe selber Abschnitt). Alles
+bereits gepusht und als GitHub-Release veroeffentlicht.
 
-**Ebenfalls 14.09.2026:** Push-to-Talk um Controller-/HOTAS-Knoepfe als dritte Ausloeser-Art
-erweitert (neues Modul `gamepad.py`, siehe Modulstruktur unten) - Nutzerwunsch, da PTT vorher nur
-Tastatur/Maus konnte. **Wichtiger Fund dabei:** die naheliegende Bibliothek `pygame` laesst sich
+**Kernentscheidungen kurz:** ein Prozess statt Server/Client, Push-to-Talk, Whisper
+`large-v3-turbo-german-q5` fest auf Deutsch, LLM-Klassifikation statt Stringmatch
+(Gemma 4 E4B, `temperature=0`, Denkmodus per `--reasoning off` an llama-server explizit aus -
+frueher LM-Studio-GUI-Schalter, siehe "LM Studio abgeloest" unten),
+Tags im Format `&&TAG&&`, `&&NONE&&` bei Uneindeutigkeit, YAML-Profil pro Spiel mit
+`schlagwort`/`beispiel`/`taste`/`kontextlaenge`-Feldern (Details siehe „Aktionslisten-Format" in
+`Gaming_assistent.md`). Die vorherige Testreihe (vier Runden, zuletzt 105/107 auf der vollen
+77-Tag-Helldivers-2-Liste) ist im Detail in `Gaming_assistent.md`, Abschnitt "Testreihe"
+dokumentiert.
+
+## Architektur (Modulstruktur)
+
+Paket `gaming_assistant/`, ein einziger Prozess, als Vorlage aus `F:\Projekte\KI Diktier Tool`
+uebernommen, aber ohne WebSocket/Token-Auth/Server-Client-Split:
+`config.py` (globale JSON-Config), `profile.py` (YAML-Profil laden), `prompt.py`
+(System-Prompt + Whisper-initial_prompt aus dem Profil generieren), `parser.py`
+(Tag-Extraktion, verwirft bei Zweifel statt zu raten), `keypress.py` (Tastensequenz per
+pynput), `whisper_proc.py` + `stt.py` (whisper-server-Subprozess + Einzel-Transkription, kein
+rollierendes Fenster), `llama_proc.py` + `llm.py` (llama-server-Subprozess, startet bei
+Kontextlaengen-Aenderung automatisch neu, + Klassifikations-Request), `ptt.py` +
+`ptt_dialog.py` + `audio.py` + `gamepad.py` (Push-to-Talk inkl.
+Tray-Dialog zum Aendern des Ausloesers zur Laufzeit, Mikrofon-Aufnahme, Controller-/HOTAS-Knoepfe
+per HID), `tray.py` + `icons.py` + `logbuf.py` (Tray-Icon mit Profil- und PTT-Auswahl-Menue,
+Log-Fenster), `training_log.py` (ungefiltertes JSONL-Live-Logging fuer spaeteres Fine-Tuning),
+`ed_status.py` (liest die von Elite Dangerous selbst geschriebene `Status.json`, nur fuer die
+Feuergruppen-Tags dieses einen Profils gebraucht), `__main__.py` (verdrahtet alles). Start ueber
+`Gaming-Assistent.vbs` (lautlos, `.venv\Scripts\pythonw.exe -m gaming_assistant`) oder
+`python -m gaming_assistant` mit Konsole.
+
+## Push-to-Talk: Ausloeser & Halte-Tasten
+
+**Grundprinzip:** PTT laesst sich ueber Tastatur, Maus (`ptt.py`) oder seit v1.5 auch Controller-/
+HOTAS-Knoepfe (`gamepad.py`) ausloesen, per Tray-Dialog zur Laufzeit umstellbar.
+
+**Controller-/HOTAS-Unterstuetzung (14.09.2026, Nutzerwunsch, da PTT vorher nur Tastatur/Maus
+konnte).** **Wichtiger Fund dabei:** die naheliegende Bibliothek `pygame` laesst sich
 auf der hier verwendeten Python-3.14-Umgebung NICHT installieren (Build-Fehler: pygames Windows-
 Build-Skript importiert ein in neueren `setuptools`-Versionen entferntes Modul, kein fertiges
 Wheel fuer `cp314`) - dieselbe Kategorie Problem wie schon bei `llama-cpp-python` (siehe "LM
@@ -69,8 +126,8 @@ Ereignis auszuloesen; `on_release` feuert nur, wenn der Listener selbst zuvor `o
 hat (verhindert ein verwaistes on_release, falls der Ausgangszustand bereits "gedrueckt" war). Nach
 dem Fix im echten Betrieb bestaetigt: kein Fehlauftreten mehr direkt nach dem Festlegen.
 
-**15.09.2026: Halte-Tasten stehen jetzt inline in der `taste`-Liste statt in einem separaten
-`halte_taste`-Feld.** Ausloeser war ein Gespraech ueber AutoHotkey (Nutzer wollte verstehen, wie
+**Halte-Tasten inline in der `taste`-Liste statt separatem `halte_taste`-Feld (15.09.2026).**
+Ausloeser war ein Gespraech ueber AutoHotkey (Nutzer wollte verstehen, wie
 AHK funktioniert, im Zuge der Frage, ob sich AHK-Skripte ueber unser Tool ausloesen liessen - AHK
 selbst braucht dafuer keine Code-Integration: ein an einen freien Hotkey wie F13 gebundenes
 AHK-Skript reagiert bereits auf einen von uns simulierten Tastendruck genauso wie auf einen
@@ -83,12 +140,14 @@ umgesetzt).
 **Umsetzung:** `keypress.py::ausloesen()` erkennt Eintraege wie `"ctrl_down"`/`"ctrl_up"` jetzt
 direkt in der `taste`-Liste (neue Hilfsfunktion `_halte_marker()`) und funktioniert generisch fuer
 JEDE ueber `_zu_taste()` aufloesbare Taste, nicht nur Strg - auch mehrere gleichzeitig gehalten
-sind moeglich. Das bisherige `halte_taste`-Profilfeld (`profile.py`, `TagEintrag`) ist komplett
-entfernt. **Wichtige Kollisions-Absicherung:** ein Name gilt nur dann als Halte-Marker, wenn er
-sich NICHT schon selbst als eigenstaendige Taste aufloesen laesst - sonst wuerden echte
-pynput-Tastennamen, die zufaellig auf `_down`/`_up` enden (`page_down`, `page_up`,
-`media_volume_down`, `media_volume_up`), faelschlich als Marker interpretiert statt als das, was
-sie sind.
+sind moeglich (z.B. `["ctrl_down", "shift_down", "x", "shift_up", "ctrl_up"]`). Das bisherige
+`halte_taste`-Profilfeld (`profile.py`, `TagEintrag`) ist komplett entfernt - die `taste`-Listen
+im Profil sind jetzt durchgaengig eine einzige flache Liste, in der Halte-Marker und normale
+Tipp-Eintraege gemischt vorkommen koennen. **Wichtige Kollisions-Absicherung:** ein Name gilt nur
+dann als Halte-Marker, wenn er sich NICHT schon selbst als eigenstaendige Taste aufloesen laesst -
+sonst wuerden echte pynput-Tastennamen, die zufaellig auf `_down`/`_up` enden (`page_down`,
+`page_up`, `media_volume_down`, `media_volume_up`), faelschlich als Marker interpretiert statt
+als das, was sie sind.
 
 **Migration der bestehenden Profile:** `Helldivers1.yaml` (55 Eintraege) und `Helldivers2.yaml`
 (77 Eintraege) waren die einzigen beiden Nutzer von `halte_taste: "ctrl"` (per `grep` bestaetigt,
@@ -105,41 +164,20 @@ verifiziert (0 unerwartete Abweichungen in beiden Dateien - jede Zeile entweder 
 exakt die erwartete `ctrl_down`/`ctrl_up`-Erweiterung). **Lektion:** `\s*$` in einem Python-Regex
 im MULTILINE-Modus ist gefaehrlich, wenn nachfolgende Leerzeilen erhalten bleiben sollen - `\s`
 schliesst Newlines mit ein, ein einfacher zeilenweiser Ansatz (split/join) ist fuer so eine
-Textmanipulation robuster.
+Textmanipulation robuster. Ende-zu-Ende im echten Spiel (Helldivers 2) mit der neuen Syntax
+bestaetigt: `Resupply` loeste korrekt `['ctrl_down', 'down', 'down', 'up', 'right', 'ctrl_up']`
+aus, Strg sauber gehalten und wieder losgelassen.
 
-**Noch offen:** nur die Geraete-/Ladelogik und das Profil-Laden sind bisher verifiziert (beide
-Profile laden fehlerfrei, `tests/test_profil_klassifikation.py` sollte weiterlaufen). Ein
-tatsaechlicher Tastendruck-Test im echten Spiel (Helldivers 2) mit der neuen inline-Halte-Syntax
-steht noch aus - siehe "Naechste moegliche Schritte".
+## Spielprofile
 
-* **Modulstruktur** (Paket `gaming_assistant/`, ein einziger Prozess, als Vorlage aus
-  `F:\Projekte\KI Diktier Tool` uebernommen, aber ohne WebSocket/Token-Auth/Server-Client-Split):
-  `config.py` (globale JSON-Config), `profile.py` (YAML-Profil laden), `prompt.py`
-  (System-Prompt + Whisper-initial_prompt aus dem Profil generieren), `parser.py`
-  (Tag-Extraktion, verwirft bei Zweifel statt zu raten), `keypress.py` (Tastensequenz per
-  pynput), `whisper_proc.py` + `stt.py` (whisper-server-Subprozess + Einzel-Transkription, kein
-  rollierendes Fenster), `llama_proc.py` + `llm.py` (llama-server-Subprozess, startet bei
-  Kontextlaengen-Aenderung automatisch neu, + Klassifikations-Request), `ptt.py` +
-  `ptt_dialog.py` + `audio.py` + `gamepad.py` (Push-to-Talk inkl.
-  Tray-Dialog zum Aendern des Ausloesers zur Laufzeit, Mikrofon-Aufnahme, Controller-/HOTAS-Knoepfe
-  per HID), `tray.py` + `icons.py`
-  + `logbuf.py` (Tray-Icon mit Profil- und PTT-Auswahl-Menue, Log-Fenster), `training_log.py`
-  (ungefiltertes JSONL-Live-Logging fuer spaeteres Fine-Tuning), `ed_status.py` (liest die von
-  Elite Dangerous selbst geschriebene `Status.json`, nur fuer die Feuergruppen-Tags dieses einen
-  Profils gebraucht, siehe unten), `__main__.py` (verdrahtet alles). Start ueber
-  `Gaming-Assistent.vbs` (lautlos, `.venv\Scripts\pythonw.exe -m gaming_assistant`) oder
-  `python -m gaming_assistant` mit Konsole.
-* **Design-Entscheidung `halte_taste`:** die `taste`-Listen im Profil sind IMMER eine
-  Tipp-Sequenz (nacheinander druecken/loslassen), niemals eine gleichzeitig gehaltene
-  Kombination. Optionales Profil-Feld `halte_taste` (bei Helldivers 2: `"ctrl"`) haelt waehrend
-  der ganzen Sequenz eine Zusatztaste gedrueckt — noetig, weil Helldivers-2-Stratagem-Codes
-  exakt so funktionieren.
 * **`profiles/Helldivers2.yaml`** (bis 13.09.2026 `Helldivers2_Stratagems.yaml`, umbenannt) ist
   das erste, im echten Spiel bestaetigte Profil.
   Tasten sind als Pfeiltasten (`up`/`down`/`left`/`right`, nicht mehr WASD) hinterlegt, weil der
   Nutzer die Spielbelegung entsprechend umgestellt hat. Zwei Abtippfehler wurden im Zuge des
   Testens gefunden und korrigiert (`Panzerabwehrstellung`, `Automatische_Kanone`) — die
-  `taste`-Werte gelten weiterhin als vorlaeufig aenderbar, nicht als endgueltig fixiert.
+  `taste`-Werte gelten weiterhin als vorlaeufig aenderbar, nicht als endgueltig fixiert. Seit
+  15.09.2026 mit inline `ctrl_down`/`ctrl_up` statt `halte_taste` (siehe Abschnitt
+  "Push-to-Talk"), im echten Spiel nachgetestet.
 * **`profiles/Helldivers1.yaml`** (bis 13.09.2026 `Helldivers1_Stratagems.yaml`, umbenannt) ist
   das zweite Profil (12.09.2026), 55 Stratageme.
   Codes aus einer Wiki-Quelle abgetippt (die urspruenglich verlinkte Fandom-Seite war per
@@ -149,7 +187,8 @@ steht noch aus - siehe "Naechste moegliche Schritte".
   durchgaengig zwei Woerter (englischer Original-Codename + deutsche Uebersetzung), Klassifikation
   gegen das echte llama-server-Setup stichprobenartig getestet (inkl. zweier anfangs gefundener,
   dann behobener Namenskonflikte: Maschinengewehr-Familie MG-94/MGX-42, Tiefflieger-Angriff-
-  Familie).
+  Familie). Ebenfalls seit 15.09.2026 mit inline `ctrl_down`/`ctrl_up` migriert (automatisiert,
+  siehe Abschnitt "Push-to-Talk"), aber wie das ganze Profil noch nicht im echten Spiel getestet.
 * **`profiles/EliteDangerous.yaml`** ist das dritte Profil (13.09.2026), 23 Kommandos
   (Energieverteilung Waffen/Schilde/Antrieb, Fahrgestell, FSD, Ladeluke, Stop, Boost, Heatsink,
   Aufhaengungen/Hardpoints, Moduswechsel Kampf/Analyse, Schildzellenbank, ECM, Dueppel/Chaff, plus
@@ -180,37 +219,38 @@ steht noch aus - siehe "Naechste moegliche Schritte".
   freien `beschreibung`, kein Ersatz - erweitert nur, was das Modell als plausible Umschreibung
   akzeptiert. `Dueppel` ("(Chaff)") und `Frameshiftdrive` ("(FSD)") hatten dieses Muster schon
   vorher unabhaengig davon.
-* **Feuergruppen-Direktwahl umgesetzt (13.09.2026)** - eine urspruenglich in derselben Session
-  verworfene Idee (Direktwahl per intern mitgefuehrtem Zaehler, siehe vorheriger Absatz in
-  fruehreren CLAUDE.md-Versionen der Git-Historie: Risiko eines unbemerkten Abdriftens vom echten
-  Spielzustand, da kein Rueckmelde-Kanal existiert). **Doch ein Rueckmelde-Kanal existiert**:
-  Elite Dangerous schreibt selbst laufend eine `Status.json` mit dem echten Ist-Zustand, u.a.
-  `"FireGroup"` (0-indiziert). Neues Modul `gaming_assistant/ed_status.py::feuergruppen_tasten()`
-  liest diese Datei bei JEDEM Tastendruck frisch (kein Caching), berechnet die Differenz zum
-  Ziel-Index modulo 8 in beide Richtungen und waehlt den kuerzeren Weg - liefert `None`, wenn das
-  Feld fehlt (Spiel laeuft nicht/kein Schiff aktiv) oder die Datei nicht lesbar ist (mit 2-3
-  kurzen Wiederholungsversuchen bei `JSONDecodeError`, da die Datei laufend komplett neu
-  geschrieben wird); `__main__.py::verarbeiten()` loest dann bewusst KEINEN Tastendruck aus statt
-  zu raten - Grundprinzip bleibt gewahrt. Acht neue Tags `FeuergruppeA`..`FeuergruppeH`
-  (`feuergruppe_ziel: 0..7`), `taste: []` (Sequenz wird zur Laufzeit berechnet statt fest in der
-  YAML zu stehen). Neues profilweites YAML-Feld `status_datei` (Pfad zur `Status.json`) - **bei
-  jedem Nutzer potenziell anders** (anderer Windows-Benutzername, verschobener Speicherort), daher
-  NICHT im Code hart hinterlegt, sondern in der YAML mit Platzhalter
-  `<DeinBenutzername>` und erklaerendem Kommentar (waehrend der Umsetzung/des Testens stand dort
-  kurzzeitig der echte lokale Pfad des Nutzers, vor dem Commit durch den Platzhalter ersetzt).
-  Vorwaerts-Taste "N" ist Spiel-Standardbelegung, Rueckwaerts-Taste "B" hat keine
-  Standardbelegung und muss vom Nutzer selbst in den Elite-Dangerous-Optionen eingestellt werden
-  (kollisionsfrei getestet). Beide Tasten sind seit 13.09.2026 zusaetzlich per Profil
-  ueberschreibbar (`feuergruppe_vorwaerts_taste`/`feuergruppe_rueckwaerts_taste`, Vorgabe "n"/"b"
-  aus `ed_status.py::TASTE_VORWAERTS_STANDARD`/`TASTE_RUECKWAERTS_STANDARD`) - Nutzerwunsch, falls
-  die Tasten bei jemandem doch kollidieren. Maximal 8 Feuergruppen (A-H) angenommen, ohne die
-  tatsaechlich vom
-  Nutzer konfigurierte Anzahl zu kennen - liegt laut Nutzeraussage in dessen eigener
-  Verantwortung, eine sinnvoll belegte Gruppe zu nennen. Isoliert gegen die echte, laufende
-  `Status.json` verifiziert (`FireGroup:0` als Ausgangspunkt, alle acht Ziel-Berechnungen
-  stimmten) UND **im echten Spiel per Sprachbefehl bestaetigt** (A->C->H->A durchgespielt,
-  jeweils korrekte Zielgruppe erreicht). Dieses eine Feature ist die einzige Ausnahme im ganzen
-  Projekt, die auf eine Datei ausserhalb des Projektordners zugreift (nur lesend).
+
+  **Feuergruppen-Direktwahl umgesetzt (13.09.2026)** - eine urspruenglich in derselben Session
+  verworfene Idee (Direktwahl per intern mitgefuehrtem Zaehler: Risiko eines unbemerkten
+  Abdriftens vom echten Spielzustand, da kein Rueckmelde-Kanal existiert). **Doch ein
+  Rueckmelde-Kanal existiert**: Elite Dangerous schreibt selbst laufend eine `Status.json` mit
+  dem echten Ist-Zustand, u.a. `"FireGroup"` (0-indiziert). Neues Modul
+  `gaming_assistant/ed_status.py::feuergruppen_tasten()` liest diese Datei bei JEDEM Tastendruck
+  frisch (kein Caching), berechnet die Differenz zum Ziel-Index modulo 8 in beide Richtungen und
+  waehlt den kuerzeren Weg - liefert `None`, wenn das Feld fehlt (Spiel laeuft nicht/kein Schiff
+  aktiv) oder die Datei nicht lesbar ist (mit 2-3 kurzen Wiederholungsversuchen bei
+  `JSONDecodeError`, da die Datei laufend komplett neu geschrieben wird); `__main__.py::verarbeiten()`
+  loest dann bewusst KEINEN Tastendruck aus statt zu raten - Grundprinzip bleibt gewahrt. Acht
+  neue Tags `FeuergruppeA`..`FeuergruppeH` (`feuergruppe_ziel: 0..7`), `taste: []` (Sequenz wird
+  zur Laufzeit berechnet statt fest in der YAML zu stehen). Neues profilweites YAML-Feld
+  `status_datei` (Pfad zur `Status.json`) - **bei jedem Nutzer potenziell anders** (anderer
+  Windows-Benutzername, verschobener Speicherort), daher NICHT im Code hart hinterlegt, sondern
+  in der YAML mit Platzhalter `<DeinBenutzername>` und erklaerendem Kommentar (waehrend der
+  Umsetzung/des Testens stand dort kurzzeitig der echte lokale Pfad des Nutzers, vor dem Commit
+  durch den Platzhalter ersetzt). Vorwaerts-Taste "N" ist Spiel-Standardbelegung, Rueckwaerts-Taste
+  "B" hat keine Standardbelegung und muss vom Nutzer selbst in den Elite-Dangerous-Optionen
+  eingestellt werden (kollisionsfrei getestet). Beide Tasten sind seit 13.09.2026 zusaetzlich per
+  Profil ueberschreibbar (`feuergruppe_vorwaerts_taste`/`feuergruppe_rueckwaerts_taste`, Vorgabe
+  "n"/"b" aus `ed_status.py::TASTE_VORWAERTS_STANDARD`/`TASTE_RUECKWAERTS_STANDARD`) -
+  Nutzerwunsch, falls die Tasten bei jemandem doch kollidieren. Maximal 8 Feuergruppen (A-H)
+  angenommen, ohne die tatsaechlich vom Nutzer konfigurierte Anzahl zu kennen - liegt laut
+  Nutzeraussage in dessen eigener Verantwortung, eine sinnvoll belegte Gruppe zu nennen. Isoliert
+  gegen die echte, laufende `Status.json` verifiziert (`FireGroup:0` als Ausgangspunkt, alle acht
+  Ziel-Berechnungen stimmten) UND **im echten Spiel per Sprachbefehl bestaetigt** (A->C->H->A
+  durchgespielt, jeweils korrekte Zielgruppe erreicht). Dieses eine Feature ist die einzige
+  Ausnahme im ganzen Projekt, die auf eine Datei ausserhalb des Projektordners zugreift (nur
+  lesend).
+
   **Nebenbefund beim Live-Test:** ein zunaechst wie ein Bug wirkendes Verhalten (Elite Dangerous
   oeffnete beim Sprachbefehl scheinbar zufaellig das Pause-Menue) lag NICHT am Gaming-Assistant-
   Code, sondern daran, dass parallel das unabhaengige Diktiertool-Projekt lief und zufaellig
@@ -224,6 +264,7 @@ steht noch aus - siehe "Naechste moegliche Schritte".
   Ringpuffer/Tray-Fenster fortlaufend nach `logs/gaming_assistant.log` geschrieben (pro
   Programmstart neu, nicht endlos wachsend) - praktisch, wenn man waehrend des Spielens nicht
   staendig zum Log-Fenster wechseln will/kann.
+
   **Nutzerfund 14.09.2026: die Annahme "immer 8 Feuergruppen" kann zu falschen Zielgruppen
   fuehren.** Sind im Schiff tatsaechlich weniger als 8 Feuergruppen eingerichtet, zykelt Elite
   Dangerous selbst nur durch die vorhandenen Gruppen (z.B. bei 7 eingerichteten springt die
@@ -243,6 +284,7 @@ steht noch aus - siehe "Naechste moegliche Schritte".
   `feuergruppe_*_taste`-Feldern) und in der README (Abschnitt zum Aktionslisten-Format), dass die
   Direktwahl nur zuverlaessig funktioniert, wenn im Schiff alle 8 Feuergruppen eingerichtet sind -
   auch wenn nicht alle tatsaechlich genutzt werden.
+
 * **`profiles/Diablo4.yaml`** ist das vierte Profil (15.09.2026), 7 Kommandos (Trank, Karte,
   Reittier, Skillbaum, Paragon, Stadtteleport, Dungeonexit). Aus einem rohen Nutzer-Entwurf
   (`Diablo4 (erster Entwurf).txt`, lokal, nicht im Repo - siehe `.gitignore`) uebernommen, analog
@@ -259,27 +301,14 @@ steht noch aus - siehe "Naechste moegliche Schritte".
   220/220) korrekt, keine Regression durch das neue Profil. **Noch NICHT im echten Spiel
   getestet** - `taste`-Werte stammen vom Nutzer selbst (kein Wiki-Abtippen wie bei Helldivers 1),
   gelten aber wie ueberall in diesem Projekt als vorlaeufig, bis im Spiel bestaetigt.
+
+## Design-Entscheidungen zum Profil-/Tag-Format
+
 * **Kommentar-Konvention fuer Profil-YAMLs (12.09.2026, Nutzerwunsch):** so minimal wie moeglich.
   Kein Kopfkommentar mit Formaterklaerung (steht zentral in `Gaming_assistent.md`, Abschnitt
   "Aktionslisten-Format"), keine Datums-/Aenderungshistorie in der Datei selbst (gehoert in die
   Git-Historie). Pro-Tag-Kommentare nur, wo sie eine sonst nicht ersichtliche Mehrdeutigkeit
-  zwischen zwei Tags erklaeren. Gilt fuer beide bestehenden Profile und alle kuenftigen.
-* **Tray-Icon von Mikrofon auf Gamepad umgestellt** (`gaming_assistant/icons.py`, 12.09.2026,
-  Nutzerwunsch) - passender zum Gaming-Thema. Programmatisch aus PIL-Formen gezeichnet (kein
-  Bild geladen): kastenfoermiger Sockel, D-Pad-Kreuz links, zwei Aktionsknoepfe rechts.
-* **Trainingsdaten-Aufzeichnung per Tray abschaltbar** (13.09.2026, Nutzerwunsch, Hinblick auf
-  Veroeffentlichung: nicht jeder GitHub-Nutzer soll gezwungen sein, seine gesprochenen Befehle
-  mitschreiben zu lassen). Neuer Config-Wert `cfg["training_log"]["aktiv"]` (Default `true`, kein
-  Verhaltenswechsel fuer Bestandsnutzer), checkbarer Menuepunkt in `tray.py`, Pruefung in
-  `__main__.py::verarbeiten()` vor dem `training_log.eintrag_anhaengen()`-Aufruf.
-* **Profilnamen sind nicht mehr im Code hart hinterlegt** (13.09.2026, Nutzerfrage nach dem
-  Umbenennen der beiden Helldivers-Profile). `__main__.py` faellt beim Start automatisch auf das
-  erste per `profile.liste_profile()` gefundene Profil zurueck, falls der in `config.json`
-  gespeicherte Name zu keiner Datei mehr passt (Warnung statt Absturz) - `config.py`s
-  `DEFAULTS["profil"]["aktiv"]` bleibt nur noch ein Vorschlag fuer den Erststart, keine harte
-  Abhaengigkeit mehr. Grund fuer die Umbenennung selbst: `Helldivers1_Stratagems.yaml` ->
-  `Helldivers1.yaml`, `Helldivers2_Stratagems.yaml` -> `Helldivers2.yaml` (kuerzer, konsistent
-  mit `EliteDangerous.yaml`).
+  zwischen zwei Tags erklaeren. Gilt fuer alle Profile.
 * **`schlagwort` ist jetzt optional** (11.09.2026, Nutzergespraech): ein Tag braucht mindestens
   eines von `schlagwort`/`beschreibung`, `profile.py::laden()` bricht sonst mit klarer
   Fehlermeldung ab. Hintergrund: `schlagwort` und `beschreibung` haben unabhaengige Aufgaben -
@@ -316,17 +345,74 @@ steht noch aus - siehe "Naechste moegliche Schritte".
   verifiziert, bevor sie in die YAML uebernommen wurde - dabei genau ein Fall gefunden und korrigiert
   (`Panzerabwehr` -> `Panzerabwehrkanone`). Abschliessender Regressionstest ueber 32 Faelle
   (alle Aenderungen plus Referenzfaelle wie Guard-Dog-Familie, NONE-Erkennung): 32/32 korrekt.
+
+## Weitere Tray-/Verhaltens-Entscheidungen
+
+* **Tray-Icon von Mikrofon auf Gamepad umgestellt** (`gaming_assistant/icons.py`, 12.09.2026,
+  Nutzerwunsch) - passender zum Gaming-Thema. Programmatisch aus PIL-Formen gezeichnet (kein
+  Bild geladen): kastenfoermiger Sockel, D-Pad-Kreuz links, zwei Aktionsknoepfe rechts.
+* **Trainingsdaten-Aufzeichnung per Tray abschaltbar** (13.09.2026, Nutzerwunsch, Hinblick auf
+  Veroeffentlichung: nicht jeder GitHub-Nutzer soll gezwungen sein, seine gesprochenen Befehle
+  mitschreiben zu lassen). Neuer Config-Wert `cfg["training_log"]["aktiv"]` (Default `true`, kein
+  Verhaltenswechsel fuer Bestandsnutzer), checkbarer Menuepunkt in `tray.py`, Pruefung in
+  `__main__.py::verarbeiten()` vor dem `training_log.eintrag_anhaengen()`-Aufruf.
+* **Profilnamen sind nicht mehr im Code hart hinterlegt** (13.09.2026, Nutzerfrage nach dem
+  Umbenennen der beiden Helldivers-Profile). `__main__.py` faellt beim Start automatisch auf das
+  erste per `profile.liste_profile()` gefundene Profil zurueck, falls der in `config.json`
+  gespeicherte Name zu keiner Datei mehr passt (Warnung statt Absturz) - `config.py`s
+  `DEFAULTS["profil"]["aktiv"]` bleibt nur noch ein Vorschlag fuer den Erststart, keine harte
+  Abhaengigkeit mehr. Grund fuer die Umbenennung selbst: `Helldivers1_Stratagems.yaml` ->
+  `Helldivers1.yaml`, `Helldivers2_Stratagems.yaml` -> `Helldivers2.yaml` (kuerzer, konsistent
+  mit `EliteDangerous.yaml`).
+
+## Vendor-Binaries und Modelle
+
 * **`vendor/whisper.cpp` und Whisper-Modell sind eigenstaendige Kopien**, keine Pfad-
   Abhaengigkeit zum Diktier-Tool-Repo (aus dessen fertigem Build kopiert: nur `whisper-
   server.exe` + noetige DLLs, nur die Q5-Deutsch-Modellvariante). Analog dazu ist
   `vendor/llama.cpp/` eine eigenstaendige Kopie des offiziellen llama.cpp-Vulkan-Windows-
   Release-Zips (gepinnter Build `b10909`), auf `llama-server.exe` + noetige DLLs verschlankt
   (die vielen mitgelieferten Zusatzwerkzeuge wie `llama-cli.exe`/`llama-bench.exe`/etc. werden
-  nicht gebraucht). **Beide Server-Binaries liegen seit 12.09.2026 direkt im Repo** (siehe
-  "Server-Binaries eingebettet" weiter unten) statt separat heruntergeladen werden zu muessen -
-  `scripts/build_whisper.ps1`/`scripts/fetch_llama.ps1` bleiben nur noch als
-  Fallback-/Reparatur-Skripte fuer den Ausnahmefall bestehen. `setup.ps1` buendelt die
-  Ersteinrichtung (venv + beide Modell-Downloads) in einem Aufruf.
+  nicht gebraucht).
+* **Entscheidung: kein Git LFS, Modell bleibt ausserhalb des Repos (12.09.2026).**
+  Git LFS war eingerichtet und getestet (`git lfs track`), aber verworfen: die Hauptdatei
+  `gemma-4-E4B-it-Q4_K_M.gguf` liegt bei ~4,97 GiB, knapp unter GitHubs 5-GiB-Limit pro
+  LFS-Datei, und zusammen mit der `mmproj`-Datei (~0,95 GB) weit ueber dem kostenlosen
+  LFS-Kontingent (1 GB Speicher/Bandbreite pro Monat) — fuer ein oeffentliches Repo ohne
+  bezahlten Datenpaket-Zusatz nicht praktikabel. Stattdessen: der Ordner
+  `gemma-4-E4B-it-GGUF/` bleibt im Repo (mit eigener `README.md` als Download-Anleitung), die
+  `*.gguf`-Dateien selbst sind ueber `.gitignore` ausgeschlossen. Nutzer laden die Modelldatei
+  manuell herunter (Quelle: `unsloth/gemma-4-E4B-it-GGUF` auf Hugging Face, siehe
+  `gemma-4-E4B-it-GGUF/README.md` und Haupt-`README.md`) und kopieren sie selbst in den Ordner —
+  gleiches Prinzip wie schon bei Whisper, nur ohne Git-Versionierung der Gewichte.
+* **Lizenzfrage bereits geklaert (11.09.2026, per Websuche verifiziert):** Gemma 4 (die hier
+  genutzte Version) laeuft seit April 2026 unter **Apache 2.0** — keine Redistributions-
+  Einschraenkungen fuer die Modellgewichte. Nur Gemma 1-3 liefen noch unter den restriktiveren,
+  selbst geschriebenen "Gemma Terms of Use"; fuer dieses Projekt nicht relevant.
+* **Server-Binaries eingebettet (12.09.2026), Ersteinrichtung auf ein Skript gebuendelt.**
+  Nachtraeglich aufgefallen: die eigentlichen Server-Programme (`llama-server.exe`,
+  `whisper-server.exe`) sind winzig im Vergleich zu den Modellgewichten - nach dem Verschlanken
+  auf nur die tatsaechlich gebrauchten Dateien ~81 MB (llama.cpp) bzw. ~54 MB (whisper.cpp), jede
+  einzelne Datei weit unter GitHubs 100-MB-Grenze fuer normale (nicht-LFS-)Dateien. Anders als
+  bei den Modellgewichten (mehrere GB, siehe oben) gibt es hier also **kein** Kontingent-Problem.
+  Deshalb: `.gitignore` von einem pauschalen `vendor/`-Ausschluss auf eine gezielte Regel
+  umgestellt (verschachtelte `!`-Ausnahmen fuer `vendor/whisper.cpp/build/bin/Release/`, damit ein
+  evtl. von `build_whisper.ps1` geklonter Quellcode/Build-Zwischenstand weiterhin ignoriert
+  bleibt, aber die fertigen Binaries darin nicht; `vendor/llama.cpp/` braucht keine eigene Regel,
+  da dort nie Quellcode anfaellt) - beide Binary-Sets sind jetzt direkt im Repo committet.
+  `fetch_llama.ps1`/`build_whisper.ps1` sind dadurch fuer den Normalfall ueberfluessig geworden,
+  bleiben aber als Fallback-/Reparatur-Skripte bestehen (z.B. falls `vendor/` beschaedigt ist
+  oder eine andere Plattform/Architektur gebraucht wird) - `fetch_llama.ps1` entfernt dabei
+  automatisch dieselben ueberfluessigen Zusatzwerkzeuge, die einmalig manuell aus
+  `vendor/llama.cpp/` geloescht wurden. Uebrig bleiben fuer eine Ersteinrichtung nur noch die
+  Python-Umgebung und die beiden grossen Modell-Downloads (LLM ~5 GB, Whisper ~0,5 GB) - dafuer
+  `setup.ps1`, das `setup_venv.ps1`/`download_llm.ps1`/`fetch_models.ps1` nacheinander aufruft
+  (keine Logik-Duplizierung, die drei Skripte bleiben einzeln nutzbar). `setup_venv.ps1` zeigt
+  seit 15.09.2026 bei fehlendem Python 3 einen Link zur Installation statt nur einer technischen
+  Fehlermeldung (siehe auch Abschnitt "Veroeffentlichung").
+
+## Latenz & Performance
+
 * **Bekannter, nicht als kritisch eingestufter Fund:** bei rein digitaler Stille (Testfall, kein
   echtes Mikrofon-Rauschen) halluziniert Whisper gelegentlich Text statt leer zu bleiben. Im
   echten Spielbetrieb bisher nicht als Problem aufgefallen.
@@ -360,83 +446,45 @@ steht noch aus - siehe "Naechste moegliche Schritte".
   Sprache messen, nie mit Stille oder Rauschen** - Windows-TTS (`System.Speech.Synthesis`,
   Stimme "Microsoft Hedda Desktop", 16kHz-Mono-WAV) hat sich dafuer als schneller Ersatz fuer
   eine echte Aufnahme bewaehrt.
-* **Erste feste Testinfrastruktur (14.09.2026):** `tests/test_profil_klassifikation.py` - vorher
-  waren alle Klassifikationstests Wegwerf-Skripte im Scratchpad, die nach jeder Session wieder
-  geloescht wurden. Nutzerwunsch: Skripte nicht mehr staendig neu schreiben muessen. Urspruenglich
-  Elite-Dangerous-spezifisch angelegt (38 feste Faelle), auf Nutzerwunsch noch am selben Tag
-  verallgemeinert: **jedes** Tag jedes Profils wird automatisch mit seinem eigenen `beispiel`-Feld
-  getestet (muss zu sich selbst klassifizieren) - keine Notwendigkeit, fuer jedes Profil von Hand
-  Testfaelle zu schreiben. Zusaetzlich ein `ZUSATZFAELLE`-Dict fuer handverlesene Paraphrasen/
-  Mehrfachbefehle je Profil (bisher nur fuer Elite Dangerous befuellt). Reine Textklassifikation
-  ohne Whisper/Mikrofon, startet `llama-server` selbst; Aufruf ohne Argumente testet alle Profile in
-  `profiles/`, mit Profilnamen als Argumente nur die genannten. Kein pytest o.ae. eingefuehrt,
-  einfaches eigenstaendiges Skript passend zur bisherigen Projekt-Schlichtheit (kein
-  Test-Framework als neue Abhaengigkeit). Bei der Verallgemeinerung gegen alle drei Profile
-  verifiziert: **175/175 korrekt** (39 Elite Dangerous inkl. neu entdecktem Paraphrasen-Fall
-  "Frachtluke" fuer `Ladeluke`, 57 Helldivers 1, 79 Helldivers 2 - allesamt automatisch aus den
-  jeweiligen `beispiel`-Feldern abgeleitet, ohne manuelles Zutun fuer die beiden
-  Helldivers-Profile). Dazu (Nutzeridee, direkt danach) ein zweites,
-  allgemeineres Werkzeug: `tests/profil_interaktiv_testen.py` - profilunabhaengig (fragt beim
-  Start, welches Profil getestet werden soll, oder nimmt den Namen als Kommandozeilenargument),
-  interaktive Eingabeschleife statt fester Testfaelle, zeigt pro Eingabe den erkannten Tag und
-  die zugehoerige Tastenfolge an (bzw. bei Feuergruppen-Tags den Hinweis "wird zur Laufzeit
-  berechnet"), loest dabei aber bewusst NICHTS wirklich aus (reiner Trockentest, kein
-  `keypress.ausloesen()`-Aufruf) - gedacht fuer alle, die eine neue oder geaenderte Profil-YAML
-  ausprobieren wollen, bevor sie damit ins echte Spiel gehen (z.B. spaeter beigesteuerte
-  Community-Profile ueber den Reddit-Post). Drittes Werkzeug (Nutzerwunsch, fuer andere Nutzer
-  mit abweichender Hardware): `tests/latenz_messen.py` formalisiert das wiederholt in dieser und
-  frueheren Sessions genutzte Ad-hoc-Messverfahren (Windows-Sprachsynthese als Testaudio statt
-  Stille, siehe "Lektion" oben) zu einem eigenstaendigen, jederzeit erneut ausfuehrbaren Skript -
-  misst STT-Latenz, LLM-Cold-Start und LLM-Wiederholungslatenz gegen das aktuell aktive Profil.
-  Bewusst NICHT auf die deutsche Stimme "Hedda" festgelegt (nutzt die jeweilige
-  System-Standardstimme), damit es auch auf Rechnern ohne diese eine installierte Stimme
-  funktioniert - fuer die reine Zeitmessung ist die inhaltliche Erkennungsqualitaet
-  nebensaechlich. Keine neue Python-Abhaengigkeit: Sprachsynthese laeuft ueber einen
-  PowerShell-Unterprozess (Windows-eigenes `System.Speech`), nicht ueber eine TTS-Bibliothek.
-* **Naechste moegliche Schritte:** offene Punkte am Elite-Dangerous-Profil (drei fehlende Tasten
-  fuer `Schildzellenbank`/`ECM`/`Dueppel` selbst im Spiel belegen und eintragen, `kontextlaenge`
-  einmal real nachmessen statt Schaetzwert, Test der uebrigen 15 Kommandos im echten Spiel - die
-  acht Feuergruppen-Tags sind bereits live bestaetigt, siehe oben); abwarten, ob sich ueber den
-  Reddit-Post Interesse und/oder Wuensche fuer
-  weitere Spielprofile ergeben (siehe "Veroeffentlichung vorbereitet" oben), dann ggf. Repo auf
-  oeffentlich stellen; eine zweistufige Trainingsdaten-Aufbereitung (Extraktor-Durchlaeufe auf den
-  `training_log.py`-Rohdaten - Durchlauf 1 prueft Plausibilitaet Rohtext/erkannter Tag,
-  Durchlauf 2 korrigiert nur die aussortierten Faelle) fuer kuenftiges Fine-Tuning; **die
-  migrierten Helldivers-1/2-Profile (inline ctrl_down/ctrl_up statt halte_taste, siehe oben) im
-  echten Spiel nachtesten**, bevor committet wird - bisher nur das Laden verifiziert, nicht der
-  eigentliche Tastendruck mit der neuen Syntax.
-* **Ueberlegung (12.09.2026, noch nicht umgesetzt): LoRA-Adapter statt volles Fine-Tuning pro
-  Profil.** Da das Tool profilbasiert ist (unterschiedliche Tag-Listen je Spiel), wuerde ein
-  vollstaendig fine-getuntes Modell pro Profil bedeuten, dass fuer jedes Spiel eine eigene,
-  mehrere GB grosse Modellkopie vorgehalten werden muesste - und ein Profilwechsel muesste dann
-  das komplette Modell neu laden statt nur (wie aktuell) die Kontextlaenge anzupassen. Deshalb
-  angedachter Ansatz: LoRA- bzw. QLoRA-Adapter (kleine Zusatzgewichts-Datei, wenige MB statt
-  mehrere GB, wird zur Laufzeit auf das gemeinsame Basismodell geladen, ohne dieses selbst zu
-  veraendern - QLoRA betrifft nur die Trainingsphase selbst, das Ergebnis ist derselbe
-  Adapter-Dateityp). llama-server unterstuetzt das Laden eines Adapters ueber `--lora`. Pro
-  Spielprofil koennte ein eigener, winziger Adapter trainiert und direkt neben der jeweiligen
-  Profil-YAML abgelegt werden; beim Profilwechsel wuerde der Server (analog zum bereits
-  bestehenden Neustart bei geaenderter Kontextlaenge) mit dem passenden Adapter neu gestartet -
-  vertretbarer Umweg, falls sich dynamisches Nachladen eines noch nicht beim Start geladenen
-  Adapters ohne Neustart als nicht zuverlaessig herausstellt. Zweck waere dabei primaer nicht,
-  dem Modell Tag-Namen eines bestimmten Spiels beizubringen (das leistet schon der
-  System-Prompt), sondern die allgemeine Faehigkeit zu verbessern, Text anhand einer im Prompt
-  mitgegebenen Tag-Liste zuverlaessig zu klassifizieren - trainiert auf ueber alle Profile
-  hinweg gesammelten Daten, nicht auf ein einzelnes Spiel beschraenkt.
 
-* `Gaming_assistent.md` ist das massgebliche, vollstaendige Konzept — bei Widersprueche zwischen
-  dieser Zusammenfassung hier und `Gaming_assistent.md` gilt **immer** `Gaming_assistent.md`.
-  Alle Designentscheidungen stehen im Abschnitt "Bereits entschieden", das vollstaendige
-  Testergebnis im Abschnitt "Testreihe (abgeschlossen)" — **keine offenen Konzeptfragen mehr**,
-  siehe dort fuer die Begruendung.
-* **Kernentscheidungen kurz:** ein Prozess statt Server/Client, Push-to-Talk, Whisper
-  `large-v3-turbo-german-q5` fest auf Deutsch, LLM-Klassifikation statt Stringmatch
-  (Gemma 4 E4B, `temperature=0`, Denkmodus per `--reasoning off` an llama-server explizit aus -
-  frueher LM-Studio-GUI-Schalter, siehe "LM Studio abgeloest" unten),
-  Tags im Format `&&TAG&&`, `&&NONE&&` bei Uneindeutigkeit, YAML-Profil pro Spiel mit
-  `schlagwort`/`beispiel`/`taste`/`kontextlaenge`-Feldern (Details siehe „Aktionslisten-Format").
-  Die vorherige Testreihe (vier Runden, zuletzt 105/107 auf der vollen 77-Tag-Helldivers-2-Liste)
-  ist im Detail in `Gaming_assistent.md`, Abschnitt "Testreihe" dokumentiert.
+## Testinfrastruktur
+
+**Erste feste Testinfrastruktur (14.09.2026):** `tests/test_profil_klassifikation.py` - vorher
+waren alle Klassifikationstests Wegwerf-Skripte im Scratchpad, die nach jeder Session wieder
+geloescht wurden. Nutzerwunsch: Skripte nicht mehr staendig neu schreiben muessen. Urspruenglich
+Elite-Dangerous-spezifisch angelegt (38 feste Faelle), auf Nutzerwunsch noch am selben Tag
+verallgemeinert: **jedes** Tag jedes Profils wird automatisch mit seinem eigenen `beispiel`-Feld
+getestet (muss zu sich selbst klassifizieren) - keine Notwendigkeit, fuer jedes Profil von Hand
+Testfaelle zu schreiben. Zusaetzlich ein `ZUSATZFAELLE`-Dict fuer handverlesene Paraphrasen/
+Mehrfachbefehle je Profil (aktuell fuer Elite Dangerous und Diablo 4 befuellt). Reine Textklassifikation
+ohne Whisper/Mikrofon, startet `llama-server` selbst; Aufruf ohne Argumente testet alle Profile in
+`profiles/`, mit Profilnamen als Argumente nur die genannten. Kein pytest o.ae. eingefuehrt,
+einfaches eigenstaendiges Skript passend zur bisherigen Projekt-Schlichtheit (kein
+Test-Framework als neue Abhaengigkeit). Bei der Verallgemeinerung gegen alle drei damaligen Profile
+verifiziert: **175/175 korrekt** (39 Elite Dangerous inkl. neu entdecktem Paraphrasen-Fall
+"Frachtluke" fuer `Ladeluke`, 57 Helldivers 1, 79 Helldivers 2 - allesamt automatisch aus den
+jeweiligen `beispiel`-Feldern abgeleitet, ohne manuelles Zutun fuer die beiden
+Helldivers-Profile). Dazu (Nutzeridee, direkt danach) ein zweites,
+allgemeineres Werkzeug: `tests/profil_interaktiv_testen.py` - profilunabhaengig (fragt beim
+Start, welches Profil getestet werden soll, oder nimmt den Namen als Kommandozeilenargument),
+interaktive Eingabeschleife statt fester Testfaelle, zeigt pro Eingabe den erkannten Tag und
+die zugehoerige Tastenfolge an (bzw. bei Feuergruppen-Tags den Hinweis "wird zur Laufzeit
+berechnet"), loest dabei aber bewusst NICHTS wirklich aus (reiner Trockentest, kein
+`keypress.ausloesen()`-Aufruf) - gedacht fuer alle, die eine neue oder geaenderte Profil-YAML
+ausprobieren wollen, bevor sie damit ins echte Spiel gehen (z.B. spaeter beigesteuerte
+Community-Profile ueber den Reddit-Post). Drittes Werkzeug (Nutzerwunsch, fuer andere Nutzer
+mit abweichender Hardware): `tests/latenz_messen.py` formalisiert das wiederholt in dieser und
+frueheren Sessions genutzte Ad-hoc-Messverfahren (Windows-Sprachsynthese als Testaudio statt
+Stille, siehe "Lektion" im Abschnitt "Latenz & Performance") zu einem eigenstaendigen, jederzeit
+erneut ausfuehrbaren Skript - misst STT-Latenz, LLM-Cold-Start und LLM-Wiederholungslatenz gegen
+das aktuell aktive Profil. Bewusst NICHT auf die deutsche Stimme "Hedda" festgelegt (nutzt die
+jeweilige System-Standardstimme), damit es auch auf Rechnern ohne diese eine installierte Stimme
+funktioniert - fuer die reine Zeitmessung ist die inhaltliche Erkennungsqualitaet
+nebensaechlich. Keine neue Python-Abhaengigkeit: Sprachsynthese laeuft ueber einen
+PowerShell-Unterprozess (Windows-eigenes `System.Speech`), nicht ueber eine TTS-Bibliothek.
+
+**Diablo-4-Profil ergaenzt (15.09.2026):** 9 Grundfaelle + 10 Zusatzfaelle, siehe Abschnitt
+"Spielprofile". Voller Regressionstest ueber alle vier Profile: 220/220 korrekt.
 
 ## LM Studio abgeloest (12.09.2026)
 
@@ -522,6 +570,8 @@ der lokalen `config.json` entfernt, damit er sauber aus den neuen `DEFAULTS` bef
 automatischer Config-Migrator gebaut (Projekt war zu diesem Zeitpunkt noch nicht veroeffentlicht,
 Einzelfall).
 
+## Wettbewerbsanalyse
+
 **Konkurrenz-Recherche (11.09.2026, per Websuche), Korrektur einer fruehen Annahme:** die
 urspruengliche Annahme "kein Tool nutzt ein LLM statt fester Kommandophrasen" haelt so **nicht**
 stand — **Wingman AI** (wingman-ai.com, Kern Open Source) macht das bereits: freie Formulierung,
@@ -586,65 +636,31 @@ Kompatibilitaet) - nur echte Controller/HOTAS sowie proprietaere Geraete wie Str
 relevant, und Stream Deck liesse sich ohnehin schon ueber dessen eigene "sende Tastenkombination"-
 Funktion genau wie AHK anbinden, ganz ohne diese Erweiterung.
 
-* **Entscheidung revidiert (12.09.2026): kein Git LFS, Modell bleibt ausserhalb des Repos.**
-  Git LFS war eingerichtet und getestet (`git lfs track`), aber verworfen: die Hauptdatei
-  `gemma-4-E4B-it-Q4_K_M.gguf` liegt bei ~4,97 GiB, knapp unter GitHubs 5-GiB-Limit pro
-  LFS-Datei, und zusammen mit der `mmproj`-Datei (~0,95 GB) weit ueber dem kostenlosen
-  LFS-Kontingent (1 GB Speicher/Bandbreite pro Monat) — fuer ein oeffentliches Repo ohne
-  bezahlten Datenpaket-Zusatz nicht praktikabel. Stattdessen: der Ordner
-  `gemma-4-E4B-it-GGUF/` bleibt im Repo (mit eigener `README.md` als Download-Anleitung), die
-  `*.gguf`-Dateien selbst sind ueber `.gitignore` ausgeschlossen. Nutzer laden die Modelldatei
-  manuell herunter (Quelle: `unsloth/gemma-4-E4B-it-GGUF` auf Hugging Face, siehe
-  `gemma-4-E4B-it-GGUF/README.md` und Haupt-`README.md`) und kopieren sie selbst in den Ordner —
-  gleiches Prinzip wie schon bei Whisper (`vendor/whisper.cpp` + Modell, siehe oben), nur ohne
-  Git-Versionierung der Gewichte.
-* **Lizenzfrage bereits geklaert (11.09.2026, per Websuche verifiziert):** Gemma 4 (die hier
-  genutzte Version) laeuft seit April 2026 unter **Apache 2.0** — keine Redistributions-
-  Einschraenkungen fuer die Modellgewichte. Nur Gemma 1-3 liefen noch unter den restriktiveren,
-  selbst geschriebenen "Gemma Terms of Use"; fuer dieses Projekt nicht relevant.
-* **Server-Binaries eingebettet (12.09.2026), Ersteinrichtung auf ein Skript gebuendelt.**
-  Nachtraeglich aufgefallen: die eigentlichen Server-Programme (`llama-server.exe`,
-  `whisper-server.exe`) sind winzig im Vergleich zu den Modellgewichten - nach dem Verschlanken
-  auf nur die tatsaechlich gebrauchten Dateien (Rest siehe "Modulstruktur" oben) ~81 MB
-  (llama.cpp) bzw. ~54 MB (whisper.cpp), jede einzelne Datei weit unter GitHubs 100-MB-Grenze
-  fuer normale (nicht-LFS-)Dateien. Anders als bei den Modellgewichten (mehrere GB, siehe oben)
-  gibt es hier also **kein** Kontingent-Problem. Deshalb: `.gitignore` von einem pauschalen
-  `vendor/`-Ausschluss auf eine gezielte Regel umgestellt (verschachtelte `!`-Ausnahmen fuer
-  `vendor/whisper.cpp/build/bin/Release/`, damit ein evtl. von `build_whisper.ps1` geklonter
-  Quellcode/Build-Zwischenstand weiterhin ignoriert bleibt, aber die fertigen Binaries darin
-  nicht; `vendor/llama.cpp/` braucht keine eigene Regel, da dort nie Quellcode anfaellt) - beide
-  Binary-Sets sind jetzt direkt im Repo committet. `fetch_llama.ps1`/`build_whisper.ps1` sind
-  dadurch fuer den Normalfall ueberfluessig geworden, bleiben aber als Fallback-/
-  Reparatur-Skripte bestehen (z.B. falls `vendor/` beschaedigt ist oder eine andere
-  Plattform/Architektur gebraucht wird) - `fetch_llama.ps1` entfernt dabei automatisch dieselben
-  ueberfluessigen Zusatzwerkzeuge, die einmalig manuell aus `vendor/llama.cpp/` geloescht wurden.
-  Uebrig bleiben fuer eine Ersteinrichtung nur noch die Python-Umgebung und die beiden grossen
-  Modell-Downloads (LLM ~5 GB, Whisper ~0,5 GB) - dafuer neu `setup.ps1`, das
-  `setup_venv.ps1`/`download_llm.ps1`/`fetch_models.ps1` nacheinander aufruft (keine
-  Logik-Duplizierung, die drei Skripte bleiben einzeln nutzbar).
+## Veroeffentlichung
 
-## Veroeffentlichung vorbereitet (13.09.2026)
-
-**Status: GitHub-Repo existiert und ist vollstaendig gepusht (Stand v1.4), aber bewusst noch
-privat.** Repo `derpreusse85-cloud/KI-Gaming-Assistent` (leer angelegt, kein README/.gitignore/
+**Status: GitHub-Repo existiert, ist vollstaendig gepusht und seit 15.09.2026 OEFFENTLICH.** Repo
+`derpreusse85-cloud/KI-Gaming-Assistent` (leer angelegt, kein README/.gitignore/
 Lizenz beim Erstellen, um Konflikte mit den bereits lokal fertigen Dateien zu vermeiden). Lokaler
 Branch `main` per `git push -u origin main` hochgeladen (inzwischen mehrfach per einfachem
 `git push` aktualisiert - Repo-Stand ist durchgehend synchron mit dem lokalen Stand gehalten
-worden, kein pinning auf einen bestimmten Commit-Hash hier gepflegt), dazu alle fuenf
-Versions-Tags v1.0-v1.4
-(`git push origin --tags` bzw. einzeln `git push origin v1.4`) und passende GitHub-Releases zu
-allen fuenf Tags (Notizen aus `CHANGELOG.md`, per `gh release create` angelegt - `gh` blieb ueber
+worden, kein pinning auf einen bestimmten Commit-Hash hier gepflegt), dazu alle
+Versions-Tags (`git push origin --tags` bzw. einzeln) und passende GitHub-Releases zu
+jedem Tag (Notizen aus `CHANGELOG.md`, per `gh release create` angelegt - `gh` blieb ueber
 die Session hinweg angemeldet, spaetere Releases liefen direkt aus der KI-Sitzung, nicht mehr nur
 vom Nutzer selbst). Authentifizierung: Personal Access Token (classic, Scope
 `public_repo`, 90 Tage, laeuft ~12.12.2026 ab) fuer `git push` ueber den Windows Git Credential
 Manager gespeichert; `gh`-CLI (per `winget install --id GitHub.cli` installiert) separat per
 Browser-Login authentifiziert - beide Anmeldungen sind unabhaengig voneinander und wurden vom
 Nutzer selbst in seinem eigenen Terminal durchgefuehrt, nicht durch die KI-Sitzung (Sicherheits-
-prinzip: Zugangsdaten nie im Chat teilen). Repo-Sichtbarkeit aktuell **privat** - will das Repo
-erst oeffentlich stellen, wenn sich echtes Nutzerinteresse zeigt. **Nutzer-Hintergrund:** dies ist
-seine allererste GitHub-Veroeffentlichung ueberhaupt - GitHub-Konzepte (Tokens, `gh`,
-Fork/Pull-Request-Modell, Releases vs. Tags, Packages/Contributors-Widgets) wurden in der Session
-jeweils von Grund auf erklaert, nicht vorausgesetzt.
+prinzip: Zugangsdaten nie im Chat teilen). **Update 15.09.2026: Nutzer hat das Repo selbst auf
+public umgestellt** (per `gh repo view` bestaetigt), unabhaengig vom urspruenglich genannten
+Kriterium "erst wenn sich echtes Interesse zeigt" - aus eigenem Ermessen, einfach abwarten was
+sich ergibt. **Nutzer-Hintergrund:** dies ist seine allererste GitHub-Veroeffentlichung
+ueberhaupt - GitHub-Konzepte (Tokens, `gh`, Fork/Pull-Request-Modell, Releases vs. Tags,
+Packages/Contributors-Widgets, Issues, Discussions) wurden in der Session jeweils von Grund auf
+erklaert, nicht vorausgesetzt. **Discussions seit 15.09.2026 aktiviert** (Settings -> General ->
+Features), zusaetzlich zu den standardmaessig bereits aktiven Issues - als Feedback-Kanal fuer
+Spielideen/Fragen von Besuchern gedacht.
 
 **Reddit-Stand (15.09.2026, siehe auch Auto-Memory `projekt_reddit_ankuendigung`):** der
 urspruenglich erwaehnte, auf Mod-Freigabe wartende Post war in einem anderen Subreddit und wurde
@@ -652,7 +668,8 @@ vom Nutzer inzwischen selbst geloescht. Der tatsaechlich aktive Post ist in **r/
 ("PC Gaming Deutschland", brauchte keine Mod-Freigabe) - hat inzwischen echte Kommentare bekommen,
 u.a. eine Frage nach Anime-/Pokemon-Kampfspielen (Antwort: Tool kann nicht in fremden Spielcode
 eingreifen, nur Tastendruck-Simulation) und eine Frage "Ist AutoHotkey zulaessig?" (bezog sich auf
-die Anti-Cheat-Frage) - daraus entstand ein laengeres Gespraech (siehe naechster Absatz).
+die Anti-Cheat-Frage) - daraus entstand ein laengeres Gespraech, siehe Abschnitt
+"Wettbewerbsanalyse".
 
 **`LICENSE` (GPL-3.0):** offizieller Volltext von `gnu.org/licenses/gpl-3.0.txt`, mit eigener
 Copyright-Zeile ("Gaming-Sprachassistent / Copyright (C) 2026 DerPreusse") vorangestellt. **Fund
@@ -669,28 +686,72 @@ beginnt jetzt direkt mit dem offiziellen Titel), Copyright-Angabe stattdessen in
 verschoben (Abschnitt "Lizenz und Drittanbieter-Komponenten"). Danach per `gh api` bestaetigt:
 `spdx_id: GPL-3.0`, korrekt erkannt.
 
-**`CHANGELOG.md`** neu (Keep-a-Changelog-Stil, v1.0-v1.3), Inhalte aus den vorhandenen
-Git-Tag-Nachrichten und diesem Dokument destilliert, in der README verlinkt.
+**`CHANGELOG.md`** neu (Keep-a-Changelog-Stil), Inhalte aus den vorhandenen
+Git-Tag-Nachrichten und diesem Dokument destilliert, in der README verlinkt. Wird bei jedem
+Versionssprung gepflegt (aktuell bis v1.5).
 
 **README-Ergaenzungen fuer die Veroeffentlichung:** Hinweis dass Code/System-Prompt fest auf
-Gemma 4 E4B ausgelegt sind (kein reiner Config-Tausch bei anderem Modell moeglich, siehe
-"Modellwahl" oben); Abschnitt zum Erweitern bestehender Profile um neue Kommandos
-(Namenskollisionen pruefen, `kontextlaenge` im Blick behalten); Abschnitt "Lizenz und
-Drittanbieter-Komponenten" (eigener Code GPL-3.0, `vendor/`-Binaries MIT, Gemma-Gewichte
-Apache-2.0); persoenlicher Disclaimer des Autors (Nicht-Entwickler, kompletter Code KI-generiert,
-Bitte um Sachlichkeit) als Zitat-Block direkt nach der Einleitung, wortwoertlich vom Nutzer
-vorgegeben.
+Gemma 4 E4B ausgelegt sind (kein reiner Config-Tausch bei anderem Modell moeglich); Abschnitt zum
+Erweitern bestehender Profile um neue Kommandos (Namenskollisionen pruefen, `kontextlaenge` im
+Blick behalten); Abschnitt "Lizenz und Drittanbieter-Komponenten" (eigener Code GPL-3.0,
+`vendor/`-Binaries MIT, Gemma-Gewichte Apache-2.0); persoenlicher Disclaimer des Autors
+(Nicht-Entwickler, kompletter Code KI-generiert, Bitte um Sachlichkeit) als Zitat-Block direkt
+nach der Einleitung, wortwoertlich vom Nutzer vorgegeben. Spaeter ergaenzt: Python-3-Voraussetzung
+in "Mindestanforderungen", Abschnitt "Komplexere Aktionen per AutoHotkey" (siehe
+"Wettbewerbsanalyse").
 
-**`.gitignore`:** `Elite Dangerous (erster entwurf).txt` (roher Arbeitsentwurf, analog zu
-`Beispiele.txt`) ergaenzt - beide sind persoenliches Referenzmaterial, nicht Teil des Repos.
-Ausserdem (13.09.2026) `profiles/EliteDangerous_Lokal.yaml` ausgeschlossen: persoenliche Kopie
-von `EliteDangerous.yaml` mit dem echten `status_datei`-Pfad des Nutzers statt des im oeffentlichen
-Profil hinterlegten Platzhalters `<DeinBenutzername>` - noetig, damit das Feuergruppen-Feature
-(siehe "Stand der Arbeit" oben) trotz Platzhalter im Repo lokal weiter funktioniert. Nutzers
-lokale `config.json` (selbst nicht versioniert) hat `profil.aktiv` aktuell auf
+**`.gitignore`:** `Elite Dangerous (erster entwurf).txt` und `Diablo4 (erster Entwurf).txt`
+(rohe Arbeitsentwuerfe, analog zu `Beispiele.txt`) ergaenzt - persoenliches Referenzmaterial,
+nicht Teil des Repos. Ausserdem (13.09.2026) `profiles/EliteDangerous_Lokal.yaml` ausgeschlossen:
+persoenliche Kopie von `EliteDangerous.yaml` mit dem echten `status_datei`-Pfad des Nutzers statt
+des im oeffentlichen Profil hinterlegten Platzhalters `<DeinBenutzername>` - noetig, damit das
+Feuergruppen-Feature trotz Platzhalter im Repo lokal weiter funktioniert. Nutzers lokale
+`config.json` (selbst nicht versioniert) hat `profil.aktiv` aktuell auf
 `"EliteDangerous_Lokal"` gesetzt - **Hinweis fuer eine kuenftige Session:** das war eigenmaechtig
 von der KI gesetzt worden, Nutzer haette lieber selbst im Tray-Menue ausgewaehlt (Feedback dazu
 liegt auch im Auto-Memory-System) - falls das nochmal auffaellt, nicht erneut automatisch aendern.
+`.gitignore` selbst bleibt bewusst Teil des Repos (15.09.2026 kurz hinterfragt) - ohne sie wuerden
+Neuklone die Ausschlussregeln verlieren; ihr Inhalt (Dateinamen von Referenzmaterial/
+Build-Artefakten) gilt als unproblematisch, da nirgends Secrets/Tokens drinstehen.
+
+## Naechste moegliche Schritte
+
+* Offene Punkte am Elite-Dangerous-Profil: drei fehlende Tasten fuer
+  `Schildzellenbank`/`ECM`/`Dueppel` selbst im Spiel belegen und eintragen, `kontextlaenge` einmal
+  real nachmessen statt Schaetzwert, Test der uebrigen 15 Kommandos im echten Spiel (die acht
+  Feuergruppen-Tags sind bereits live bestaetigt).
+* Die migrierten Helldivers-1/2-Profile sind im echten Spiel (Helldivers 2) bereits mit der neuen
+  `ctrl_down`/`ctrl_up`-Syntax bestaetigt; **Helldivers 1 selbst bleibt weiterhin ungetestet**
+  (Nutzer besitzt das Spiel nicht).
+* **Diablo-4-Profil im echten Spiel testen**, sobald die neue Season laeuft - `Dungeonexit`
+  braucht noch eine echte Taste vom Nutzer.
+* Abwarten, ob sich ueber Reddit/das jetzt oeffentliche Repo (siehe "Veroeffentlichung") Interesse
+  und/oder Wuensche fuer weitere Spielprofile ergeben.
+* Eine zweistufige Trainingsdaten-Aufbereitung (Extraktor-Durchlaeufe auf den
+  `training_log.py`-Rohdaten - Durchlauf 1 prueft Plausibilitaet Rohtext/erkannter Tag, Durchlauf
+  2 korrigiert nur die aussortierten Faelle) fuer kuenftiges Fine-Tuning.
+* Die WhisperAttack/VoiceAttack-Konkurrenzanalyse und die AHK-Positionierung ("Ergaenzung statt
+  Konkurrenz") noch nicht fest in README/CLAUDE.md uebernommen, nur hier notiert (siehe
+  "Wettbewerbsanalyse") - bei Bedarf ergaenzen.
+
+**Ueberlegung (12.09.2026, noch nicht umgesetzt): LoRA-Adapter statt volles Fine-Tuning pro
+Profil.** Da das Tool profilbasiert ist (unterschiedliche Tag-Listen je Spiel), wuerde ein
+vollstaendig fine-getuntes Modell pro Profil bedeuten, dass fuer jedes Spiel eine eigene,
+mehrere GB grosse Modellkopie vorgehalten werden muesste - und ein Profilwechsel muesste dann
+das komplette Modell neu laden statt nur (wie aktuell) die Kontextlaenge anzupassen. Deshalb
+angedachter Ansatz: LoRA- bzw. QLoRA-Adapter (kleine Zusatzgewichts-Datei, wenige MB statt
+mehrere GB, wird zur Laufzeit auf das gemeinsame Basismodell geladen, ohne dieses selbst zu
+veraendern - QLoRA betrifft nur die Trainingsphase selbst, das Ergebnis ist derselbe
+Adapter-Dateityp). llama-server unterstuetzt das Laden eines Adapters ueber `--lora`. Pro
+Spielprofil koennte ein eigener, winziger Adapter trainiert und direkt neben der jeweiligen
+Profil-YAML abgelegt werden; beim Profilwechsel wuerde der Server (analog zum bereits
+bestehenden Neustart bei geaenderter Kontextlaenge) mit dem passenden Adapter neu gestartet -
+vertretbarer Umweg, falls sich dynamisches Nachladen eines noch nicht beim Start geladenen
+Adapters ohne Neustart als nicht zuverlaessig herausstellt. Zweck waere dabei primaer nicht,
+dem Modell Tag-Namen eines bestimmten Spiels beizubringen (das leistet schon der
+System-Prompt), sondern die allgemeine Faehigkeit zu verbessern, Text anhand einer im Prompt
+mitgegebenen Tag-Liste zuverlaessig zu klassifizieren - trainiert auf ueber alle Profile
+hinweg gesammelten Daten, nicht auf ein einzelnes Spiel beschraenkt.
 
 ## Uebertragbare Lektionen aus dem Vorgaengerprojekt
 

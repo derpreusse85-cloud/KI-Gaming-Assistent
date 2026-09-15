@@ -420,10 +420,9 @@ Sprachstil passen und nicht neutral/systemhaft klingen.
 ## Bereits entschieden
 
 * **Eigenständiges Projekt, eigenes Repo** statt Betriebsprofil im Diktier-Tool oder Branch
-  dort. Als Referenz diente anfangs eine lokale Kopie der Diktier-Tool-`CLAUDE.md`
-  (`Diktiertool.md`, seit 12.09.2026 nicht mehr Teil des Git-Repos, siehe dortiger Hinweis in
-  `CLAUDE.md`), dazu diese Konzeptdatei; das Repo bekommt eine eigene, schlanke `CLAUDE.md` mit
-  nur den übertragbaren Lektionen.
+  dort. Als Referenz diente anfangs eine lokale Kopie der Diktier-Tool-`CLAUDE.md` (nicht Teil
+  dieses Git-Repos), dazu diese Konzeptdatei; das Repo bekommt eine eigene, schlanke `CLAUDE.md`
+  mit nur den übertragbaren Lektionen.
 * **Ein Prozess statt Server-Client** (siehe oben) — läuft komplett lokal auf dem Spiele-PC.
 * **Kein Mehrsprachigkeits-Support** — Kommandos werden ausschließlich auf Deutsch gesprochen,
   Whisper wird fest auf Deutsch statt auf automatische Spracherkennung eingestellt.
