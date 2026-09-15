@@ -2,8 +2,10 @@
 
 Format ist in Gaming_assistent.md, Abschnitt "Aktionslisten-Format" festgelegt:
 ein YAML pro Spiel, ein Eintrag pro Tag mit beispiel/taste, dazu schlagwort
-und/oder beschreibung (siehe unten), und optional eine Taste, die waehrend
-der ganzen taste-Sequenz gehalten wird (halte_taste).
+und/oder beschreibung (siehe unten). Eine Taste ueber mehrere Sequenz-Schritte
+hinweg halten (z.B. Strg bei Helldivers-Stratagems) steht seit 14.09.2026
+direkt in der taste-Liste selbst (Eintraege wie "ctrl_down"/"ctrl_up", siehe
+keypress.py), kein eigenes Profilfeld mehr noetig.
 
 `schlagwort` und `beschreibung` haben zwei unabhaengige Aufgaben, die sich
 nicht gegenseitig ausschliessen (11.09.2026, Nutzergespraech):
@@ -75,10 +77,6 @@ class TagEintrag:
     # None = Standardbeschreibung ("nur wenn das Wort ... vorkommt") wird
     # spaeter in prompt.py erzeugt.
     beschreibung: str | None = None
-    # Taste, die waehrend der taste-Sequenz gehalten wird (z.B. "ctrl" bei
-    # Helldivers 2). Kommt normalerweise vom Profil, kann aber pro Tag
-    # ueberschrieben werden.
-    halte_taste: str | None = None
     # Falls gesetzt: dieser Tag hat keine feste taste-Liste, sondern die
     # Tastensequenz wird zur Laufzeit aus Profil.status_datei berechnet
     # (siehe ed_status.py). Ziel-Index einer Feuergruppe (0=A, 1=B, ...).
@@ -121,9 +119,6 @@ def laden(pfad: Path) -> Profil:
         rohdaten = yaml.safe_load(datei) or {}
 
     kontextlaenge = int(rohdaten.pop("kontextlaenge", 4096))
-    # Profilweite Halte-Taste (z.B. "ctrl") - gilt als Vorgabe fuer jeden Tag,
-    # der selbst keine eigene halte_taste angibt.
-    profil_halte_taste = rohdaten.pop("halte_taste", None)
     initial_prompt_schlagwoerter = [str(w) for w in rohdaten.pop("initial_prompt_schlagwoerter", [])]
     status_datei_roh = rohdaten.pop("status_datei", None)
     status_datei = Path(status_datei_roh) if status_datei_roh else None
@@ -160,7 +155,6 @@ def laden(pfad: Path) -> Profil:
             beispiel=str(eintrag["beispiel"]),
             taste=[str(t) for t in eintrag["taste"]],
             beschreibung=beschreibung,
-            halte_taste=eintrag.get("halte_taste", profil_halte_taste),
             feuergruppe_ziel=feuergruppe_ziel,
         )
 

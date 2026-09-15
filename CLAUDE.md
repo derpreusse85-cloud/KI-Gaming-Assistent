@@ -66,6 +66,49 @@ Ereignis auszuloesen; `on_release` feuert nur, wenn der Listener selbst zuvor `o
 hat (verhindert ein verwaistes on_release, falls der Ausgangszustand bereits "gedrueckt" war). Nach
 dem Fix im echten Betrieb bestaetigt: kein Fehlauftreten mehr direkt nach dem Festlegen.
 
+**15.09.2026: Halte-Tasten stehen jetzt inline in der `taste`-Liste statt in einem separaten
+`halte_taste`-Feld.** Ausloeser war ein Gespraech ueber AutoHotkey (Nutzer wollte verstehen, wie
+AHK funktioniert, im Zuge der Frage, ob sich AHK-Skripte ueber unser Tool ausloesen liessen - AHK
+selbst braucht dafuer keine Code-Integration: ein an einen freien Hotkey wie F13 gebundenes
+AHK-Skript reagiert bereits auf einen von uns simulierten Tastendruck genauso wie auf einen
+echten). Dabei fiel AHKs eigene Schreibweise `{Ctrl down}`/`{Ctrl up}` auf, die Halten direkt an
+der Stelle in der Sequenz ausdrueckt statt ueber ein separates Feld - das wollte der Nutzer fuer
+unsere `taste`-Listen uebernehmen, zugleich die bereits vorher zurueckgestellte Idee "Mischung aus
+gehaltenen und sequenziellen Tasten" (siehe Auto-Memory `projekt_zukuenftige_tastenmischung`, jetzt
+umgesetzt).
+
+**Umsetzung:** `keypress.py::ausloesen()` erkennt Eintraege wie `"ctrl_down"`/`"ctrl_up"` jetzt
+direkt in der `taste`-Liste (neue Hilfsfunktion `_halte_marker()`) und funktioniert generisch fuer
+JEDE ueber `_zu_taste()` aufloesbare Taste, nicht nur Strg - auch mehrere gleichzeitig gehalten
+sind moeglich. Das bisherige `halte_taste`-Profilfeld (`profile.py`, `TagEintrag`) ist komplett
+entfernt. **Wichtige Kollisions-Absicherung:** ein Name gilt nur dann als Halte-Marker, wenn er
+sich NICHT schon selbst als eigenstaendige Taste aufloesen laesst - sonst wuerden echte
+pynput-Tastennamen, die zufaellig auf `_down`/`_up` enden (`page_down`, `page_up`,
+`media_volume_down`, `media_volume_up`), faelschlich als Marker interpretiert statt als das, was
+sie sind.
+
+**Migration der bestehenden Profile:** `Helldivers1.yaml` (55 Eintraege) und `Helldivers2.yaml`
+(77 Eintraege) waren die einzigen beiden Nutzer von `halte_taste: "ctrl"` (per `grep` bestaetigt,
+`EliteDangerous.yaml` nutzt es nicht) - beide automatisiert per Skript migriert (Kopfzeile
+entfernt, jede `taste`-Liste um `"ctrl_down"`/`"ctrl_up"` erweitert), nicht von Hand, um bei 132
+Eintraegen keine Tippfehler zu riskieren. **Dabei ein Bug im ersten Skript-Versuch gefunden und
+korrigiert, bevor er in die Dateien uebernommen wurde:** ein Regex mit `\]\s*$` hat durch Pythons
+Greedy-Backtracking in einigen Faellen ungewollt nachfolgende Leerzeilen mitgefressen (`\s`
+matched auch Newlines) - fuehrte zu einem stillen Verlust von ~55 Leerzeilen in Helldivers1.yaml
+(325 -> 268 Zeilen statt der erwarteten ~324). Ueber Leerzeilen-Zaehlung (`grep -c "^$"`) entdeckt,
+beide Dateien per `git restore` zurueckgesetzt und mit einem zeilenbasierten (nicht Regex-auf-
+Volltext-basierten) Ansatz neu migriert. Danach vollstaendig zeilenweise gegen den Git-Originalstand
+verifiziert (0 unerwartete Abweichungen in beiden Dateien - jede Zeile entweder identisch oder
+exakt die erwartete `ctrl_down`/`ctrl_up`-Erweiterung). **Lektion:** `\s*$` in einem Python-Regex
+im MULTILINE-Modus ist gefaehrlich, wenn nachfolgende Leerzeilen erhalten bleiben sollen - `\s`
+schliesst Newlines mit ein, ein einfacher zeilenweiser Ansatz (split/join) ist fuer so eine
+Textmanipulation robuster.
+
+**Noch offen:** nur die Geraete-/Ladelogik und das Profil-Laden sind bisher verifiziert (beide
+Profile laden fehlerfrei, `tests/test_profil_klassifikation.py` sollte weiterlaufen). Ein
+tatsaechlicher Tastendruck-Test im echten Spiel (Helldivers 2) mit der neuen inline-Halte-Syntax
+steht noch aus - siehe "Naechste moegliche Schritte".
+
 * **Modulstruktur** (Paket `gaming_assistant/`, ein einziger Prozess, als Vorlage aus
   `F:\Projekte\KI Diktier Tool` uebernommen, aber ohne WebSocket/Token-Auth/Server-Client-Split):
   `config.py` (globale JSON-Config), `profile.py` (YAML-Profil laden), `prompt.py`
@@ -339,7 +382,10 @@ dem Fix im echten Betrieb bestaetigt: kein Fehlauftreten mehr direkt nach dem Fe
   weitere Spielprofile ergeben (siehe "Veroeffentlichung vorbereitet" oben), dann ggf. Repo auf
   oeffentlich stellen; eine zweistufige Trainingsdaten-Aufbereitung (Extraktor-Durchlaeufe auf den
   `training_log.py`-Rohdaten - Durchlauf 1 prueft Plausibilitaet Rohtext/erkannter Tag,
-  Durchlauf 2 korrigiert nur die aussortierten Faelle) fuer kuenftiges Fine-Tuning.
+  Durchlauf 2 korrigiert nur die aussortierten Faelle) fuer kuenftiges Fine-Tuning; **die
+  migrierten Helldivers-1/2-Profile (inline ctrl_down/ctrl_up statt halte_taste, siehe oben) im
+  echten Spiel nachtesten**, bevor committet wird - bisher nur das Laden verifiziert, nicht der
+  eigentliche Tastendruck mit der neuen Syntax.
 * **Ueberlegung (12.09.2026, noch nicht umgesetzt): LoRA-Adapter statt volles Fine-Tuning pro
   Profil.** Da das Tool profilbasiert ist (unterschiedliche Tag-Listen je Spiel), wuerde ein
   vollstaendig fine-getuntes Modell pro Profil bedeuten, dass fuer jedes Spiel eine eigene,

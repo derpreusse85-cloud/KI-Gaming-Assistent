@@ -157,9 +157,9 @@ def main() -> None:
                         tag_name,
                     )
                     continue
-                keypress.ausloesen(berechnete_taste, eintrag.halte_taste)
+                keypress.ausloesen(berechnete_taste)
             else:
-                keypress.ausloesen(eintrag.taste, eintrag.halte_taste)
+                keypress.ausloesen(eintrag.taste)
         nach_tasten = time.monotonic()
 
         log.info(

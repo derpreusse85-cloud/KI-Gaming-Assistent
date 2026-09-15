@@ -97,8 +97,7 @@ def main() -> None:
                 if eintrag.feuergruppe_ziel is not None:
                     print(f"  -> &&{tag_name}&& (Taste wird zur Laufzeit aus dem Spielzustand berechnet)")
                 else:
-                    halte = f"[{eintrag.halte_taste}]+" if eintrag.halte_taste else ""
-                    print(f"  -> &&{tag_name}&& -> Taste(n): {halte}{eintrag.taste}")
+                    print(f"  -> &&{tag_name}&& -> Taste(n): {eintrag.taste}")
     finally:
         klassifikator.close()
         server.stop()

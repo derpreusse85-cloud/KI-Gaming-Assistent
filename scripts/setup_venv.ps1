@@ -14,7 +14,13 @@ $py   = Join-Path $venv 'Scripts\python.exe'
 if (-not (Test-Path $py)) {
     Write-Host "Erzeuge .venv mit der neuesten installierten Python-3-Version ..."
     py -3 -m venv $venv
-    if ($LASTEXITCODE -ne 0) { throw "venv-Erstellung fehlgeschlagen - ist Python 3 installiert? (py.exe im PATH?)" }
+    if ($LASTEXITCODE -ne 0) {
+        Write-Host ""
+        Write-Host "Python 3 wurde nicht gefunden (py.exe nicht im PATH)." -ForegroundColor Yellow
+        Write-Host "Bitte zuerst Python 3 installieren: https://www.python.org/downloads/"
+        Write-Host "Danach dieses Skript einfach noch einmal ausfuehren."
+        throw "Python 3 nicht gefunden - siehe Hinweis oben."
+    }
 }
 
 & $py -m pip install --upgrade pip --quiet

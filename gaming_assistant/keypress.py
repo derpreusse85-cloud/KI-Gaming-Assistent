@@ -1,10 +1,16 @@
 """Simuliert eine Tastensequenz im aktiven Fenster (dem Spiel) per pynput.
 
-Wichtige Design-Entscheidung (siehe Implementierungsplan): die "taste"-Liste
-im Profil ist IMMER eine Sequenz von Tipp-Vorgaengen (Druecken+Loslassen
-nacheinander), niemals eine gleichzeitig gehaltene Tastenkombination. Bei
-Helldivers 2 wird waehrend der ganzen Sequenz zusaetzlich eine Taste gehalten
-(Standard: Strg) - das ist die optionale "halte_taste".
+Die "taste"-Liste im Profil ist normalerweise eine Sequenz von Tipp-Vorgaengen
+(Druecken+Loslassen nacheinander). Einzelne Eintraege koennen aber auch eine
+Zusatztaste ueber mehrere Schritte hinweg gedrueckt HALTEN statt sie zu
+tippen - Vorbild dafuer ist AutoHotkeys eigene Schreibweise ({Ctrl down} ...
+{Ctrl up}): ein Eintrag wie "ctrl_down" haelt Strg gedrueckt, "ctrl_up" laesst
+es wieder los. Dazwischen liegende normale Eintraege werden ganz normal
+getippt, waehrend die Halte-Taste(n) weiter unten bleiben. Bei Helldivers 2/1
+z.B. steht deshalb in jedem Stratagem-Eintrag "ctrl_down" vor und "ctrl_up"
+nach der Pfeiltasten-Sequenz (bis 14.09.2026 gab es dafuer noch ein separates
+"halte_taste"-Profilfeld - das ist jetzt direkt Teil der taste-Liste selbst,
+kein Sonderfall im Code/Profil mehr noetig).
 
 Python-Hinweis: pynput.keyboard.Controller() ist ein virtuelles Keyboard, das
 Tastendruecke an das Betriebssystem meldet, als kaeme es von echter Hardware.
@@ -42,6 +48,11 @@ _SONDERTASTEN: dict[str, Key] = {
 
 _controller = Controller()
 
+# Endungen, die einen Eintrag als "Taste halten/loslassen" statt "tippen"
+# markieren - siehe _halte_marker().
+_ENDUNG_DRUECKEN = "_down"
+_ENDUNG_LOSLASSEN = "_up"
+
 
 def _zu_taste(name: str) -> Key | KeyCode:
     """Wandelt einen Tasten-Namen aus dem Profil in ein pynput-Tasten-Objekt um."""
@@ -60,20 +71,69 @@ def _zu_taste(name: str) -> Key | KeyCode:
         raise ValueError(f"Unbekannte Taste in Profil: {name!r}") from None
 
 
-def ausloesen(taste_sequenz: list[str], halte_taste: str | None = None) -> None:
-    """Tippt die Tasten der Sequenz nacheinander, waehrend halte_taste gehalten wird.
+def _halte_marker(name: str) -> tuple[str, bool] | None:
+    """Erkennt Eintraege wie "ctrl_down"/"ctrl_up" (Taste halten/loslassen
+    statt tippen). Liefert (Basis-Tastenname, wird_gedrueckt) oder None, wenn
+    es sich um eine ganz normale Taste handelt.
 
-    Ablauf bei z.B. taste=["S","A","S","W","D"], halte_taste="ctrl":
-    Strg druecken (halten) -> S tippen -> A tippen -> ... -> Strg loslassen.
+    Wichtig: ein Name gilt NUR dann als Halte-Marker, wenn er sich nicht
+    schon selbst ueber _zu_taste() als eigenstaendige Taste aufloesen laesst
+    - sonst wuerden echte pynput-Tastennamen, die zufaellig auf "_down"/"_up"
+    enden (z.B. "page_down", "media_volume_up"), faelschlich als Halte-Marker
+    interpretiert statt als das, was sie sind.
     """
-    halte_key = _zu_taste(halte_taste) if halte_taste else None
+    try:
+        _zu_taste(name)
+        return None  # loest sich selbst auf -> ganz normale Taste, kein Marker
+    except ValueError:
+        pass
 
-    if halte_key is not None:
-        _controller.press(halte_key)
-        time.sleep(_PAUSE_S)
+    kleinname = name.lower()
+    if kleinname.endswith(_ENDUNG_DRUECKEN):
+        basis, wird_gedrueckt = kleinname[: -len(_ENDUNG_DRUECKEN)], True
+    elif kleinname.endswith(_ENDUNG_LOSLASSEN):
+        basis, wird_gedrueckt = kleinname[: -len(_ENDUNG_LOSLASSEN)], False
+    else:
+        return None
+
+    try:
+        _zu_taste(basis)
+    except ValueError:
+        return None  # z.B. "media_volume_down" - Praefix "media_volume" ist keine Taste
+    return basis, wird_gedrueckt
+
+
+def ausloesen(taste_sequenz: list[str]) -> None:
+    """Fuehrt eine Tasten-Sequenz aus. Normale Eintraege werden getippt
+    (Druecken+kurze Pause+Loslassen+kurze Pause). Halte-Marker (siehe
+    _halte_marker()) drueecken bzw. lassen stattdessen eine Zusatztaste los,
+    die dann waehrend der folgenden Eintraege gehalten bleibt.
+
+    Beispiel: ["ctrl_down", "down", "left", "ctrl_up"] haelt Strg, waehrend
+    "down" und "left" getippt werden, laesst es danach wieder los.
+    """
+    # Aktuell gehaltene Tasten, Basis-Name -> pynput-Tastenobjekt - falls am
+    # Ende noch welche offen sind (vergessenes "_up" oder Fehler mittendrin),
+    # werden sie im finally-Block sicherheitshalber trotzdem losgelassen.
+    gehalten: dict[str, Key | KeyCode] = {}
 
     try:
         for name in taste_sequenz:
+            marker = _halte_marker(name)
+            if marker is not None:
+                basis, wird_gedrueckt = marker
+                taste = _zu_taste(basis)
+                if wird_gedrueckt:
+                    _controller.press(taste)
+                    gehalten[basis] = taste
+                    log.debug("Taste gehalten: %r", basis)
+                else:
+                    _controller.release(taste)
+                    gehalten.pop(basis, None)
+                    log.debug("Taste losgelassen (Halte-Ende): %r", basis)
+                time.sleep(_PAUSE_S)
+                continue
+
             taste = _zu_taste(name)
             _controller.press(taste)
             log.debug("Taste gedrueckt: %r", name)
@@ -82,10 +142,10 @@ def ausloesen(taste_sequenz: list[str], halte_taste: str | None = None) -> None:
             log.debug("Taste losgelassen: %r", name)
             time.sleep(_PAUSE_S)
     finally:
-        # "finally" stellt sicher, dass die Halte-Taste auch dann losgelassen
-        # wird, wenn beim Tippen ein Fehler auftritt - sonst bliebe z.B. Strg
+        # Sicherheitsnetz: laesst jede noch offen gehaltene Taste los, auch
+        # wenn mittendrin ein Fehler auftrat - sonst bliebe z.B. Strg
         # dauerhaft gedrueckt haengen.
-        if halte_key is not None:
-            _controller.release(halte_key)
+        for taste in gehalten.values():
+            _controller.release(taste)
 
-    log.info("Tasten ausgeloest: %s%s", f"[{halte_taste}]+" if halte_taste else "", taste_sequenz)
+    log.info("Tasten ausgeloest: %s", taste_sequenz)

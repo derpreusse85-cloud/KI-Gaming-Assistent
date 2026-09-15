@@ -62,6 +62,10 @@ Eingabe festlegen, welches genutzt werden soll.
 
 * **Windows 10/11 (64-Bit)** — `pynput`/`pystray`/`whisper-server.exe`/`llama-server.exe` sind
   Windows-spezifisch, keine plattformuebergreifende Unterstuetzung vorgesehen.
+* **Python 3** installiert (https://www.python.org/downloads/) — wird fuer `setup.ps1`/
+  `setup_venv.ps1` gebraucht, um die eigene `.venv` anzulegen. Ist noch kein Python installiert,
+  bricht `setup_venv.ps1` mit genau diesem Link und dem Hinweis ab, das Skript danach einfach
+  erneut auszufuehren.
 * **GPU mit Vulkan-Unterstuetzung**, mindestens **8 GB VRAM insgesamt**. Gemessen auf diesem
   Rechner (12.09.2026): Whisper-Modell ~0,92 GB, llama-server (Gemma 4 E4B, Q4_K_M, Kontext 8192,
   ein Slot) ~3,34 GB — zusammen ~4,26 GB fuers Tool allein, der Rest ist Platz fuers Spiel selbst
@@ -128,7 +132,6 @@ anhand eines einzelnen Tags:
 
 ```yaml
 kontextlaenge: 4096          # Kontextlaenge fuers LLM, siehe unten
-halte_taste: "ctrl"          # optional: Taste, die waehrend jeder Tasten-Sequenz gehalten wird
 
 LANDEGESTELL:
   schlagwort: ["Landegestell", "Fahrgestell"]  # eines davon muss im Befehl woertlich vorkommen
@@ -139,6 +142,11 @@ ORBITALSCHLAG:
   beschreibung: "nur wenn ein Orbitalschlag angefordert wird"  # frei formuliert statt Wortbindung
   beispiel: "Ruf den Orbitalschlag"
   taste: ["ctrl", "o"]
+
+STRATAGEM_BEISPIEL:
+  beschreibung: "nur wenn dieses Beispiel-Stratagem angefordert wird"
+  beispiel: "Ruf das Beispiel-Stratagem"
+  taste: ["ctrl_down", "down", "left", "ctrl_up"]  # Strg bleibt waehrend down+left gehalten
 ```
 
 * **`schlagwort`** und **`beschreibung`** haben zwei unabhaengige Aufgaben — ein Tag braucht
@@ -153,12 +161,14 @@ ORBITALSCHLAG:
   * **`beschreibung`** (optional): ersetzt die wortgebundene Standardbeschreibung durch freien
     Text. Sinnvoll bei Spielen mit wenigen, eindeutigen Kommandos, die keine strikte Wortbindung
     brauchen (siehe `ORBITALSCHLAG` oben) — dann kann `schlagwort` komplett entfallen.
-* **`taste`**: Liste einzelner Tasten, die **nacheinander** getippt werden (kein gleichzeitig
-  gehaltener Hotkey). Sondertasten wie `ctrl`, `shift`, `alt`, `tab`, `up`/`down`/`left`/`right`
-  sind moeglich, sonst einzelne Zeichen.
-* **`halte_taste`** (optional, Profil- oder Tag-Ebene): eine Taste, die waehrend der ganzen
-  `taste`-Sequenz zusaetzlich gehalten wird — bei Helldivers 2 z. B. Strg, weil das Spiel
-  Stratagem-Codes so entgegennimmt.
+* **`taste`**: Liste einzelner Tasten, die **nacheinander** getippt werden. Sondertasten wie
+  `ctrl`, `shift`, `alt`, `tab`, `up`/`down`/`left`/`right` sind moeglich, sonst einzelne Zeichen.
+  Soll eine Taste ueber mehrere Schritte hinweg zusaetzlich GEHALTEN werden (z. B. Strg bei
+  Helldivers-2-Stratagem-Codes), steht das direkt in der Liste: ein Eintrag `"<taste>_down"`
+  drueckt und haelt sie, `"<taste>_up"` laesst sie wieder los — Vorbild ist AutoHotkeys eigene
+  `{Ctrl down}`/`{Ctrl up}`-Schreibweise. Beispiel: `["ctrl_down", "down", "left", "ctrl_up"]`
+  haelt Strg, waehrend `down`+`left` getippt werden. Lassen sich beliebig mischen und sogar
+  mehrere Tasten gleichzeitig halten (`["ctrl_down", "shift_down", "x", "shift_up", "ctrl_up"]`).
 * **`kontextlaenge`**: einmalig ermitteln (Prompt-Tokens des generierten System-Prompts plus
   Marge) und hier eintragen — wird beim Laden des Profils an den llama-server-Subprozess
   durchgereicht. Weicht sie vom bisher aktiven Profil ab, startet llama-server automatisch mit
@@ -185,6 +195,19 @@ ORBITALSCHLAG:
   "Aktionslisten-Format".
 
 Details und Hintergrund zu jedem Feld: `Gaming_assistent.md`, Abschnitt "Aktionslisten-Format".
+
+### Komplexere Aktionen per AutoHotkey
+
+`taste` deckt einfache Tastensequenzen ab, ist aber bewusst kein eigenes Skript-Format (keine
+Schleifen, Bedingungen, Mausteuerung, Pausen pro Schritt). Wer mehr braucht, muss dafuer nichts an
+diesem Tool aendern: [AutoHotkey](https://www.autohotkey.com/) ist eine kostenlose Windows-
+Automatisierungssprache, die selbst Tastatureingaben ueberwacht (Hotkeys) — bindet man ein
+AHK-Skript an eine sonst ungenutzte Taste (z. B. `f13`) und traegt genau diese Taste als `taste`
+in einen Tag ein, loest dieses Tool das Skript per Sprachbefehl aus, als waere die Taste echt
+gedrueckt worden. Keine Code-Integration noetig — dieses Tool und AHK laufen komplett unabhaengig
+voneinander, nur ueber die simulierte Taste verbunden. Damit lassen sich die beiden Staerken
+kombinieren: freie gesprochene Sprache (kann AHK nicht) mit beliebig komplexer Automatisierung
+(baut dieses Tool bewusst nicht nach).
 
 ## Ein bestehendes Profil um Kommandos erweitern
 
