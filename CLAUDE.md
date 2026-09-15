@@ -13,8 +13,8 @@ keine direkten Dateiverweise mehr darauf (12.09.2026 auch dort bereinigt).
 
 ## Stand der Arbeit (fuer den Wiedereinstieg in einer neuen Session)
 
-**Version 1.0 fertig und im echten Spiel bestaetigt (09.09.2026), seither auf v1.4 (13.09.2026,
-Git-Tags vorhanden).** Push-to-Talk -> Whisper -> LLM-Klassifikation -> Tastensequenz
+**Version 1.0 fertig und im echten Spiel bestaetigt (09.09.2026), seither auf v1.5 (15.09.2026,
+Git-Tags + GitHub-Releases vorhanden, siehe `CHANGELOG.md`).** Push-to-Talk -> Whisper -> LLM-Klassifikation -> Tastensequenz
 funktioniert Ende-zu-Ende gegen das laufende Helldivers 2: richtig erkannte Tags loesen korrekt
 die passende Stratagem-Tastenfolge aus, nicht im Profil enthaltene Kommandos loesen (wie
 vorgesehen) keine Aktion aus. v1.1: LM Studio abgeloest (siehe eigener Abschnitt weiter unten).
@@ -23,23 +23,26 @@ ergaenzt, Trainingsdaten-Aufzeichnung per Tray abschaltbar, GitHub-Veroeffentlic
 (siehe eigener Abschnitt "Veroeffentlichung vorbereitet" weiter unten). v1.4: Feuergruppen-
 Direktwahl fuer Elite Dangerous per `Status.json`-Auslesen (neues Modul `ed_status.py`), zwei
 weitere Elite-Dangerous-Kommandos (`Aufhaengungen`, `Moduswechsel`), Debug-Log per Tray-Haken
-umschaltbar inkl. Log-Datei (siehe "Stand der Arbeit" unten fuer Details). **Nach v1.4, noch ohne
-eigenen Versionssprung (14.09.2026):** Feuergruppen-Tasten "n"/"b" zusaetzlich per Profil
-ueberschreibbar gemacht; `LICENSE` nochmal korrigiert (GitHub hatte die Lizenz zunaechst nicht
-automatisch erkannt, siehe "Veroeffentlichung vorbereitet"); Latenz erneut nachgemessen und
-diesmal auch in die README uebernommen (vorher nur hier); erste feste Testinfrastruktur unter
-`tests/` angelegt (Klassifikations-Regressionstest fuer alle Profile automatisch aus den
-`beispiel`-Feldern, interaktives Testwerkzeug ohne feste Faelle, Latenz-Messskript fuer die
-eigene Hardware) - siehe eigener Absatz weiter unten. Ausserdem `prompt.py` um eine echte
-Wiederholungs-Regel ergaenzt (Nutzerfund ueber `tests/profil_interaktiv_testen.py`: "Ladeluke
-dreimal oeffnen" kollabierte zu einem einzigen Tag statt dreimal auszugeben) - betrifft alle
-Profile gleichzeitig, gegen die komplette Testsuite regressionsgetestet (201/201, ein einzelner
-transienter Verbindungsfehler beim ersten Durchlauf per Wiederholung als Fluke bestaetigt). Vom
-Nutzer live bestaetigt, inkl. eines komplexeren, nicht explizit im Prompt vorgesehenen Falls:
-"Oeffne die Frachtluke, dann das Landegestell, und wiederhole alles drei mal" ergab korrekt die
-verschachtelte Sequenz Ladeluke-Fahrgestell-Ladeluke-Fahrgestell-Ladeluke-Fahrgestell (nicht
-etwa Ladeluke x3 gefolgt von Fahrgestell x3) - eine Generalisierungsleistung des Modells, keine
-explizit vorgegebene Regel. Alles bis hierher bereits gepusht.
+umschaltbar inkl. Log-Datei (siehe "Stand der Arbeit" unten fuer Details). **v1.5 (15.09.2026):**
+Feuergruppen-Tasten "n"/"b" zusaetzlich per Profil ueberschreibbar gemacht; `LICENSE` nochmal
+korrigiert (GitHub hatte die Lizenz zunaechst nicht automatisch erkannt, siehe
+"Veroeffentlichung vorbereitet"); Latenz erneut nachgemessen und diesmal auch in die README
+uebernommen (vorher nur hier); erste feste Testinfrastruktur unter `tests/` angelegt
+(Klassifikations-Regressionstest fuer alle Profile automatisch aus den `beispiel`-Feldern,
+interaktives Testwerkzeug ohne feste Faelle, Latenz-Messskript fuer die eigene Hardware) - siehe
+eigener Absatz weiter unten. Ausserdem `prompt.py` um eine echte Wiederholungs-Regel ergaenzt
+(Nutzerfund ueber `tests/profil_interaktiv_testen.py`: "Ladeluke dreimal oeffnen" kollabierte zu
+einem einzigen Tag statt dreimal auszugeben) - betrifft alle Profile gleichzeitig, gegen die
+komplette Testsuite regressionsgetestet (201/201, ein einzelner transienter Verbindungsfehler
+beim ersten Durchlauf per Wiederholung als Fluke bestaetigt). Vom Nutzer live bestaetigt, inkl.
+eines komplexeren, nicht explizit im Prompt vorgesehenen Falls: "Oeffne die Frachtluke, dann das
+Landegestell, und wiederhole alles drei mal" ergab korrekt die verschachtelte Sequenz
+Ladeluke-Fahrgestell-Ladeluke-Fahrgestell-Ladeluke-Fahrgestell (nicht etwa Ladeluke x3 gefolgt
+von Fahrgestell x3) - eine Generalisierungsleistung des Modells, keine explizit vorgegebene
+Regel. Ausserdem in v1.5: Push-to-Talk um Controller-/HOTAS-Knoepfe erweitert (`gamepad.py`,
+siehe eigener Absatz weiter unten) und Halte-Tasten stehen jetzt inline in der `taste`-Liste
+statt in einem separaten `halte_taste`-Feld (siehe eigener Absatz weiter unten). Alles bereits
+gepusht und als GitHub-Release veroeffentlicht.
 
 **Ebenfalls 14.09.2026:** Push-to-Talk um Controller-/HOTAS-Knoepfe als dritte Ausloeser-Art
 erweitert (neues Modul `gamepad.py`, siehe Modulstruktur unten) - Nutzerwunsch, da PTT vorher nur
