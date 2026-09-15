@@ -351,6 +351,19 @@ aus, Strg sauber gehalten und wieder losgelassen.
 * **Tray-Icon von Mikrofon auf Gamepad umgestellt** (`gaming_assistant/icons.py`, 12.09.2026,
   Nutzerwunsch) - passender zum Gaming-Thema. Programmatisch aus PIL-Formen gezeichnet (kein
   Bild geladen): kastenfoermiger Sockel, D-Pad-Kreuz links, zwei Aktionsknoepfe rechts.
+* **`Gaming-Assistent.ico` ergaenzt (15.09.2026, Nutzerwunsch)** - fuers Zuweisen an eine
+  Desktop-Verknuepfung von `Gaming-Assistent.vbs` (VBS-Dateien haben sonst nur ein generisches
+  Windows-Standardicon). Mehrere Aufloesungen (16-256px) direkt aus dem bestehenden
+  `icons.icon("bereit")` erzeugt (per Pillow auf einen 256px-Master hochskaliert, dann als
+  Multi-Groessen-ICO gespeichert) - kein separat gepflegtes Bild, bleibt automatisch im selben
+  Gamepad-Look wie das Tray-Icon. **Lektion:** Pillows `Image.save(..., format="ICO", sizes=...)`
+  generiert die Groessen per Herunterskalieren VOM QUELLBILD - beim ersten Versuch wurde
+  faelschlich von einem bereits auf 16x16 verkleinerten Bild aus gespeichert, wodurch nur die
+  16x16-Groesse im ICO landete (alle anderen `sizes`-Eintraege wurden von Pillow stillschweigend
+  verworfen, da sie groesser als das Quellbild gewesen waeren) - Fix: von einem hochaufgeloesten
+  Master-Bild aus speichern, nicht von einem bereits verkleinerten. Ins Repo aufgenommen (nicht nur
+  lokal), damit auch andere Nutzer es fuer ihre eigene Verknuepfung nutzen koennen; in der README
+  (Abschnitt "Starten") dokumentiert.
 * **Trainingsdaten-Aufzeichnung per Tray abschaltbar** (13.09.2026, Nutzerwunsch, Hinblick auf
   Veroeffentlichung: nicht jeder GitHub-Nutzer soll gezwungen sein, seine gesprochenen Befehle
   mitschreiben zu lassen). Neuer Config-Wert `cfg["training_log"]["aktiv"]` (Default `true`, kein
@@ -733,6 +746,18 @@ Build-Artefakten) gilt als unproblematisch, da nirgends Secrets/Tokens drinstehe
 * Die WhisperAttack/VoiceAttack-Konkurrenzanalyse und die AHK-Positionierung ("Ergaenzung statt
   Konkurrenz") noch nicht fest in README/CLAUDE.md uebernommen, nur hier notiert (siehe
   "Wettbewerbsanalyse") - bei Bedarf ergaenzen.
+* **Gesprochene Wartezeiten zwischen Aktionen (`&&sleep:N&&`-Idee, 15.09.2026):** reine
+  Machbarkeits-Recherche im Anschluss ans AHK-Gespraech, NICHT umgesetzt (kein Code geaendert,
+  keine Repo-Datei betroffen) - volle Details inkl. der funktionierenden Prompt-Formulierung in
+  Auto-Memory `projekt_sleep_tag_machbarkeit`. Kurzfassung: funktioniert ueberraschend zuverlaessig
+  (einfache/mehrfache Wartezeiten, Einheiten-Umrechnung "eine Minute" -> 60, Wiederholung samt
+  Wartezeit auch fuer ganze Mehrfach-Aktions-Sequenzen - aber nur mit einem expliziten
+  Prompt-Beispiel dafuer), mit dokumentierten Grenzen (vage Zeitangaben brauchen einen
+  `sleep:0`-Fallback statt erfundener Zahlen; hoehere Wiederholungszahlen ab ca. 5x werden
+  unzuverlaessig; leichter Hang zu ueberfluessigen Sleep-Tags an Block-Grenzen; `max_tokens: 40`
+  ist fuer laengere Ketten zu knapp). Bei echter Umsetzung noetig: `parser.py`/`prompt.py`/
+  `__main__.py` aendern, `max_tokens` anheben, Nebenlaeufigkeit waehrend eines mehrsekuendigen
+  Sleeps klaeren (neuer PTT-Befehl waehrend des Wartens?).
 
 **Ueberlegung (12.09.2026, noch nicht umgesetzt): LoRA-Adapter statt volles Fine-Tuning pro
 Profil.** Da das Tool profilbasiert ist (unterschiedliche Tag-Listen je Spiel), wuerde ein
