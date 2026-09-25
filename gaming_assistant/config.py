@@ -77,7 +77,16 @@ DEFAULTS: dict[str, Any] = {
         "startup_timeout_s": 180,
         # 0.0 = Greedy Decoding, siehe Gaming_assistent.md "Sampling-Parameter".
         "temperature": 0.0,
-        "max_tokens": 40,
+        # War 40 vor den Sleep-Tags (&&sleep:N&&, siehe CLAUDE.md): reichte
+        # fuer normale Mehrfachbefehle, war aber fuer laengere Sequenzen mit
+        # mehreren Wiederholungen und Wartezeiten dazwischen zu knapp (Antwort
+        # wuerde bei max_tokens abgeschnitten, finish_reason "length" - parser.py
+        # verwirft eine so abgeschnittene Antwort komplett). Real gemessen
+        # (17.09.2026, echter llama-server, EliteDangerous-Profil): eine
+        # 3-fach-Wiederholung zweier Aktionen samt Sleeps braucht ~44
+        # Completion-Tokens, eine 4er-Kette aus Aktion+Sleep-Paaren ~38 - 120
+        # laesst also weiterhin reichlich Marge nach oben.
+        "max_tokens": 120,
         "timeout_s": 30,
     },
     "log_level": "INFO",

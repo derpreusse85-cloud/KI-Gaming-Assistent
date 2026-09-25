@@ -53,6 +53,19 @@ ZUSATZFAELLE: dict[str, list[tuple[str, list[str]]]] = {
         ("Gib mir Feuergruppe A", ["FeuergruppeA"]),
         ("Fahrgestell ausfahren und Ladeluke oeffnen", ["Fahrgestell", "Ladeluke"]),
         ("Ladeluke oeffnen und Fahrgestell ausfahren", ["Ladeluke", "Fahrgestell"]),
+        # Sleep-Tags (17.09.2026, siehe CLAUDE.md "Verschachtelte Kommandos
+        # mit Pausenzeiten" und Auto-Memory projekt_sleep_tag_machbarkeit) -
+        # gegen den echten llama-server verifiziert, siehe Session vom 17.09.
+        ("Fahr das Fahrgestell aus, warte 5 Sekunden, dann mach die Ladeluke auf",
+         ["Fahrgestell", "sleep:5", "Ladeluke"]),
+        ("Warte eine Minute und dann mach das Fahrgestell startklar",
+         ["sleep:60", "Fahrgestell"]),
+        ("Warte kurz, dann fahr die Hardpoints aus", ["sleep:0", "Aufhaengungen"]),
+        ("Fahr das Fahrgestell aus und mach die Ladeluke auf, wiederhole das dreimal mit 2 Sekunden Abstand",
+         ["Fahrgestell", "Ladeluke", "sleep:2", "Fahrgestell", "Ladeluke", "sleep:2", "Fahrgestell", "Ladeluke"]),
+        # Ueberfluessiger Sleep ganz am Ende der Sequenz muss herausgefiltert
+        # werden (parser.py) - erwartet daher OHNE den sleep-Tag.
+        ("Mach die Ladeluke auf und warte danach 5 Sekunden", ["Ladeluke"]),
     ],
     "Diablo4": [
         ("Ich brauche einen Heiltrank", ["Trank"]),

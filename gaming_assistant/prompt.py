@@ -69,6 +69,34 @@ def system_prompt_bauen(profil: Profil) -> str:
         "passenden Tag genau so oft hintereinander aus, zum Beispiel: "
         '"mach A dreimal" -> &&AKTION_A&& &&AKTION_A&& &&AKTION_A&&.'
     )
+    # Sleep-Tag-Regeln (17.09.2026, siehe CLAUDE.md "Verschachtelte Kommandos
+    # mit Pausenzeiten") - Formulierung aus der vorherigen Machbarkeits-
+    # Recherche uebernommen (Auto-Memory projekt_sleep_tag_machbarkeit):
+    # kurze Basisregel, expliziter sleep:0-Fallback fuer vage Zeitangaben (ohne
+    # den faengt das Modell an, Zahlen zu erfinden oder die gesamte Aeusserung
+    # zu &&NONE&& zu kippen) und eine explizite Sequenz-Wiederholungs-Regel mit
+    # Gegenbeispielen (ohne die vertauscht das Modell die Reihenfolge).
+    zeilen.append(
+        "Wird zwischen zwei Aktionen eine Wartezeit genannt (z.B. \"warte 5 Sekunden\", "
+        "\"warte eine Minute\"), gib dafuer an genau dieser Stelle in der Sequenz den Tag "
+        "&&sleep:N&& aus, wobei N die Wartezeit in ganzen Sekunden ist (Minuten in Sekunden "
+        "umrechnen), zum Beispiel: \"mach A, warte 5 Sekunden, dann B\" -> "
+        "&&AKTION_A&& &&sleep:5&& &&AKTION_B&&."
+    )
+    zeilen.append(
+        "Ist die genannte Wartezeit vage oder unklar (z.B. \"kurz\", \"ein bisschen\", "
+        "\"ewig\"), gib stattdessen &&sleep:0&& aus statt eine Zahl zu erfinden - die "
+        "uebrigen Tags der Aeusserung bleiben davon unberuehrt und sind trotzdem gueltig."
+    )
+    zeilen.append(
+        "Wird eine ganze Abfolge mehrerer Aktionen mit Wartezeit dazwischen wiederholt "
+        "(z.B. \"mach A und B, wiederhole alles dreimal mit 2 Sekunden Abstand\"), gib die "
+        "Aktionen und die Wartezeit paarweise abwechselnd fuer jede Wiederholung aus, zum "
+        "Beispiel: &&AKTION_A&& &&AKTION_B&& &&sleep:2&& &&AKTION_A&& &&AKTION_B&& "
+        "&&sleep:2&& &&AKTION_A&& &&AKTION_B&&. Gib NIEMALS zuerst alle Aktionen und "
+        "danach erst alle Wartezeiten aus, und wiederhole NIEMALS erst eine Aktion "
+        "komplett fuer sich alleine, bevor die andere folgt."
+    )
     zeilen.append(
         f"Passt keine Aeusserung eindeutig zu einem der oben genannten Tags, "
         f"antworte ausschliesslich mit &&{NONE_TAG}&&. Rate niemals einen Tag, "

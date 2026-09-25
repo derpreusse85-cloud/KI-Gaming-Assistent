@@ -47,11 +47,25 @@ class RingHandler(logging.Handler):
             return list(self.zeilen)
 
 
+class _KompaktFilter(logging.Filter):
+    """Laesst fuer die Konsole nur die kompakte Anzeige-Log-Zeile (Logger-Name
+    "main.anzeige", siehe __main__.py) sowie Warnungen/Fehler durch - gedacht
+    fuers Demo-Video, wo im Terminal nur Transkription/Tag/Tasten sichtbar sein
+    sollen statt aller Debug-Details. Ringpuffer/Log-Fenster und Log-Datei
+    bleiben davon unberuehrt (der Filter haengt nur am Konsolen-Handler)."""
+
+    def filter(self, record: logging.LogRecord) -> bool:
+        return record.name == "main.anzeige" or record.levelno >= logging.WARNING
+
+
 _ring: RingHandler | None = None
 
 
-def setup(level: str = "INFO", ring_groesse: int = 500) -> RingHandler:
-    """Konfiguriert das Root-Logging mit Ringpuffer und Konsolenausgabe."""
+def setup(level: str = "INFO", ring_groesse: int = 500, kompakt: bool = False) -> RingHandler:
+    """Konfiguriert das Root-Logging mit Ringpuffer und Konsolenausgabe.
+
+    ``kompakt=True`` filtert nur die Konsolenausgabe (siehe _KompaktFilter) -
+    fuer den "--kompakt"-Kommandozeilenschalter, siehe __main__.py."""
     global _ring
     if _ring is not None:
         return _ring
@@ -69,6 +83,8 @@ def setup(level: str = "INFO", ring_groesse: int = 500) -> RingHandler:
     if sys.stderr is not None:
         konsole = logging.StreamHandler()
         konsole.setFormatter(formatter)
+        if kompakt:
+            konsole.addFilter(_KompaktFilter())
         root.addHandler(konsole)
 
     # Log-Datei zusaetzlich zum Ringpuffer/Konsole - praktisch fuer die

@@ -25,8 +25,9 @@ Fuer alle, die nur schnell den aktuellen Stand brauchen, bevor sie tiefer einste
   bestaetigt.
 * **Vier Spielprofile:** Helldivers 2 (im echten Spiel bestaetigt, auch mit der neuen
   Halte-Tasten-Syntax), Helldivers 1 (noch nicht im echten Spiel getestet, Nutzer besitzt es
-  nicht), Elite Dangerous (Feuergruppen-Tags live bestaetigt, 13 weitere Kommandos noch nicht),
-  Diablo 4 (neu, noch nicht im echten Spiel getestet).
+  nicht), Elite Dangerous (alle 20 Kommandos mit Taste im echten Spiel bestaetigt, drei tastenlose
+  Kommandos per interaktivem Testwerkzeug bestaetigt), Diablo 4 (neu, noch nicht im echten Spiel
+  getestet).
 * **Push-to-Talk** geht ueber Tastatur, Maus oder seit v1.5 auch Controller-/HOTAS-Knoepfe.
   Halte-Tasten (z.B. Strg bei Helldivers-Stratagems) stehen seit v1.5 direkt inline in der
   `taste`-Liste (`"ctrl_down"`/`"ctrl_up"`), kein separates Profilfeld mehr.
@@ -168,6 +169,49 @@ Textmanipulation robuster. Ende-zu-Ende im echten Spiel (Helldivers 2) mit der n
 bestaetigt: `Resupply` loeste korrekt `['ctrl_down', 'down', 'down', 'up', 'right', 'ctrl_up']`
 aus, Strg sauber gehalten und wieder losgelassen.
 
+## Verschachtelte Kommandos mit Pausenzeiten (Sleep-Tags)
+
+**Umgesetzt (17.09.2026)**, nachdem die reine Machbarkeit dafuer bereits am 15.09.2026 recherchiert
+war (siehe Auto-Memory `projekt_sleep_tag_machbarkeit`, vollstaendige Testergebnisse/Grenzen dort).
+Erlaubt gesprochene Wartezeiten zwischen zwei Aktionen (z.B. "oeffne die Ladeluke, warte 5
+Sekunden, dann fahr das Fahrgestell aus"), profilunabhaengig fuer alle vier Spielprofile
+gleichzeitig (Nutzerentscheidung, da die Prompt-Erweiterung ohnehin profilweit in `prompt.py`
+liegt).
+
+**Umsetzung:** neuer Pseudo-Tag `&&sleep:N&&` (N = ganze Sekunden), kein echter Aktions-Tag aus
+einem Profil. `prompt.py::system_prompt_bauen()` ergaenzt dafuer drei zusaetzliche Regeln (Basis-
+Regel mit Einheiten-Umrechnung, `sleep:0`-Fallback fuer vage Zeitangaben wie "kurz"/"ewig", explizite
+Sequenz-Wiederholungs-Regel mit Gegenbeispielen) - Formulierung 1:1 aus der Machbarkeits-Recherche
+uebernommen. `parser.py` erkennt `sleep:N`-Marker per eigenem Muster (`sleep_dauer()`) als gueltig,
+unabhaengig von der Tag-Liste des jeweiligen Profils, und entfernt einen ueberfluessigen Sleep ganz
+am Ende der Sequenz (bekannter LLM-Fehler an Block-/Sequenzgrenzen, siehe Machbarkeits-Recherche).
+`__main__.py::verarbeiten()` fuehrt einen erkannten Sleep als echtes `time.sleep(N)` aus statt eines
+Tastendrucks, mit einer Sicherheitsobergrenze `parser.MAX_SLEEP_SEKUNDEN = 30` (kappt eine falsch
+verstandene oder absurd lange Zeitangabe, statt die Pipeline sehr lange zu blockieren).
+
+**Nebenlaeufigkeits-Frage geklaert (Nutzerentscheidung 17.09.2026):** ein waehrend eines laufenden
+Sleeps per PTT neu aufgenommener Befehl soll warten, nicht parallel dazwischenfunken. Dafuer wurde
+`__main__.py` umgebaut: statt vorher einen neuen Thread PRO Sprachbefehl zu starten
+(`threading.Thread(target=verarbeiten, ...).start()` bei jedem `bei_ptt_loslassen()`), landet ein
+Befehl jetzt in einer `queue.Queue`, die von einem einzigen dauerhaften Worker-Thread strikt
+nacheinander abgearbeitet wird - ein neuer Befehl reiht sich hinten ein und ist erst dran, wenn der
+aktuelle (inkl. aller seiner Sleeps) fertig ist.
+
+**`max_tokens` angehoben (40 -> 120):** war fuer laengere Sleep-Ketten (mehrere Wiederholungen +
+mehrere Wartezeiten) zu knapp, eine so abgeschnittene Antwort (`finish_reason == "length"`) wird von
+`parser.py` komplett verworfen. Real gemessen (echter llama-server, EliteDangerous-Profil): eine
+3-fach-Wiederholung zweier Aktionen samt Sleeps braucht ~44 Completion-Tokens, eine 4er-Kette aus
+Aktion+Sleep-Paaren ~38 - 120 laesst weiterhin reichlich Marge.
+
+**Getestet:** gegen den echten llama-server per Textklassifikation (EliteDangerous-Profil,
+5 Faelle: einfache Wartezeit, Minuten-Umrechnung, vage Zeitangabe -> `sleep:0`, 3-fach-Sequenz-
+Wiederholung mit Wartezeit, ueberfluessiger Trailing-Sleep korrekt entfernt - alle 5/5 korrekt),
+dauerhaft in `tests/test_profil_klassifikation.py::ZUSATZFAELLE["EliteDangerous"]` uebernommen.
+Voller Regressionstest ueber alle Profile danach weiterhin 220/220 korrekt (kein
+Qualitaetsverlust durch die zusaetzlichen Prompt-Regeln bei den bestehenden Tags). **Noch NICHT im
+echten Spiel getestet** - nur Textklassifikation, kein echter Tastendruck/Sleep-Ablauf im laufenden
+Spiel verifiziert.
+
 ## Spielprofile
 
 * **`profiles/Helldivers2.yaml`** (bis 13.09.2026 `Helldivers2_Stratagems.yaml`, umbenannt) ist
@@ -201,11 +245,21 @@ aus, Strg sauber gehalten und wieder losgelassen.
   siehe naechster Punkt) korrekt. **Drei Kommandos (`Schildzellenbank`, `ECM`,
   `Dueppel`) haben im Spiel standardmaessig keine Taste** - `taste: []` mit erklaerendem
   Kommentar, muss von jedem Nutzer selbst im Spiel belegt werden, kein vorlaeufiger/fehlender
-  Wert wie bei den anderen Profilen. `kontextlaenge: 4096` ist ein grober Startwert, nicht einzeln
-  nachgemessen (bei 23 Tags/3.350 Zeichen System-Prompt aber weiterhin mit Marge). Die acht
+  Wert wie bei den anderen Profilen. **`kontextlaenge: 4096` real nachgemessen (17.09.2026)**
+  ueber die tatsaechliche `usage.prompt_tokens`-Angabe von llama-server (genauer als eine
+  Zeichen-Schaetzung): der System-Prompt braucht ~1146-1181 Tokens (inkl. laengerer
+  Mehrfachbefehle mit Wiederholung), zusammen mit der Completion (`max_tokens: 40`) also ~1220
+  Tokens tatsaechlicher Bedarf - der Wert 4096 hat damit bereits gut das 3,3-fache an Marge nach
+  oben (Platz fuer kuenftig ergaenzte Kommandos), bewusst unveraendert gelassen statt
+  runterzusetzen. Die acht
   Feuergruppen-Tags sind mittlerweile **im echten Spiel bestaetigt**
-  (siehe naechster Absatz); die uebrigen 13 Kommandos noch nicht - Nutzer besitzt Elite Dangerous
-  aber selbst und kann das im Gegensatz zu Helldivers 1 grundsaetzlich noch verifizieren.
+  (siehe naechster Absatz); die uebrigen 15 Kommandos ebenfalls **im echten Spiel bestaetigt**
+  (17.09.2026, alle korrekt) - damit sind alle 20 Kommandos mit Taste live im Spiel verifiziert.
+  Die drei tastenlosen Kommandos (`Schildzellenbank`/`ECM`/`Dueppel`) sind ueber das interaktive
+  Testwerkzeug (`tests/profil_interaktiv_testen.py`, reiner Trockentest ohne echten
+  Tastendruck - siehe Abschnitt "Testinfrastruktur") als korrekt erkannt bestaetigt, warten aber
+  weiterhin auf eine vom Nutzer selbst im Spiel zu vergebende Taste, bevor sie auch als
+  ausgeloester Tastendruck live getestet werden koennen.
   **Erkanntes Muster (13.09.2026, Nutzerbeobachtung): englische Begriffe in Klammern in der
   `beschreibung` verbessern die Erkennung englischer Paraphrasen, ohne die deutsche Erkennung zu
   gefaehrden.** Aufgefallen beim `Aufhaengungen`-Tag: die Beschreibung nennt "(Hardpoints/Waffen)",
@@ -301,6 +355,25 @@ aus, Strg sauber gehalten und wieder losgelassen.
   220/220) korrekt, keine Regression durch das neue Profil. **Noch NICHT im echten Spiel
   getestet** - `taste`-Werte stammen vom Nutzer selbst (kein Wiki-Abtippen wie bei Helldivers 1),
   gelten aber wie ueberall in diesem Projekt als vorlaeufig, bis im Spiel bestaetigt.
+  **Praxis-Fund (19.09.2026, Nutzerbeobachtung beim Spielen): Diablo 4 ist fuer dieses Tool nicht
+  gut geeignet.** Jedes Mal, wenn waehrend des Spielens die LLM-Klassifikation laeuft, brechen im
+  Spiel selbst spuerbar die FPS ein - beide Prozesse (Spiel + llama-server) konkurrieren um
+  dieselbe GPU und kommen sich dabei gegenseitig in die Quere. Bei Helldivers 2 und Elite
+  Dangerous ist das bisher nicht in dieser Form aufgefallen (vermutlich weniger GPU-hungrig oder
+  mehr Leistungsreserve) - **kein Diablo-4-spezifischer Bug, sondern eine grundsaetzliche Grenze
+  der Architektur** (ein lokales LLM auf derselben GPU wie das Spiel, siehe auch "Latenz &
+  Performance" zum verwandten Verdraengungs-Phaenomen), die bei besonders GPU-intensiven Spielen
+  staerker durchschlaegt. **Grafikeinstellungen generell runterdrehen gilt als praxisfremd**
+  (Nutzereinschaetzung 19.09.2026) - kaum jemand will wegen eines Sprachsteuerungs-Tools die
+  eigene Grafikqualitaet reduzieren. **Upscaling dagegen ist die einzige wirklich praktikable
+  Massnahme** (senkt die GPU-Last des Spiels, ohne die wahrgenommene Bildqualitaet so stark zu
+  opfern wie ein pauschales Runterdrehen aller Einstellungen) - FSR herstellerunabhaengig, DLSS
+  als Alternative bei einer Nvidia-Grafikkarte. **Noch nicht getestet** - FSR kann der Nutzer
+  selbst pruefen, **DLSS kann der Nutzer NICHT selbst testen (keine Nvidia-Grafikkarte)**, bleibt
+  also nur eine theoretisch genannte Option ohne eigene Verifikationsmoeglichkeit. Bis dahin
+  keine weitere Massnahme geplant (kein sinnvoller Fix ohne zusaetzliche Hardware wie eine zweite
+  GPU oder ein kleineres/leistungsschwaecheres Modell) - beim Empfehlen dieses Tools fuer ein
+  bestimmtes Spiel kuenftig mitdenken.
 
 ## Design-Entscheidungen zum Profil-/Tag-Format
 
@@ -729,10 +802,13 @@ Build-Artefakten) gilt als unproblematisch, da nirgends Secrets/Tokens drinstehe
 
 ## Naechste moegliche Schritte
 
-* Offene Punkte am Elite-Dangerous-Profil: drei fehlende Tasten fuer
-  `Schildzellenbank`/`ECM`/`Dueppel` selbst im Spiel belegen und eintragen, `kontextlaenge` einmal
-  real nachmessen statt Schaetzwert, Test der uebrigen 15 Kommandos im echten Spiel (die acht
-  Feuergruppen-Tags sind bereits live bestaetigt).
+* Elite-Dangerous-Profil: alle 20 Kommandos mit Taste sind im echten Spiel bestaetigt
+  (17.09.2026), `kontextlaenge` ebenfalls real nachgemessen (siehe "Spielprofile"). Kein
+  offener Punkt mehr fuer dieses Projekt - die drei tastenlosen Kommandos
+  (`Schildzellenbank`/`ECM`/`Dueppel`) sind bewusst so gelassen (`taste: []`, siehe
+  "Spielprofile"): das sind Kommandos ohne Standardbelegung im Spiel, jeder Nutzer muss sie sich
+  selbst individuell zuweisen - kein projektseitiges To-do, sondern ein dauerhafter Hinweis fuer
+  jeden, der das Profil nutzt.
 * Die migrierten Helldivers-1/2-Profile sind im echten Spiel (Helldivers 2) bereits mit der neuen
   `ctrl_down`/`ctrl_up`-Syntax bestaetigt; **Helldivers 1 selbst bleibt weiterhin ungetestet**
   (Nutzer besitzt das Spiel nicht).
@@ -746,18 +822,11 @@ Build-Artefakten) gilt als unproblematisch, da nirgends Secrets/Tokens drinstehe
 * Die WhisperAttack/VoiceAttack-Konkurrenzanalyse und die AHK-Positionierung ("Ergaenzung statt
   Konkurrenz") noch nicht fest in README/CLAUDE.md uebernommen, nur hier notiert (siehe
   "Wettbewerbsanalyse") - bei Bedarf ergaenzen.
-* **Gesprochene Wartezeiten zwischen Aktionen (`&&sleep:N&&`-Idee, 15.09.2026):** reine
-  Machbarkeits-Recherche im Anschluss ans AHK-Gespraech, NICHT umgesetzt (kein Code geaendert,
-  keine Repo-Datei betroffen) - volle Details inkl. der funktionierenden Prompt-Formulierung in
-  Auto-Memory `projekt_sleep_tag_machbarkeit`. Kurzfassung: funktioniert ueberraschend zuverlaessig
-  (einfache/mehrfache Wartezeiten, Einheiten-Umrechnung "eine Minute" -> 60, Wiederholung samt
-  Wartezeit auch fuer ganze Mehrfach-Aktions-Sequenzen - aber nur mit einem expliziten
-  Prompt-Beispiel dafuer), mit dokumentierten Grenzen (vage Zeitangaben brauchen einen
-  `sleep:0`-Fallback statt erfundener Zahlen; hoehere Wiederholungszahlen ab ca. 5x werden
-  unzuverlaessig; leichter Hang zu ueberfluessigen Sleep-Tags an Block-Grenzen; `max_tokens: 40`
-  ist fuer laengere Ketten zu knapp). Bei echter Umsetzung noetig: `parser.py`/`prompt.py`/
-  `__main__.py` aendern, `max_tokens` anheben, Nebenlaeufigkeit waehrend eines mehrsekuendigen
-  Sleeps klaeren (neuer PTT-Befehl waehrend des Wartens?).
+* Gesprochene Wartezeiten zwischen Aktionen sind mittlerweile umgesetzt - siehe Abschnitt
+  "Verschachtelte Kommandos mit Pausenzeiten (Sleep-Tags)" weiter unten. Verbleibend offen: im
+  echten Spiel noch nicht getestet (nur gegen den echten llama-server per Textklassifikation, siehe
+  dort), realistische Obergrenze fuer Wiederholungszahlen nicht ermittelt (bekannt nur: 3x
+  zuverlaessig, 5x laut frueherer Machbarkeitsrecherche nicht mehr).
 
 **Ueberlegung (12.09.2026, noch nicht umgesetzt): LoRA-Adapter statt volles Fine-Tuning pro
 Profil.** Da das Tool profilbasiert ist (unterschiedliche Tag-Listen je Spiel), wuerde ein

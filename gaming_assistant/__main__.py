@@ -19,7 +19,9 @@ Funktion noch fehlte.
 
 from __future__ import annotations
 
+import argparse
 import logging
+import queue
 import threading
 import time
 
@@ -43,11 +45,27 @@ from gaming_assistant import (
 )
 
 log = logging.getLogger("main")
+# Eigener Logger nur fuer die kompakte Anzeige (Transkription/Tag/Tasten) -
+# siehe logbuf.py::_KompaktFilter und "--kompakt" weiter unten. Laeuft immer
+# mit, unabhaengig vom Schalter - der Filter entscheidet nur, ob die normale
+# Konsole zusaetzlich noch alles andere zeigt oder nicht.
+anzeige_log = logging.getLogger("main.anzeige")
 
 
 def main() -> None:
+    cli_argumente = argparse.ArgumentParser(
+        description="Gaming-Sprachassistent: Push-to-Talk -> Whisper -> LLM-Klassifikation -> Tastensequenz"
+    )
+    cli_argumente.add_argument(
+        "--kompakt", action="store_true",
+        help="Zeigt in der Konsole nur Transkription, erkannten Tag und ausgeloeste Tasten "
+             "an, ohne die uebrigen Debug-/Info-Zeilen - gedacht fuers Demo-Video. Die Log-"
+             "Datei und das Tray-Log-Fenster bleiben davon unberuehrt (weiterhin vollstaendig).",
+    )
+    args = cli_argumente.parse_args()
+
     cfg = config.load()
-    logbuf.setup(cfg.get("log_level", "INFO"))
+    logbuf.setup(cfg.get("log_level", "INFO"), kompakt=args.kompakt)
     log.info("Gaming-Assistent startet ...")
 
     profil_verzeichnis = config.profil_verzeichnis(cfg)
@@ -117,8 +135,11 @@ def main() -> None:
     laufzeit: dict = {}
 
     def verarbeiten(pcm: bytes) -> None:
-        """Laeuft in einem eigenen Thread (siehe bei_ptt_loslassen), damit der
-        Push-to-talk-Listener waehrend Whisper/LLM nicht blockiert.
+        """Laeuft im eigenen Verarbeitungs-Worker-Thread (siehe
+        verarbeitungs_worker weiter unten), damit der Push-to-talk-Listener
+        waehrend Whisper/LLM/Sleep-Tags nicht blockiert. Mehrere Befehle
+        werden dabei strikt nacheinander abgearbeitet, nie parallel - wichtig
+        bei einem laufenden &&sleep:N&&, siehe verarbeitungs_worker.
 
         Misst nebenbei, wie lange jeder Pipeline-Schritt braucht (Latenz-Frage
         vom 10.09.2026) - time.monotonic() liefert eine Uhr, die nur fuer
@@ -138,7 +159,29 @@ def main() -> None:
         nach_llm = time.monotonic()
         tags = parser.tags_extrahieren(antwort, profil_obj.bekannte_tags(), finish_reason)
 
+        # Sammelt (Tag, tatsaechlich ausgeloeste Tasten) fuer die kompakte
+        # Anzeige unten - bei Feuergruppen ist das erst nach der Berechnung
+        # gegen den aktuellen Spielzustand bekannt, nicht schon vorher aus dem
+        # Profil (dort steht wegen der Laufzeitberechnung nur "taste: []").
+        ausgeloeste_tasten: list[tuple[str, list[str]]] = []
+
         for tag_name in tags:
+            sleep_sekunden = parser.sleep_dauer(tag_name)
+            if sleep_sekunden is not None:
+                # Sicherheitsobergrenze statt der vom LLM genannten Zahl
+                # blind zu vertrauen - siehe parser.py, MAX_SLEEP_SEKUNDEN.
+                if sleep_sekunden > parser.MAX_SLEEP_SEKUNDEN:
+                    log.warning(
+                        "Wartezeit %ds auf Obergrenze %ds gekappt",
+                        sleep_sekunden, parser.MAX_SLEEP_SEKUNDEN,
+                    )
+                    sleep_sekunden = parser.MAX_SLEEP_SEKUNDEN
+                time.sleep(sleep_sekunden)
+                # Zeigt die tatsaechlich gewartete (ggf. gekappte) Sekundenzahl
+                # an, nicht den urspruenglichen tag_name - relevant fuer die
+                # Anzeige-Zeile unten, falls die Obergrenze gegriffen hat.
+                ausgeloeste_tasten.append((f"sleep:{sleep_sekunden}", []))
+                continue
             eintrag = profil_obj.tags[tag_name]
             if eintrag.feuergruppe_ziel is not None:
                 # Keine feste Tastenliste - wird aus dem aktuellen Spielzustand
@@ -158,8 +201,10 @@ def main() -> None:
                     )
                     continue
                 keypress.ausloesen(berechnete_taste)
+                ausgeloeste_tasten.append((tag_name, berechnete_taste))
             else:
                 keypress.ausloesen(eintrag.taste)
+                ausgeloeste_tasten.append((tag_name, eintrag.taste))
         nach_tasten = time.monotonic()
 
         log.info(
@@ -167,6 +212,31 @@ def main() -> None:
             nach_stt - start, nach_llm - nach_stt, nach_tasten - nach_llm, nach_tasten - start,
             roh_text, tags,
         )
+
+        # Kompakte Anzeige-Zeile (siehe --kompakt weiter oben) - unabhaengig
+        # vom Schalter immer geloggt, der Konsolen-Filter in logbuf.py
+        # entscheidet, ob sie zusaetzlich zu allem anderen oder allein
+        # angezeigt wird. Latenz mit dabei (Nutzerwunsch: gut fuers
+        # Demo-Video) - sowohl bis zum ersten Tastendruck (STT+LLM, Zeitpunkt
+        # nach_llm) als auch gesamt (inkl. aller Tastendruecke, Zeitpunkt
+        # nach_tasten), dieselben Werte wie in der "Latenz: ..."-Zeile oben,
+        # nur kompakter zusammengefasst.
+        latenz_bis_taste = nach_llm - start
+        gesamt_latenz = nach_tasten - start
+        if ausgeloeste_tasten:
+            anzeige_log.info(
+                "Gehoert: %r -> %s (gesamt: %.2fs)", roh_text,
+                " | ".join(
+                    f"(wartet {t2}s)" if (t2 := parser.sleep_dauer(n)) is not None
+                    else f"{n}: ({latenz_bis_taste:.2f}s) {t}"
+                    for n, t in ausgeloeste_tasten
+                ),
+                gesamt_latenz,
+            )
+        else:
+            anzeige_log.info(
+                "Gehoert: %r -> kein Tag erkannt (NONE) (%.2fs)", roh_text, latenz_bis_taste,
+            )
 
         # Ungefiltertes Live-Logging fuer die spaetere Trainingsdaten-Aufbereitung
         # (siehe Gaming_assistent.md) - passiert unabhaengig davon, ob ein Tag
@@ -180,6 +250,25 @@ def main() -> None:
     # als neuen Ausloeser ab, statt (wie erwartet) die Aufnahme zu beenden.
     zustand["aufnahme_laeuft"] = False
 
+    # Verarbeitung laeuft strikt nacheinander ueber diese Queue statt (wie vor
+    # den Sleep-Tags) in einem eigenen Thread PRO Befehl: waehrend eines
+    # &&sleep:N&&-Tags (siehe oben) darf ein waehrenddessen per PTT
+    # aufgenommener neuer Befehl nicht parallel dazwischenfunken (z.B. gleich-
+    # zeitige Tastendruecke), sondern soll erst dran sein, wenn der aktuelle
+    # Befehl (inkl. seiner Wartezeiten) fertig ist - Nutzerentscheidung
+    # 17.09.2026 (siehe CLAUDE.md, "Verschachtelte Kommandos mit Pausenzeiten").
+    verarbeitungs_queue: queue.Queue = queue.Queue()
+
+    def verarbeitungs_worker() -> None:
+        while True:
+            pcm = verarbeitungs_queue.get()
+            try:
+                verarbeiten(pcm)
+            except Exception:
+                log.exception("Fehler bei der Verarbeitung eines Sprachbefehls")
+
+    threading.Thread(target=verarbeitungs_worker, daemon=True).start()
+
     def bei_ptt_druecken() -> None:
         zustand["aufnahme_laeuft"] = True
         laufzeit["tray"].zustand_setzen("aufnahme")
@@ -189,7 +278,7 @@ def main() -> None:
         pcm = audio_capture.stop()
         zustand["aufnahme_laeuft"] = False
         laufzeit["tray"].zustand_setzen("bereit")
-        threading.Thread(target=verarbeiten, args=(pcm,), daemon=True).start()
+        verarbeitungs_queue.put(pcm)
 
     ptt_listener = ptt.PTTListener(cfg["ptt"], bei_ptt_druecken, bei_ptt_loslassen)
     laufzeit["ptt_listener"] = ptt_listener
