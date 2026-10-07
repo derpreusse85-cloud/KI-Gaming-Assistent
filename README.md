@@ -35,7 +35,8 @@ Kommandos. E2B ist kleiner (ca. 3 statt 5 GB) und etwa 1,6-mal so schnell bei de
 Klassifikation. In einer Testreihe (`tests/eskalationstest.py`, 175 Faelle ueber vier Profile,
 nur Textklassifikation ohne Spracherkennung) erreichten beide am Ende dasselbe Ergebnis
 (172/175 bis 173/175), E2B bei einem Teil der Faelle erst nach einer Verfeinerung des
-System-Prompts. Im echten Spiel ist E2B noch nicht ausgiebig getestet. Umschalten geht
+System-Prompts. Im echten Betrieb haben der Wechsel im Tray und eine Handvoll Sprachbefehle mit E2B funktioniert,
+ausgiebig getestet ist E2B im echten Spiel aber noch nicht. Umschalten geht
 jederzeit im Tray-Menue unter **Sprachmodell** (siehe "Bedienung").
 
 ## Einrichtung (einmalig nach dem Klonen)

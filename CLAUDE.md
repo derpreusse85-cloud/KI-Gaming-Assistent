@@ -33,8 +33,8 @@ Fuer alle, die nur schnell den aktuellen Stand brauchen, bevor sie tiefer einste
   `taste`-Liste (`"ctrl_down"`/`"ctrl_up"`), kein separates Profilfeld mehr.
 * **Repo ist oeffentlich** seit 15.09.2026 (siehe Abschnitt "Veroeffentlichung").
 * **Zwei Sprachmodelle (07.10.2026, noch unveroeffentlicht):** Gemma 4 E4B (Standard) und das
-  kleinere, schnellere E2B, im Tray umschaltbar - siehe Abschnitt "Modellvergleich". Noch nicht
-  im echten Spiel getestet.
+  kleinere, schnellere E2B, im Tray umschaltbar - siehe Abschnitt "Modellvergleich". Wechsel im Tray und
+  eine Handvoll Sprachbefehle mit E2B vom Nutzer bestaetigt (07.10.2026), ausgiebiger Test noch offen.
 * **Offene Punkte:** siehe Abschnitt "Naechste moegliche Schritte" ganz unten (u.a. Halte-Tasten-
   Migration und Diablo-4-Profil noch im echten Spiel nachtesten, drei Elite-Dangerous-Kommandos
   ohne Taste).
@@ -506,7 +506,8 @@ Anlass: Nutzer legte das kleinere `gemma-4-E2B-it-Q4_K_M.gguf` (ca. 3,4 GB lokal
 aktuell ca. 3,1 GB - die lokale Datei vom 12.08. ist nicht mehr identisch mit dem Upstream-Stand)
 in `gemma-4-E2B-it-GGUF/` und wollte wissen, ob es das groessere E4B ersetzen koennte.
 **Wichtig fuer die Einordnung: reine Textklassifikation gegen den echten llama-server, noch nicht
-im echten Spiel getestet** (Whisper-Verhoerer nur als getippte Beispiele nachgestellt).
+im echten Spiel getestet** (Whisper-Verhoerer nur als getippte Beispiele nachgestellt). Ein kurzer
+Praxistest des Nutzers folgte spaeter, siehe unten.
 
 **Testwerkzeuge (neu, dauerhaft in `tests/`):** `tests/modell_vergleich.py` (die automatisch aus
 den `beispiel`-Feldern + `ZUSATZFAELLE` abgeleiteten Regressionsfaelle, mehrere Modelle
@@ -567,8 +568,10 @@ Liste), `llama_proc.LlamaServer.modell_wechseln()` tauscht die Modelldatei und s
 Startfehler wird das alte Modell wieder gestartet und der Fehler weitergereicht),
 `__main__.py::modell_wechseln()` sperrt den Wechsel waehrend einer Aufnahme, speichert das Modell
 in `cfg["llm"]["model"]` und `config.json`. Gemessener Wechsel E4B -> E2B ~2,3s. Ein Befehl, der
-genau waehrend des Neustarts gesprochen wird, geht verloren. Nur Menueaufbau und Simulation des
-Klicks sowie der Server-Neustart waren getestet, nicht ein echter Klick im laufenden Tray.
+genau waehrend des Neustarts gesprochen wird, geht verloren. Zunaechst nur Menueaufbau, simulierter
+Klick und Server-Neustart getestet; **danach vom Nutzer im echten Tray bestaetigt (07.10.2026):**
+der Wechsel zu E2B funktioniert, und eine Handvoll Sprachbefehle lief mit E2B im Betrieb korrekt
+(kurzer Test, kein ausgiebiger).
 **Download:** `scripts/download_llm.ps1 -Modell E4B|E2B|Beide` (Standard E4B, `setup.ps1`
 unveraendert); `.gitignore` auf `*-GGUF/*.gguf` verallgemeinert, damit die E2B-Datei nicht
 versehentlich committet wird. `gemma-4-E2B-it-GGUF/README.md` analog zu E4B.
@@ -882,7 +885,7 @@ Build-Artefakten) gilt als unproblematisch, da nirgends Secrets/Tokens drinstehe
 
 ## Naechste moegliche Schritte
 
-* **E2B im echten Spiel testen** (Tray -> Sprachmodell), insbesondere bei GPU-lastigen Spielen wie
+* **E2B ausgiebiger im echten Spiel testen** (Wechsel und erste Befehle sind bestaetigt), insbesondere bei GPU-lastigen Spielen wie
   Diablo 4 (FPS-Einbruch beim Klassifizieren?), und VRAM-Bedarf von E2B messen. Danach
   entscheiden, ob E2B als Standard oder nur als Option taugt. Dann ggf. Release (v1.6) mit
   CHANGELOG-Eintrag "Unveroeffentlicht" abschliessen.
