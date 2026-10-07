@@ -4,6 +4,36 @@ Alle nennenswerten Aenderungen dieses Projekts werden hier zusammengefasst. Ausf
 Hintergruende und Design-Entscheidungen stehen in `CLAUDE.md`; das vollstaendige Konzept in
 `Gaming_assistent.md`.
 
+## [Unveroeffentlicht]
+
+### Hinzugefuegt
+
+- **Zweites Sprachmodell zur Wahl: Gemma 4 E2B** (kleiner, ca. 3 GB, etwa 1,6-mal so schnell bei
+  der Klassifikation) neben dem bisherigen E4B. Neues Tray-Untermenue **"Sprachmodell"**: alle
+  `.gguf`-Dateien in `*-GGUF/`-Ordnern erscheinen automatisch, beim Wechsel startet `llama-server`
+  mit dem neuen Modell neu und die Auswahl wird in `config.json` gespeichert. Schlaegt der Start
+  fehl, bleibt das bisherige Modell aktiv.
+- `scripts/download_llm.ps1` hat einen Parameter `-Modell` (`E4B` = Standard, `E2B`, `Beide`).
+- Neue Testwerkzeuge: `tests/eskalationstest.py` (Klassifikation mit stufenweise schwerer
+  werdenden Aufgaben, inkl. frischer Kontrollfaelle gegen Ueberanpassung) und
+  `tests/modell_vergleich.py` (mehrere Modelle nacheinander gegen dieselben Faelle, mit Latenz).
+- Sleep-Tags fuer gesprochene Wartezeiten zwischen Aktionen (`&&sleep:N&&`), siehe `CLAUDE.md`.
+
+### Geaendert
+
+- **System-Prompt um vier Praezisierungsregeln ergaenzt** (verneinte Aktionen nicht ausloesen,
+  exakte Anzahl bei Wiederholungen ohne erfundene Wartezeiten, Beispiele dazu, bei teilweise
+  passenden Tags den genauesten waehlen). Schliesst fuer E2B die Luecke zu E4B und verbessert auch
+  E4B; im bestehenden Regressionstest keine Verschlechterung.
+- `.gitignore` schliesst jetzt alle `*-GGUF/*.gguf`-Dateien aus (vorher nur E4B).
+
+### Behoben
+
+- Gibt das Modell statt des Tag-Namens eine abweichende Schreibweise (`&&Patriot-Exoanzug&&` statt
+  `&&Patriot_Exoanzug&&`) oder ein eindeutiges Schlagwort des Tags aus (`&&Gatling-Orbitalsperrfeuer&&`),
+  wird das jetzt dem richtigen Tag zugeordnet statt die ganze Antwort zu verwerfen. Mehrdeutiges
+  wird weiterhin verworfen.
+
 ## [1.5] - 2026-09-15
 
 ### Hinzugefuegt

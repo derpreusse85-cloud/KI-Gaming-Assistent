@@ -5,6 +5,10 @@ Rechner braucht: Spracherkennung (STT) und Klassifikation (LLM) getrennt,
 plus Cold-Start (der erste Aufruf nach dem Start, spuerbar langsamer wegen
 des einmaligen Verarbeitens des langen System-Prompts).
 
+Hinweis: Die in README.md/CLAUDE.md genannten Werte wurden OHNE nebenbei
+laufendes Spiel gemessen. Bei laufendem Spiel haengt die Latenz vom GPU-Leistungsbedarf
+des jeweiligen Spiels ab, dort sind deshalb keine zuverlaessigen Messungen moeglich.
+
 Nutzt echte, synthetisierte Sprache statt Stille/Rauschen als Testaudio -
 wichtig, weil Whisper bei digitaler Stille gelegentlich halluziniert und
 dadurch teure Wiederholungsdurchlaeufe ausloest, was die Zeitmessung

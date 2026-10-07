@@ -32,6 +32,9 @@ Fuer alle, die nur schnell den aktuellen Stand brauchen, bevor sie tiefer einste
   Halte-Tasten (z.B. Strg bei Helldivers-Stratagems) stehen seit v1.5 direkt inline in der
   `taste`-Liste (`"ctrl_down"`/`"ctrl_up"`), kein separates Profilfeld mehr.
 * **Repo ist oeffentlich** seit 15.09.2026 (siehe Abschnitt "Veroeffentlichung").
+* **Zwei Sprachmodelle (07.10.2026, noch unveroeffentlicht):** Gemma 4 E4B (Standard) und das
+  kleinere, schnellere E2B, im Tray umschaltbar - siehe Abschnitt "Modellvergleich". Noch nicht
+  im echten Spiel getestet.
 * **Offene Punkte:** siehe Abschnitt "Naechste moegliche Schritte" ganz unten (u.a. Halte-Tasten-
   Migration und Diablo-4-Profil noch im echten Spiel nachtesten, drei Elite-Dangerous-Kommandos
   ohne Taste).
@@ -83,7 +86,7 @@ dokumentiert.
 
 Paket `gaming_assistant/`, ein einziger Prozess, als Vorlage aus `F:\Projekte\KI Diktier Tool`
 uebernommen, aber ohne WebSocket/Token-Auth/Server-Client-Split:
-`config.py` (globale JSON-Config), `profile.py` (YAML-Profil laden), `prompt.py`
+`config.py` (globale JSON-Config, inkl. `modelle_finden()` fuers Tray-Modellmenue), `profile.py` (YAML-Profil laden), `prompt.py`
 (System-Prompt + Whisper-initial_prompt aus dem Profil generieren), `parser.py`
 (Tag-Extraktion, verwirft bei Zweifel statt zu raten), `keypress.py` (Tastensequenz per
 pynput), `whisper_proc.py` + `stt.py` (whisper-server-Subprozess + Einzel-Transkription, kein
@@ -91,7 +94,7 @@ rollierendes Fenster), `llama_proc.py` + `llm.py` (llama-server-Subprozess, star
 Kontextlaengen-Aenderung automatisch neu, + Klassifikations-Request), `ptt.py` +
 `ptt_dialog.py` + `audio.py` + `gamepad.py` (Push-to-Talk inkl.
 Tray-Dialog zum Aendern des Ausloesers zur Laufzeit, Mikrofon-Aufnahme, Controller-/HOTAS-Knoepfe
-per HID), `tray.py` + `icons.py` + `logbuf.py` (Tray-Icon mit Profil- und PTT-Auswahl-Menue,
+per HID), `tray.py` + `icons.py` + `logbuf.py` (Tray-Icon mit Profil-, Sprachmodell- und PTT-Auswahl-Menue,
 Log-Fenster), `training_log.py` (ungefiltertes JSONL-Live-Logging fuer spaeteres Fine-Tuning),
 `ed_status.py` (liest die von Elite Dangerous selbst geschriebene `Status.json`, nur fuer die
 Feuergruppen-Tags dieses einen Profils gebraucht), `__main__.py` (verdrahtet alles). Start ueber
@@ -497,11 +500,88 @@ Spiel verifiziert.
   seit 15.09.2026 bei fehlendem Python 3 einen Link zur Installation statt nur einer technischen
   Fehlermeldung (siehe auch Abschnitt "Veroeffentlichung").
 
+## Modellvergleich Gemma 4 E2B vs. E4B (07.10.2026)
+
+Anlass: Nutzer legte das kleinere `gemma-4-E2B-it-Q4_K_M.gguf` (ca. 3,4 GB lokal, bei Hugging Face
+aktuell ca. 3,1 GB - die lokale Datei vom 12.08. ist nicht mehr identisch mit dem Upstream-Stand)
+in `gemma-4-E2B-it-GGUF/` und wollte wissen, ob es das groessere E4B ersetzen koennte.
+**Wichtig fuer die Einordnung: reine Textklassifikation gegen den echten llama-server, noch nicht
+im echten Spiel getestet** (Whisper-Verhoerer nur als getippte Beispiele nachgestellt).
+
+**Testwerkzeuge (neu, dauerhaft in `tests/`):** `tests/modell_vergleich.py` (die automatisch aus
+den `beispiel`-Feldern + `ZUSATZFAELLE` abgeleiteten Regressionsfaelle, mehrere Modelle
+nacheinander, mit Latenz) und `tests/eskalationstest.py` - eine Nachbildung der urspruenglichen
+Testreihe vom 08.-09.09.2026, deren Skripte damals Wegwerf-Skripte im Scratchpad waren und nicht
+mehr existierten: Stufe 1 (8 Grundtags), 2 (13 Waffen), 3 (alle Helldivers-2-Tags mit
+Satzrahmen), 4 (Konfliktcluster, Whisper-Verhoerer wie "Rufe autocennen", Mehrfachbefehle),
+5 (Elite Dangerous: Mehrfachbefehle, Wiederholungen, Sleeps), 6 (frische Faelle fuer drei Profile,
+NACH der Prompt-Optimierung neu geschrieben und nie zum Abstimmen benutzt - zeigt Ueberanpassung
+auf). Beide Skripte nehmen beliebig viele Modelldateien als Argument.
+
+**Ergebnisse, Ausgangslage (alter Prompt):** Regressionssatz E4B 199/199, E2B 198/199 (einziger
+Fehler "Spring in den Hyperraum" -> Boost statt Frameshiftdrive, vom Nutzer bewusst nicht
+angegangen: im Spiel werden ohnehin die Spielbegriffe benutzt). Eskalationstest: Stufen 1-3 bei
+beiden praktisch gleich, E2B faellt ab Stufe 4/5 zurueck (Gatling/Gatlinggeschuetz-Verwechslung,
+Wiederholungen mit einem Tag zu viel, erfundene `sleep:0`, Negation "Nicht die Railgun" loest
+trotzdem aus). Latenz (ohne laufendes Spiel gemessen) E4B ~0,12s, E2B ~0,075s (Median pro Anfrage inkl. HTTP), Cold-Start
+~1,1-1,4s vs. ~0,7s.
+
+**Prompt-Optimierung (`prompt.py`, vier neue kurze Regeln, wirkt auf ALLE Profile):**
+(1) verneinte/ausgeschlossene Aktionen nicht ausgeben, nur beschriebene Sachen -> NONE,
+(2) exakte Anzahl bei Wiederholungen und keine erfundenen sleep-Tags, (3) drei Beispiele dazu
+(Wiederholung ohne Wartezeit, "zweimal", "nicht A, sondern B"), (4) bei teilweise passenden Tags
+den genauesten waehlen. Schrittweise getestet (V1 Negation+Anzahl 147/151, V2 nur Beispiele
+146/151, V3 zusammen 146/151, V4 alle vier 148/151 fuer E2B, E4B 146 -> 149/151) - E4B profitiert
+ebenfalls, die Regeln sind also kein E2B-Spezialfall. Prompt wird dadurch ca. 1000 Zeichen laenger
+(Helldivers 2 jetzt ~13000 Zeichen, Elite Dangerous ~5900), `kontextlaenge` (8192/4096) reicht
+weiterhin; nur in Zeichen, nicht in Tokens nachgemessen. Regressionstest nach der Aenderung
+unveraendert (E4B 199/199, E2B 198/199).
+
+**Parser-Korrektur (`parser.py`, `profile.py::schlagwort_zuordnung()`):** zwei Faelle, in denen
+das Modell den Befehl richtig erkannte, aber den Tag falsch SCHRIEB, wurden bisher komplett
+verworfen ("Unbekannter Marker"): E4B gab `&&Patriot-Exoanzug&&` (Bindestrich statt Unterstrich),
+E2B `&&Gatling-Orbitalsperrfeuer&&` (das Schlagwort statt des Tag-Namens, frueher auch
+`&&Moerser&&`). Jetzt wird ein unbekannter Marker auf einen bekannten Tag abgebildet, wenn er nach
+Normalisierung (klein, `-`/Leerzeichen -> `_`) GENAU einem Tag-Namen entspricht oder genau ein
+Schlagwort genau EINES Tags ist (Schlagwoerter, die bei mehreren Tags vorkommen, werden fuer die
+Zuordnung weggelassen). Alles andere bleibt bei "verwerfen" - das Grundprinzip "bei Zweifel nichts
+ausloesen" gilt weiter. `tags_extrahieren()` hat dafuer den optionalen Parameter `schlagwoerter`;
+alle Aufrufstellen (`__main__.py` und die Tests) reichen `profil.schlagwort_zuordnung()` durch.
+
+**Entscheidung des Nutzers zu den Testfaellen:** Beschreibungssaetze mit einem Schlagwort darin
+("Der Bot da vorne hat eine Railgun", "klares Kommando", "hat einen Speer", "Boss droppt einen
+Trank", "Fahrgestell klemmt") sind aus den Tests entfernt - durch Push-to-Talk erreichen nur
+gezielte Befehle das LLM, keine normale Konversation; die Faelle sagten nichts ueber die
+Alltagstauglichkeit aus. Die Negationsregel bleibt trotzdem sinnvoll (Versprecher wie "doch nicht
+X, sondern Y"). **Endstand:** Eskalationstest (175 Faelle) E4B 173/175, E2B 173/175; verbleibend
+nur "Antrieb voll aufdrehen" -> Boost (statt AntriebMAX, bei beiden, als Erwartung diskutabel) und
+"Spring jetzt" (E4B leer, E2B Boost). Fazit: im Test gleichauf, E2B ~1,6-mal so schnell und
+~2 GB kleiner. **Empfehlung bleibt E4B als Standard** (sicherer bei Mehrfachbefehlen/Sleeps und
+vielen aehnlichen Tags); ob E2B im echten Spiel gleich gut traegt und ob es den FPS-Einbruch bei
+GPU-lastigen Spielen (siehe Diablo-4-Fund unter "Spielprofile") abmildert, ist **noch offen**.
+VRAM-Bedarf von E2B ebenfalls noch nicht gemessen.
+
+**Tray-Auswahl "Sprachmodell" (Nutzerwunsch):** `config.modelle_finden()` sammelt alle `.gguf`-Dateien
+in `*-GGUF/`-Ordnern im Projektordner (ohne `mmproj*`; das konfigurierte Modell steht immer in der
+Liste), `llama_proc.LlamaServer.modell_wechseln()` tauscht die Modelldatei und startet neu (bei
+Startfehler wird das alte Modell wieder gestartet und der Fehler weitergereicht),
+`__main__.py::modell_wechseln()` sperrt den Wechsel waehrend einer Aufnahme, speichert das Modell
+in `cfg["llm"]["model"]` und `config.json`. Gemessener Wechsel E4B -> E2B ~2,3s. Ein Befehl, der
+genau waehrend des Neustarts gesprochen wird, geht verloren. Nur Menueaufbau und Simulation des
+Klicks sowie der Server-Neustart waren getestet, nicht ein echter Klick im laufenden Tray.
+**Download:** `scripts/download_llm.ps1 -Modell E4B|E2B|Beide` (Standard E4B, `setup.ps1`
+unveraendert); `.gitignore` auf `*-GGUF/*.gguf` verallgemeinert, damit die E2B-Datei nicht
+versehentlich committet wird. `gemma-4-E2B-it-GGUF/README.md` analog zu E4B.
+
 ## Latenz & Performance
 
 * **Bekannter, nicht als kritisch eingestufter Fund:** bei rein digitaler Stille (Testfall, kein
   echtes Mikrofon-Rauschen) halluziniert Whisper gelegentlich Text statt leer zu bleiben. Im
   echten Spielbetrieb bisher nicht als Problem aufgefallen.
+* **Alle Latenzmessungen in diesem Dokument, in der README und im CHANGELOG entstanden OHNE
+  nebenbei laufendes Spiel** (Nutzerhinweis 07.10.2026). Bei laufendem Spiel haengt die Latenz vom
+  GPU-Leistungsbedarf des jeweiligen Spiels ab (siehe Diablo-4-Fund unter "Spielprofile"), deshalb
+  sind dort keine zuverlaessigen Testmessungen moeglich.
 * **Latenz gemessen und dokumentiert (10.09.2026, nach der LM-Studio-Abloesung am 12.09.2026 mit
   llama-server neu verifiziert), siehe `__main__.py::verarbeiten()`** (schreibt pro Befehl eine
   Log-Zeile `Latenz: STT ...s, LLM ...s, ...`): realer End-zu-Ende-Durchlauf mit echter Sprache
@@ -802,6 +882,10 @@ Build-Artefakten) gilt als unproblematisch, da nirgends Secrets/Tokens drinstehe
 
 ## Naechste moegliche Schritte
 
+* **E2B im echten Spiel testen** (Tray -> Sprachmodell), insbesondere bei GPU-lastigen Spielen wie
+  Diablo 4 (FPS-Einbruch beim Klassifizieren?), und VRAM-Bedarf von E2B messen. Danach
+  entscheiden, ob E2B als Standard oder nur als Option taugt. Dann ggf. Release (v1.6) mit
+  CHANGELOG-Eintrag "Unveroeffentlicht" abschliessen.
 * Elite-Dangerous-Profil: alle 20 Kommandos mit Taste sind im echten Spiel bestaetigt
   (17.09.2026), `kontextlaenge` ebenfalls real nachgemessen (siehe "Spielprofile"). Kein
   offener Punkt mehr fuer dieses Projekt - die drei tastenlosen Kommandos

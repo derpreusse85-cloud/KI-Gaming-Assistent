@@ -18,16 +18,25 @@ Das vollstaendige Konzept samt aller Design-Entscheidungen und der Testreihe ste
 Das Tool ist in erster Linie als Komfort-Werkzeug gedacht, nicht speziell fuer den kompetitiven
 Bereich optimiert. Ob es sich trotzdem dafuer eignet, muss jeder fuer sich selbst entscheiden.
 
-**Code und System-Prompt sind aktuell fest auf Gemma 4 E4B ausgelegt**, nicht auf ein LLM
-im Allgemeinen. Das betrifft u. a. das `--reasoning off`-Flag beim Start von `llama-server`
+**Code und System-Prompt sind auf Gemma 4 ausgelegt** (Standard: **E4B**, optional das kleinere,
+schnellere **E2B**, siehe unten), nicht auf ein LLM im Allgemeinen. Das betrifft u. a. das `--reasoning off`-Flag beim Start von `llama-server`
 (schaltet den bei diesem Modell/Chat-Template automatisch aktiven Denkmodus ab, siehe
 `CLAUDE.md`, Abschnitt "LM Studio abgeloest"), `temperature: 0.0` fuer deterministische
 Klassifikation sowie der Aufbau und Wortlaut des System-Prompts selbst (`prompt.py`), der gegen
 genau dieses Modell getestet wurde. Ein anderes Modell einzusetzen ist nicht als reiner
-Config-Tausch gedacht - es muesste erst gegen die eigene Testreihe (siehe
+Config-Tausch gedacht (gemeint sind Modelle ausserhalb der Gemma-4-Familie) - es muesste erst gegen die eigene Testreihe (siehe
 `Gaming_assistent.md`, Abschnitt "Testreihe") neu verifiziert werden, ob Denkmodus,
 Instruction-Following bei Mehrfachbefehlen und Formattreue beim `&&TAG&&`-Marker weiterhin
 zuverlaessig funktionieren.
+
+**Zwei Modelle zur Wahl (E4B oder E2B).** E4B ist der Standard und die sicherere Wahl, besonders
+bei Mehrfachbefehlen mit Wiederholungen und Wartezeiten sowie bei vielen aehnlich klingenden
+Kommandos. E2B ist kleiner (ca. 3 statt 5 GB) und etwa 1,6-mal so schnell bei der
+Klassifikation. In einer Testreihe (`tests/eskalationstest.py`, 175 Faelle ueber vier Profile,
+nur Textklassifikation ohne Spracherkennung) erreichten beide am Ende dasselbe Ergebnis
+(172/175 bis 173/175), E2B bei einem Teil der Faelle erst nach einer Verfeinerung des
+System-Prompts. Im echten Spiel ist E2B noch nicht ausgiebig getestet. Umschalten geht
+jederzeit im Tray-Menue unter **Sprachmodell** (siehe "Bedienung").
 
 ## Einrichtung (einmalig nach dem Klonen)
 
@@ -44,9 +53,21 @@ Python-Umgebung - dafuer einmalig ausfuehren:
 ```
 
 Das ruft nacheinander `setup_venv.ps1` (Python-venv + Abhaengigkeiten), `download_llm.ps1`
-(Gemma-4-E4B-Modell, ca. 5 GB) und `fetch_models.ps1` (Whisper-Modell, ca. 0,5 GB) auf. Jedes
+(Gemma-4-E4B-Modell, ca. 5 GB; das kleinere E2B optional zusaetzlich, siehe unten) und `fetch_models.ps1` (Whisper-Modell, ca. 0,5 GB) auf. Jedes
 der drei Skripte laesst sich bei Bedarf auch einzeln erneut ausfuehren (z.B. um nur ein Modell
 neu herunterzuladen).
+
+**Optional: das kleinere Modell E2B** (ca. 3 GB) zusaetzlich herunterladen, um es im Tray-Menue
+auswaehlen zu koennen:
+
+```powershell
+.\scripts\download_llm.ps1 -Modell E2B      # nur E2B
+.\scripts\download_llm.ps1 -Modell Beide    # E4B und E2B
+```
+
+Ohne Parameter laedt das Skript wie bisher nur E4B. Die Download-Skripte sind
+PowerShell-Skripte; erlaubt die Windows-Ausfuehrungsrichtlinie sie nicht, hilft z. B.
+`powershell -ExecutionPolicy Bypass -File .\scripts\download_llm.ps1 -Modell E2B`.
 
 **Nur im Ausnahmefall noetig** (Reparatur, falls `vendor/` beschaedigt ist, oder eine andere
 Plattform/Architektur gebraucht wird): `scripts\fetch_llama.ps1` laedt `llama-server.exe` neu,
@@ -68,7 +89,8 @@ Eingabe festlegen, welches genutzt werden soll.
   erneut auszufuehren.
 * **GPU mit Vulkan-Unterstuetzung**, mindestens **8 GB VRAM insgesamt**. Gemessen auf diesem
   Rechner (12.09.2026): Whisper-Modell ~0,92 GB, llama-server (Gemma 4 E4B, Q4_K_M, Kontext 8192,
-  ein Slot) ~3,34 GB — zusammen ~4,26 GB fuers Tool allein, der Rest ist Platz fuers Spiel selbst
+  ein Slot) ~3,34 GB — zusammen ~4,26 GB fuers Tool allein (E2B nicht gemessen, braucht aber
+  naturgemaess weniger), der Rest ist Platz fuers Spiel selbst
   (Helldivers 2 & Co. brauchen ebenfalls mehrere GB VRAM). Ohne GPU laeuft Whisper
   zwar auch auf der CPU, ist dann aber laut einer frueheren Messreihe fuer
   Push-to-Talk-Latenz zu langsam (z. B. `medium` 8,17 s statt <0,2 s je Aeusserung) — GPU ist
@@ -110,7 +132,12 @@ llama-server-basierte Pipeline neu verifiziert): ein normaler Befehl braucht End
 (Spracherkennung + Klassifikation) **~0,24s** (Spracherkennung ~0,18s, Klassifikation ~0,065s
 dank Prompt-Caching). Nur der allererste Befehl nach Programmstart oder einem Profilwechsel
 dauert laenger (**~1,45s**, einmaliges Verarbeiten des langen System-Prompts) - danach bleibt es
-durchgehend schnell. Auf anderer Hardware koennen diese Werte abweichen - mit
+durchgehend schnell. Mit dem kleineren Modell E2B ist die Klassifikation nochmal schneller
+(in der Testreihe Median ~0,08s statt ~0,12s pro Anfrage, inkl. HTTP-Overhead, Cold-Start
+~0,7s statt ~1,1-1,4s). **Alle diese Messungen wurden ohne nebenbei laufendes Spiel gemacht.** Bei laufendem
+Spiel kann die Latenz je nach Leistungsbedarf der GPU des jeweiligen Spiels unterschiedlich
+ausfallen, deshalb sind dort keine zuverlaessigen Testmessungen moeglich. Auf anderer Hardware
+koennen die Werte ebenfalls abweichen - mit
 `tests/latenz_messen.py` (siehe unten) laesst sich das auf dem eigenen Rechner nachmessen.
 
 **Tray-Menue:**
@@ -118,6 +145,13 @@ durchgehend schnell. Auf anderer Hardware koennen diese Werte abweichen - mit
 * **Status/Log anzeigen** — Fenster mit den letzten Logzeilen, inkl. der Latenz je Befehl
   (`Latenz: STT ...s, LLM ...s, ...`).
 * **Profil** — aktives Spielprofil wechseln (Liste aller YAML-Dateien in `profiles/`).
+* **Sprachmodell** — zwischen den gefundenen Modellen wechseln (E4B/E2B, jede `.gguf`-Datei in
+  einem Ordner `*-GGUF/` im Projektordner erscheint hier automatisch; die `mmproj`-Dateien
+  zaehlen nicht). Beim Wechsel wird `llama-server` automatisch mit dem neuen Modell neu
+  gestartet (dauert wenige Sekunden, das Tray-Icon zeigt solange "startet"); ein Befehl,
+  der genau in dieser Zeit gesprochen wird, geht verloren. Schlaegt der Start fehl (Datei
+  fehlt/defekt), bleibt das bisherige Modell aktiv. Waehrend einer laufenden Aufnahme
+  ist der Wechsel gesperrt.
 * **Push-to-talk festlegen ...** — neuen PTT-Ausloeser (Tastatur, Maustaste 4/5/Mitte oder ein
   Knopf an einem angeschlossenen Controller/HOTAS) durch einmaliges Druecken festlegen.
 * **Trainingsdaten aufzeichnen** — an-/abschaltbarer Haken, siehe Abschnitt "Trainingsdaten"
@@ -127,7 +161,7 @@ durchgehend schnell. Auf anderer Hardware koennen diese Werte abweichen - mit
   wirkt sofort, ohne Neustart, sichtbar unter "Status/Log anzeigen".
 * **Beenden**
 
-Die Einstellungen (aktives Profil, PTT-Taste, Trainingsdaten-Aufzeichnung) werden automatisch in
+Die Einstellungen (aktives Profil, Sprachmodell, PTT-Taste, Trainingsdaten-Aufzeichnung) werden automatisch in
 `config.json` gespeichert und beim naechsten Start wiederhergestellt.
 
 ## Ein neues Spielprofil anlegen
@@ -237,9 +271,19 @@ angefasst werden. Zwei Dinge trotzdem im Blick behalten:
     eigenen Hardware nach, da die in diesem README genannten Werte auf einem bestimmten
     Testrechner gemessen wurden und auf anderer Hardware abweichen koennen. Erzeugt sich sein
     Testaudio selbst per Windows-Sprachsynthese (keine Aufnahme noetig) und misst gegen das
-    aktuell aktive Profil. Aufruf: `.venv\Scripts\python.exe tests\latenz_messen.py`.
+    aktuell aktive Profil, am besten ohne nebenbei laufendes Spiel (siehe oben). Aufruf: `.venv\Scripts\python.exe tests\latenz_messen.py`.
 
-  Alle drei brauchen einen laufenden llama-server (wird vom jeweiligen Skript selbst gestartet),
+  * `tests/eskalationstest.py` — Klassifikation mit stufenweise schwerer werdenden Aufgaben (von
+    wenigen Grundtags ueber Namens-Konfliktcluster und Whisper-Verhoerer bis zu Mehrfachbefehlen mit
+    Wiederholungen und Wartezeiten, dazu frische Faelle zur Kontrolle gegen Ueberanpassung des
+    Prompts). Nimmt beliebig viele Modelldateien als Argument und zeigt das Ergebnis je Stufe -
+    gedacht zum Vergleichen von Modellen und zum Pruefen von Prompt-Aenderungen:
+    `.venv\Scripts\python.exe tests\eskalationstest.py [Modell.gguf ...]`.
+  * `tests/modell_vergleich.py` — fuehrt dieselben Faelle wie der Regressionstest fuer mehrere
+    Modelle nacheinander aus und vergleicht Trefferquote und Latenz:
+    `.venv\Scripts\python.exe tests\modell_vergleich.py Modell1.gguf Modell2.gguf`.
+
+  Alle fuenf brauchen einen laufenden llama-server (wird vom jeweiligen Skript selbst gestartet),
   aber kein Mikrofon.
 * **`kontextlaenge` im Auge behalten.** Jeder zusaetzliche Tag macht den generierten
   System-Prompt etwas laenger. Bei einzelnen neuen Kommandos passt das meist locker in die
@@ -273,6 +317,7 @@ unberuehrt (MIT ist mit GPL-3.0 vereinbar, es handelt sich um separate Werke):
   [whisper.cpp](https://github.com/ggml-org/whisper.cpp)-Projekt (MIT-Lizenz).
 
 Nicht im Repo enthalten, aber per Skript nachgeladen: das **Gemma-4-E4B**-Modell
-(`gemma-4-E4B-it-GGUF/`, Quelle `unsloth/gemma-4-E4B-it-GGUF` auf Hugging Face) steht unter der
+(`gemma-4-E4B-it-GGUF/`, Quelle `unsloth/gemma-4-E4B-it-GGUF` auf Hugging Face) sowie das optionale
+**Gemma-4-E2B**-Modell (`gemma-4-E2B-it-GGUF/`, Quelle `unsloth/gemma-4-E2B-it-GGUF`) stehen unter der
 **Apache-2.0**-Lizenz, das Whisper-Modell (`models/`) unter der Lizenz des jeweiligen
 whisper.cpp-Modell-Downloads.
