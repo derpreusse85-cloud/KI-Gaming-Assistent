@@ -38,6 +38,39 @@ MAX_SLEEP_SEKUNDEN = 30
 NONE_TAG = "NONE"
 
 
+def schreibweise_normalisieren(name: str) -> str:
+    """Klein geschrieben, Bindestrich/Leerzeichen als Unterstrich."""
+    return name.strip().lower().replace("-", "_").replace(" ", "_")
+
+
+def _auf_bekannten_tag_abbilden(
+    marker: str, bekannte_tags: set[str], schlagwoerter: dict[str, str] | None = None
+) -> str:
+    """Korrigiert NUR eine abweichende Schreibweise eines bekannten Tags.
+
+    Kleine Modelle geben gelegentlich den Tag mit Bindestrich statt
+    Unterstrich aus (z.B. &&Patriot-Exoanzug&& statt &&Patriot_Exoanzug&&,
+    weil das Schlagwort so geschrieben ist). Das ist verlustfrei eindeutig
+    und kein Raten - es wird nur umgesetzt, wenn genau EIN bekannter Tag
+    nach der Normalisierung passt. Dasselbe gilt, wenn das Modell statt des
+    Tag-Namens ein (eindeutiges) Schlagwort des Tags ausgibt (``schlagwoerter``,
+    siehe Profil.schlagwort_zuordnung()). Alles andere bleibt unveraendert und wird
+    danach wie gehabt als unbekannter Marker verworfen.
+    """
+    if marker in bekannte_tags:
+        return marker
+    ziel = schreibweise_normalisieren(marker)
+    passende = [t for t in bekannte_tags if schreibweise_normalisieren(t) == ziel]
+    if len(passende) == 1:
+        log.debug("Schreibweise &&%s&& auf bekannten Tag &&%s&& abgebildet", marker, passende[0])
+        return passende[0]
+    tag = (schlagwoerter or {}).get(ziel)
+    if tag in bekannte_tags:
+        log.debug("Schlagwort &&%s&& auf Tag &&%s&& abgebildet", marker, tag)
+        return tag
+    return marker
+
+
 def sleep_dauer(tag: str) -> int | None:
     """Sekundenzahl, falls ``tag`` ein &&sleep:N&&-Marker ist, sonst None."""
     treffer = _SLEEP_MUSTER.match(tag)
@@ -48,6 +81,7 @@ def tags_extrahieren(
     antwort_text: str,
     bekannte_tags: set[str],
     finish_reason: str | None,
+    schlagwoerter: dict[str, str] | None = None,
 ) -> list[str]:
     """Liefert die Liste gueltiger Tags in Nennreihenfolge, oder [] bei Zweifel.
 
@@ -70,6 +104,12 @@ def tags_extrahieren(
     if not treffer:
         log.debug("Keine Tags in der LLM-Antwort gefunden")
         return []
+
+    treffer = [
+        t if sleep_dauer(t) is not None or t == NONE_TAG
+        else _auf_bekannten_tag_abbilden(t, bekannte_tags, schlagwoerter)
+        for t in treffer
+    ]
 
     gueltige_menge = bekannte_tags | {NONE_TAG}
     for tag in treffer:

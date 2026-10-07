@@ -112,7 +112,8 @@ def profil_testen(cfg: dict, name: str) -> tuple[int, int]:
     try:
         for text, erwartet in faelle:
             antwort, finish_reason = klassifikator.klassifizieren(text, system_prompt, "gaming-llm")
-            tags = parser.tags_extrahieren(antwort, profil.bekannte_tags(), finish_reason)
+            tags = parser.tags_extrahieren(antwort, profil.bekannte_tags(), finish_reason,
+                                       profil.schlagwort_zuordnung())
             treffer = tags == erwartet
             richtig += treffer
             status = "OK" if treffer else "ABWEICHUNG"

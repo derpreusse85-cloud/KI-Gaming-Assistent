@@ -97,6 +97,31 @@ def system_prompt_bauen(profil: Profil) -> str:
         "danach erst alle Wartezeiten aus, und wiederhole NIEMALS erst eine Aktion "
         "komplett fuer sich alleine, bevor die andere folgt."
     )
+    # Praezisierungsregeln (Oktober 2026, Modellvergleich E2B/E4B, siehe CLAUDE.md
+    # "Modellvergleich"): vier kurze Saetze, die fuer E2B die Luecke zu E4B
+    # schliessen und auch E4B verbessern - Negation, exakte Anzahl bei
+    # Wiederholungen (keine erfundenen sleep-Tags), Beispiele dazu und
+    # Vorrang des genauesten Treffers bei sich teilweise ueberlappenden Tags.
+    zeilen.append(
+        "Verneinte oder ausgeschlossene Aktionen (z.B. \"nicht X\", \"ohne X\", \"doch nicht X\") "
+        "gibst du NICHT aus. Wird eine Sache nur beschrieben und nicht verlangt (z.B. \"der "
+        f"Gegner hat einen X\"), antwortest du mit &&{NONE_TAG}&&."
+    )
+    zeilen.append(
+        "Gib bei Wiederholungen exakt so viele Tags aus, wie verlangt wurden - \"dreimal\" "
+        "bedeutet genau 3 Tags, nicht 4. Gib &&sleep:N&& nur aus, wenn in der Aeusserung "
+        "wirklich eine Wartezeit genannt wird; ohne genannte Wartezeit erfindest du niemals "
+        "sleep-Tags, auch nicht bei Wiederholungen."
+    )
+    zeilen.append(
+        "Weitere Beispiele: \"mach A und B, wiederhole alles dreimal\" -> &&AKTION_A&& "
+        "&&AKTION_B&& &&AKTION_A&& &&AKTION_B&& &&AKTION_A&& &&AKTION_B&&. \"mach A zweimal\" "
+        "-> &&AKTION_A&& &&AKTION_A&&. \"nicht A, sondern B\" -> &&AKTION_B&&."
+    )
+    zeilen.append(
+        "Passen mehrere Tags teilweise, waehle den Tag, dessen Name oder Wort am "
+        "vollstaendigsten und genauesten genannt wurde, und gib nicht beide aus."
+    )
     zeilen.append(
         f"Passt keine Aeusserung eindeutig zu einem der oben genannten Tags, "
         f"antworte ausschliesslich mit &&{NONE_TAG}&&. Rate niemals einen Tag, "

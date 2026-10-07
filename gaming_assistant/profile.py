@@ -62,7 +62,7 @@ from pathlib import Path
 
 import yaml
 
-from gaming_assistant import ed_status
+from gaming_assistant import ed_status, parser
 
 
 @dataclass
@@ -100,6 +100,24 @@ class Profil:
     def bekannte_tags(self) -> set[str]:
         """Menge aller gueltigen Tag-Namen - fuer den Parser (parser.py)."""
         return set(self.tags.keys())
+
+    def schlagwort_zuordnung(self) -> dict[str, str]:
+        """Schlagwort (normalisiert) -> Tag-Name, nur fuer eindeutige Schlagwoerter.
+
+        Der Parser nutzt das, wenn ein kleines Modell statt des Tag-Namens das
+        Schlagwort ausgibt (z.B. &&Gatling-Orbitalsperrfeuer&& statt
+        &&Orbital_Gatling&&). Ein Schlagwort, das bei mehreren Tags vorkommt,
+        wird weggelassen - dann gibt es keine eindeutige Zuordnung.
+        """
+        zuordnung: dict[str, str | None] = {}
+        for tag_name, eintrag in self.tags.items():
+            for wort in eintrag.schlagwort:
+                schluessel = parser.schreibweise_normalisieren(wort)
+                if zuordnung.get(schluessel, tag_name) != tag_name:
+                    zuordnung[schluessel] = None
+                else:
+                    zuordnung[schluessel] = tag_name
+        return {k: v for k, v in zuordnung.items() if v is not None}
 
 
 def _schlagwort_liste(wert) -> list[str]:

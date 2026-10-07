@@ -87,7 +87,8 @@ def main() -> None:
                 break
 
             antwort, finish_reason = klassifikator.klassifizieren(text, system_prompt, "gaming-llm")
-            tags = parser.tags_extrahieren(antwort, profil.bekannte_tags(), finish_reason)
+            tags = parser.tags_extrahieren(antwort, profil.bekannte_tags(), finish_reason,
+                                       profil.schlagwort_zuordnung())
 
             if not tags:
                 print(f"  -> kein Tag erkannt (Rohantwort: {antwort!r})")
