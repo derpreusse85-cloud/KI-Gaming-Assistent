@@ -19,7 +19,7 @@ vendor/whisper.cpp/build/bin/*
 models/
 training_data/
 logs/
-gemma-4-E4B-it-GGUF/*.gguf
+*-GGUF/*.gguf
 
 # Referenzmaterial (Screenshots/Notizen beim Profil-Erstellen genutzt), nicht
 # fuers Ausfuehren des Programms noetig.

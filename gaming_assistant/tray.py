@@ -2,8 +2,8 @@
 
 Uebernommen als Vorlage aus dem Diktier-Tool (client/tray.py), auf das
 Wesentliche fuer diesen Anwendungsfall reduziert: hier gibt es keine
-Modell-/Mikrofon-Untermenues (Whisper-Modell ist fest vorgegeben), nur die
-Auswahl des aktiven Spielprofils und der Push-to-talk-Taste.
+Mikrofon-Untermenues (Whisper-Modell ist fest vorgegeben), nur Sprachmodell-,
+Spielprofil- und Push-to-talk-Auswahl.
 
 Python-Hinweis: pystray.Menu(...) baut ein Kontextmenue fuer das Tray-Icon.
 "radio=True" bei einem MenuItem sorgt dafuer, dass genau ein Eintrag der
@@ -38,6 +38,9 @@ class Tray:
         on_training_log_umschalten: Callable[[], None],
         debug_aktiv_fn: Callable[[], bool],
         on_debug_umschalten: Callable[[], None],
+        modell_liste_fn: Callable[[], list[str]],
+        aktives_modell_fn: Callable[[], str],
+        on_modell_wechsel: Callable[[str], None],
     ) -> None:
         self.status_fn = status_fn
         self.profil_liste_fn = profil_liste_fn
@@ -50,6 +53,9 @@ class Tray:
         self.on_training_log_umschalten = on_training_log_umschalten
         self.debug_aktiv_fn = debug_aktiv_fn
         self.on_debug_umschalten = on_debug_umschalten
+        self.modell_liste_fn = modell_liste_fn
+        self.aktives_modell_fn = aktives_modell_fn
+        self.on_modell_wechsel = on_modell_wechsel
         self._zustand = "startet"
         self.icon = pystray.Icon(
             "gaming_assistant",
@@ -64,6 +70,7 @@ class Tray:
             pystray.Menu.SEPARATOR,
             pystray.MenuItem("Status/Log anzeigen", self._log_anzeigen, default=True),
             pystray.MenuItem("Profil", self._profil_menu()),
+            pystray.MenuItem("Sprachmodell", self._modell_menu()),
             pystray.MenuItem("Push-to-talk festlegen ...", self._ptt_aendern),
             pystray.MenuItem(
                 "Trainingsdaten aufzeichnen",
@@ -119,6 +126,36 @@ class Tray:
             log.info("Profil ueber Tray gewaehlt: %s", name)
             self.on_profil_wechsel(name)
             self._menu_aktualisieren()
+
+        return auswaehlen
+
+    def _modell_menu(self) -> pystray.Menu:
+        eintraege = []
+        for pfad in self.modell_liste_fn():
+            # Anzeigename = Dateiname ohne Endung, z.B. "gemma-4-E2B-it-Q4_K_M"
+            name = pfad.rsplit("/", 1)[-1].removesuffix(".gguf")
+            eintraege.append(
+                pystray.MenuItem(
+                    name,
+                    self._modell_auswahl_erzeugen(pfad),
+                    radio=True,
+                    checked=lambda _item, p=pfad: self.aktives_modell_fn() == p,
+                )
+            )
+        return pystray.Menu(*eintraege)
+
+    def _modell_auswahl_erzeugen(self, pfad: str) -> Callable:
+        def auswaehlen(*_args) -> None:
+            if pfad == self.aktives_modell_fn():
+                return
+            log.info("Modell ueber Tray gewaehlt: %s", pfad)
+            # Waehrend des Neustarts (einige Sekunden) zeigt das Icon "startet".
+            self.zustand_setzen("startet")
+            try:
+                self.on_modell_wechsel(pfad)
+            finally:
+                self.zustand_setzen("bereit")
+                self._menu_aktualisieren()
 
         return auswaehlen
 

@@ -11,3 +11,6 @@ Laedt `gemma-4-E4B-it-Q4_K_M.gguf` (ca. 5 GB) von
 [unsloth/gemma-4-E4B-it-GGUF](https://huggingface.co/unsloth/gemma-4-E4B-it-GGUF) direkt
 in diesen Ordner. Alternativ die Datei manuell von dort herunterladen und hier
 hineinkopieren.
+
+Das kleinere Modell E2B (optional, im Tray umschaltbar) laedt
+`.\scripts\download_llm.ps1 -Modell E2B` (siehe `gemma-4-E2B-it-GGUF/README.md`).

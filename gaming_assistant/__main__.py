@@ -157,7 +157,8 @@ def main() -> None:
             roh_text, zustand["system_prompt"], zustand["llm_bezeichner"]
         )
         nach_llm = time.monotonic()
-        tags = parser.tags_extrahieren(antwort, profil_obj.bekannte_tags(), finish_reason)
+        tags = parser.tags_extrahieren(antwort, profil_obj.bekannte_tags(), finish_reason,
+                                       profil_obj.schlagwort_zuordnung())
 
         # Sammelt (Tag, tatsaechlich ausgeloeste Tasten) fuer die kompakte
         # Anzeige unten - bei Feuergruppen ist das erst nach der Berechnung
@@ -309,6 +310,20 @@ def main() -> None:
         logbuf.set_level(cfg["log_level"])
         log.info("Log-Level ueber Tray auf %s gesetzt", cfg["log_level"])
 
+    def modell_wechseln(modell_pfad: str) -> None:
+        if zustand["aufnahme_laeuft"]:
+            log.warning("Modellwechsel waehrend einer laufenden Aufnahme nicht moeglich")
+            return
+        log.info("Wechsle Sprachmodell auf %s (llama-server-Neustart) ...", modell_pfad)
+        try:
+            llama_server.modell_wechseln(modell_pfad, zustand["profil"].kontextlaenge)
+        except Exception:
+            log.exception("Modellwechsel fehlgeschlagen - bisheriges Modell bleibt aktiv")
+            return
+        cfg["llm"]["model"] = modell_pfad
+        config.save(cfg)
+        log.info("Sprachmodell aktiv: %s", modell_pfad)
+
     def beenden() -> None:
         log.info("Gaming-Assistent wird beendet ...")
         ptt_listener.stop()
@@ -329,6 +344,9 @@ def main() -> None:
         on_training_log_umschalten=training_log_umschalten,
         debug_aktiv_fn=lambda: cfg.get("log_level") == "DEBUG",
         on_debug_umschalten=debug_umschalten,
+        modell_liste_fn=lambda: config.modelle_finden(cfg),
+        aktives_modell_fn=lambda: cfg["llm"]["model"],
+        on_modell_wechsel=modell_wechseln,
     )
     laufzeit["tray"] = tray_obj
     tray_obj.zustand_setzen("bereit")

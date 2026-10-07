@@ -130,6 +130,22 @@ class LlamaServer:
         self._warten_bis_bereit()
         self._kontextlaenge = kontextlaenge
 
+    def modell_wechseln(self, modell_pfad: str, kontextlaenge: int) -> None:
+        """Wechselt die Modelldatei und startet llama-server damit neu.
+
+        Schlaegt der Start mit dem neuen Modell fehl (Datei fehlt/defekt),
+        wird das bisherige Modell wieder gestartet und der Fehler erneut
+        geworfen - der Assistent bleibt so benutzbar.
+        """
+        altes_modell = self.model
+        self.model = config.resolve_path(modell_pfad)
+        try:
+            self.start(kontextlaenge)
+        except Exception:
+            self.model = altes_modell
+            self.start(kontextlaenge)
+            raise
+
     def sicherstellen(self, kontextlaenge: int) -> None:
         """Sorgt dafuer, dass llama-server mit dieser Kontextlaenge laeuft.
 

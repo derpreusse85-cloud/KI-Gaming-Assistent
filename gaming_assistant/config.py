@@ -156,5 +156,26 @@ def save(cfg: dict) -> None:
     _write_json(CONFIG_PATH, cfg)
 
 
+def modelle_finden(cfg: dict) -> list[str]:
+    """Alle LLM-Modelldateien (relative Pfade ab ROOT) fuers Tray-Auswahlmenue.
+
+    Gesucht wird in jedem Ordner "*-GGUF" direkt im Projektordner (so wie die
+    Download-Anleitungen es vorsehen). Die mmproj-Dateien (Bild-Teil von Gemma,
+    wird hier nicht gebraucht) sind keine eigenstaendigen Modelle und werden
+    uebersprungen. Das aktuell konfigurierte Modell steht immer in der Liste,
+    auch wenn es an einem ganz anderen Ort liegt.
+    """
+    gefunden = sorted(
+        datei.relative_to(ROOT).as_posix()
+        for ordner in ROOT.glob("*-GGUF") if ordner.is_dir()
+        for datei in ordner.glob("*.gguf")
+        if not datei.name.lower().startswith("mmproj")
+    )
+    aktuell = cfg["llm"]["model"]
+    if aktuell not in gefunden:
+        gefunden.append(aktuell)
+    return gefunden
+
+
 def profil_verzeichnis(cfg: dict) -> Path:
     return resolve_path(cfg["profil"]["verzeichnis"])
